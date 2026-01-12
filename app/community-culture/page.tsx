@@ -96,7 +96,7 @@ export default function CommunityCulture() {
         <section className="px-[5%] py-[40px] md:py-[50px] bg-cloud-dancer">
           <div className="max-w-[900px] mx-auto">
             <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] mb-2 text-center">
-              Full Policy
+              Our Full Policy
             </h2>
             
             <p className="text-base leading-relaxed mb-2 text-center font-semibold">
