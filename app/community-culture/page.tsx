@@ -12,7 +12,7 @@ export default function CommunityCulture() {
               Community Culture
             </h1>
             
-            <h2 className="font-spartan font-semibold text-[24px] md:text-[28px] mb-4">
+            <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] mb-4">
               Overview
             </h2>
             
@@ -65,9 +65,9 @@ export default function CommunityCulture() {
           }}
         >
           <div className="max-w-[900px] mx-auto text-center">
-            <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] mb-4">
+            <h3 className="font-spartan font-semibold text-[24px] md:text-[28px] mb-4">
               We're Here to Listen
-            </h2>
+            </h3>
             <p className="text-base md:text-lg leading-relaxed mb-4">
               If something doesn't feel right, or you experience or witness behaviour that goes against our values:
             </p>
