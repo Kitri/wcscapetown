@@ -17,9 +17,6 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "West Coast Swing Cape Town",
   description: "WCS is a modern social dance built on connection, musicality, and improvisation. Join our small but growing community as we bring WCS to every corner of Cape Town.",
-  icons: {
-    icon: "/images/WCS CT Logo black.png",
-  },
   openGraph: {
     title: "West Coast Swing Cape Town",
     description: "WCS is a modern social dance built on connection, musicality, and improvisation. Join our small but growing community as we bring WCS to every corner of Cape Town.",

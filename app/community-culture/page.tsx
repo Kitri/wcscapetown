@@ -103,8 +103,11 @@ export default function CommunityCulture() {
             </p>
 
             {/* Care Dropdown */}
-            <details className="bg-white rounded-xl p-4 md:p-6 mb-4 shadow-sm">
-              <summary className="font-spartan font-semibold text-lg md:text-xl cursor-pointer hover:text-pink-accent transition-colors">
+            <details className="bg-white rounded-xl p-4 md:p-6 mb-4 shadow-sm group [&>summary::-webkit-details-marker]:hidden [&>summary::marker]:hidden">
+              <summary className="font-spartan font-semibold text-lg md:text-xl cursor-pointer hover:text-pink-accent transition-colors list-none flex items-center gap-2">
+                <svg className="w-5 h-5 fill-pink-accent transition-transform group-open:rotate-90" viewBox="0 0 24 24">
+                  <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                </svg>
                 Care looks like
               </summary>
                 
@@ -128,8 +131,11 @@ export default function CommunityCulture() {
               </details>
 
               {/* Consent Dropdown */}
-              <details className="bg-white rounded-xl p-4 md:p-6 mb-4 shadow-sm">
-                <summary className="font-spartan font-semibold text-lg md:text-xl cursor-pointer hover:text-pink-accent transition-colors">
+              <details className="bg-white rounded-xl p-4 md:p-6 mb-4 shadow-sm group [&>summary::-webkit-details-marker]:hidden [&>summary::marker]:hidden">
+                <summary className="font-spartan font-semibold text-lg md:text-xl cursor-pointer hover:text-pink-accent transition-colors list-none flex items-center gap-2">
+                  <svg className="w-5 h-5 fill-pink-accent transition-transform group-open:rotate-90" viewBox="0 0 24 24">
+                    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                  </svg>
                   Consent looks like
                 </summary>
                 
@@ -153,8 +159,11 @@ export default function CommunityCulture() {
               </details>
 
               {/* Looking Out Dropdown */}
-              <details className="bg-white rounded-xl p-4 md:p-6 mb-6 shadow-sm">
-                <summary className="font-spartan font-semibold text-lg md:text-xl cursor-pointer hover:text-pink-accent transition-colors">
+              <details className="bg-white rounded-xl p-4 md:p-6 mb-6 shadow-sm group [&>summary::-webkit-details-marker]:hidden [&>summary::marker]:hidden">
+                <summary className="font-spartan font-semibold text-lg md:text-xl cursor-pointer hover:text-pink-accent transition-colors list-none flex items-center gap-2">
+                  <svg className="w-5 h-5 fill-pink-accent transition-transform group-open:rotate-90" viewBox="0 0 24 24">
+                    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
+                  </svg>
                   Looking out for each other
                 </summary>
                 
