@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f0eee9;
+  --foreground: #282723;
+}
+
+@theme inline {
+  /* Custom Colors - Dual Accent Design */
+  --color-cloud-dancer: #f0eee9;
+  --color-text-dark: #282723;
+  --color-yellow-accent: #FFD117;
+  --color-pink-accent: #db409c;
+  
+  /* Font Families */
+  --font-spartan: var(--font-league-spartan);
+  --font-inter: var(--font-inter);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), sans-serif;
+}
