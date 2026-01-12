@@ -5,19 +5,14 @@ export async function POST(request: Request) {
   try {
     const { zones, timestamp, sessionId } = await request.json();
 
-    // Get IP address
-    const ip = request.headers.get("x-forwarded-for") || 
-               request.headers.get("x-real-ip") || 
-               "unknown";
-
     // Save to Google Sheets
     const sheetId = process.env.SHEET_ID_MAP_VOTES;
     if (!sheetId) {
       throw new Error("Sheet ID not configured");
     }
 
-    await appendToSheet(sheetId, "Sheet1!A:D", [
-      [timestamp, zones.join(", "), sessionId || "unknown", ip]
+    await appendToSheet(sheetId, "Sheet1!A:C", [
+      [timestamp, zones.join(", "), sessionId || "unknown"]
     ]);
 
     return NextResponse.json({ success: true });

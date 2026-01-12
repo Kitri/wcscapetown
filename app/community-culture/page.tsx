@@ -173,7 +173,7 @@ export default function CommunityCulture() {
                   </p>
                   
                   <p>
-                    If you experience or witness behaviour that goes against our principles of care or consent, whether on or off the dance floor, you are encouraged to reach out to a member of the core team or teaching team, or contact us privately through our official channels (<a href="https://westcoastswing.co.za/" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">website</a>, <a href="https://www.instagram.com/wcscapetown/?hl=en" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">instagram</a> or <a href="mailto:community@wcscapetown.co.za" className="text-pink-accent hover:text-yellow-accent underline">community@wcscapetown.co.za</a>).
+                    If you experience or witness behaviour that goes against our principles of care or consent, whether on or off the dance floor, you are encouraged to reach out to our community organisers or teaching team, or contact us privately through our official channels (<a href="https://www.instagram.com/wcscapetown/?hl=en" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">instagram</a> or <a href="mailto:community@wcscapetown.co.za" className="text-pink-accent hover:text-yellow-accent underline">community@wcscapetown.co.za</a>).
                   </p>
                   
                   <p>

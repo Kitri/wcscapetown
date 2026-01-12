@@ -6,25 +6,19 @@ export async function POST(request: Request) {
     const data = await request.json();
     const { learning, events, email, timestamp, sessionId } = data;
 
-    // Get IP address
-    const ip = request.headers.get("x-forwarded-for") || 
-               request.headers.get("x-real-ip") || 
-               "unknown";
-
     // Save to Google Sheets
     const sheetId = process.env.SHEET_ID_POLL_RESPONSES;
     if (!sheetId) {
       throw new Error("Sheet ID not configured");
     }
 
-    await appendToSheet(sheetId, "Sheet1!A:F", [
+    await appendToSheet(sheetId, "Sheet1!A:E", [
       [
         timestamp,
         learning.join(", "),
         events.join(", "),
         email || "(not provided)",
         sessionId || "unknown",
-        ip,
       ],
     ]);
 
