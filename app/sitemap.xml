@@ -1,20 +1,33 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	<url>
-		<loc>https://www.wcscapetown.co.za</loc>
+		<loc>https://www.wcscapetown.co.za/</loc>
+		<lastmod>2026-01-12</lastmod>
+		<priority>0.8</priority>
+		<changefreq>monthly</changefreq>
 	</url>
 	<url>
-		<loc>https://www.wcscapetown.co.za/whats-on</loc>
+		<loc>https://www.wcscapetown.co.za/whats-on/</loc>
+		<lastmod>2026-01-12</lastmod>
+		<changefreq>monthly</changefreq>
 	</url>
 	<url>
-		<loc>https://www.wcscapetown.co.za/about-us</loc>
+		<loc>https://www.wcscapetown.co.za/about-us/</loc>
+		<lastmod>2026-01-12</lastmod>
+		<changefreq>yearly</changefreq>
 	</url>
 	<url>
-		<loc>https://www.wcscapetown.co.za/community-culture</loc>
+		<loc>https://www.wcscapetown.co.za/community-culture/</loc>
+		<lastmod>2026-01-12</lastmod>
+		<changefreq>yearly</changefreq>
 	</url>
 	<url>
-		<loc>https://www.wcscapetown.co.za/news</loc>
+		<loc>https://www.wcscapetown.co.za/news/</loc>
+		<lastmod>2026-01-12</lastmod>
+		<changefreq>monthly</changefreq>
 	</url>
 	<url>
-		<loc>https://www.wcscapetown.co.za/contact</loc>
+		<loc>https://www.wcscapetown.co.za/contact/</loc>
+		<lastmod>2026-01-12</lastmod>
+		<changefreq>yearly</changefreq>
 	</url>
 </urlset>
