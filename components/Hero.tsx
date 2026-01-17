@@ -50,12 +50,6 @@ export default function Hero() {
     setExpandedFeature(expandedFeature === index ? null : index);
   };
 
-  const scrollToPreferences = () => {
-    document.getElementById("preferences")?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  };
 
   return (
     <section className="relative min-h-[80vh] md:min-h-[85vh] px-[5%] py-[60px] md:py-[80px] flex flex-col items-center justify-center">
@@ -97,7 +91,7 @@ export default function Hero() {
 
         {/* Introduction Paragraph */}
         <p className="text-base md:text-lg leading-relaxed max-w-[700px] mx-auto mb-8">
-          WCS is a modern social dance built on connection, musicality, and
+          <span className="font-semibold">West Coast Swing</span> is a modern social dance built on connection, musicality, and
           improvisation. Join our small but growing community as we bring WCS to
           every corner of Cape Town.
         </p>
@@ -150,17 +144,11 @@ export default function Hero() {
           )}
         </div>
 
-        {/* CTA Buttons */}
-        <div className="flex flex-col md:flex-row gap-5 justify-center items-center">
+        {/* CTA Button */}
+        <div className="flex justify-center">
           <Link href="/whats-on" className="bg-yellow-accent text-text-dark px-10 py-4 rounded-lg font-medium text-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-yellow-accent/30 w-full md:w-auto text-center">
-            View Class Schedule
+            What's On
           </Link>
-          <button
-            onClick={scrollToPreferences}
-            className="text-text-dark border-2 border-text-dark px-10 py-[14px] rounded-lg font-medium text-lg bg-transparent transition-all duration-200 hover:bg-pink-accent hover:border-pink-accent hover:text-white w-full md:w-auto"
-          >
-            Help shape 2026 ↓
-          </button>
         </div>
       </div>
     </section>

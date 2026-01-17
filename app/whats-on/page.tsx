@@ -12,7 +12,7 @@ export default function WhatsOn() {
               What's On
             </h1>
             <p className="text-lg md:text-xl text-text-dark/80">
-              Join us for classes, socials, and special events
+              West Coast Swing classes & socials
             </p>
           </div>
         </section>
@@ -26,8 +26,9 @@ export default function WhatsOn() {
                 <div className="inline-block bg-yellow-accent text-text-dark px-4 py-2 rounded-full font-semibold text-sm mb-2">
                   EVERY MONDAY
                 </div>
-                <h3 className="font-spartan font-semibold text-xl mb-1">Classes & Social</h3>
+                <h3 className="font-spartan font-semibold text-xl mb-1">Levelled Classes & Social</h3>
                 <p className="text-text-dark/70">7-10 PM | Havana Nights, Plumstead</p>
+                <p className="text-sm italic font-semibold mt-1">* Newbie January promo</p>
               </a>
               
               {/* Strictly Social */}
@@ -36,7 +37,8 @@ export default function WhatsOn() {
                   SAT 24 JAN
                 </div>
                 <h3 className="font-spartan font-semibold text-xl mb-1">Strictly Social</h3>
-                <p className="text-text-dark/70">8-11 PM | Scout Hall, Claremont</p>
+                <p className="text-text-dark/70">8 PM | Scout Hall, Claremont</p>
+                <p className="text-sm italic font-semibold mt-1">West Coast Swing Taster & Social</p>
               </a>
             </div>
           </div>
@@ -137,13 +139,13 @@ export default function WhatsOn() {
               Pure WCS. All night.
             </p>
             
-            {/* Bonus Intro Class Highlight */}
+            {/* Bonus Taster Class Highlight */}
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
               <p className="text-lg md:text-xl font-semibold mb-2">
-                🎓 Bonus: Intro Class
+                🎓 Bonus: Taster Class
               </p>
               <p className="text-base md:text-lg">
-                8:00 – 8:30 PM - Perfect for absolute beginners!
+                8:00 PM - Perfect for absolute beginners!
               </p>
             </div>
 
@@ -158,7 +160,7 @@ export default function WhatsOn() {
                   </div>
                   <div>
                     <p className="font-semibold mb-1">🕗 Time</p>
-                    <p>8:30 – 11:00 PM</p>
+                    <p>8:00 – 11:00 PM</p>
                   </div>
                   <div>
                     <p className="font-semibold mb-1">💰 Cost</p>

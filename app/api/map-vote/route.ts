@@ -3,7 +3,7 @@ import { appendToSheet } from "@/lib/googleSheets";
 
 export async function POST(request: Request) {
   try {
-    const { zones, timestamp, sessionId } = await request.json();
+    const { zones, formats, timestamp, sessionId } = await request.json();
 
     // Save to Google Sheets
     const sheetId = process.env.SHEET_ID_MAP_VOTES;
@@ -11,8 +11,8 @@ export async function POST(request: Request) {
       throw new Error("Sheet ID not configured");
     }
 
-    await appendToSheet(sheetId, "Sheet1!A:C", [
-      [timestamp, zones.join(", "), sessionId || "unknown"]
+    await appendToSheet(sheetId, "Sheet1!A:D", [
+      [timestamp, zones.join(", "), formats?.join(", ") || "", sessionId || "unknown"]
     ]);
 
     return NextResponse.json({ success: true });

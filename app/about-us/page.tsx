@@ -116,7 +116,7 @@ export default function AboutUs() {
                 We had no idea we were skipping foundational technique. We didn't know concepts like "delayed weight transfer" or "rolling through the feet" or "critical timing" existed yet. We were just dancing, experimenting, trying things, seeing what felt right.
               </p>
               <p>
-                The living room sessions became weekly, then twice-weekly. Marcella kept us organized - budgets, schedules, websites, vision-setting, all the unglamorous work that turns a group of enthusiasts into an actual community. She secured us a proper dance space at Havana Nights. Slowly, we were becoming something real.
+                The living room sessions became weekly, then twice-weekly. Marcella kept us organised - budgets, schedules, websites, vision-setting, all the unglamorous work that turns a group of enthusiasts into an actual community. She secured us a proper dance space at Havana Nights. Slowly, we were becoming something real.
               </p>
               <p>
                 What kept us going through those months of fumbling in the dark? Honestly, it was the shared obsession. When you find people who are just as fascinated by connection quality and musical interpretation as you are, who will spend hours debating whether that felt right, who show up week after week even when progress feels impossibly slow - you keep showing up too.

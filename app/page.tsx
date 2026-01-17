@@ -1,6 +1,6 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
-import PreferencesPoll from "@/components/PreferencesPoll";
+import WeekenderPoll from "@/components/WeekenderPoll";
 import WhatIsWCS from "@/components/WhatIsWCS";
 import WhoAreWe from "@/components/WhoAreWe";
 import SkillsTracker from "@/components/SkillsTracker";
@@ -13,7 +13,7 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
-        <PreferencesPoll />
+        <WeekenderPoll />
         <WhatIsWCS />
         <WhoAreWe />
         <MapSection />

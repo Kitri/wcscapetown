@@ -12,12 +12,8 @@ export default function WhoAreWe() {
           Who Are We?
         </h2>
 
-        <p className="text-base md:text-lg leading-relaxed mb-6">
-          West Coast Swing Cape Town started in a living room in 2023 - a handful of us teaching ourselves a dance we'd only seen online. We learned chaotically from scattered online resources, jumping from sugar pushes to advanced concepts without knowing what we were skipping. Then the international WCS community stepped in - workshops, visiting instructors, connections across continents - and helped us find our way.
-        </p>
-        
-        <p className="text-base md:text-lg leading-relaxed mb-6">
-          Today, we're a team of community organizers and teachers who are completely in love with this dance. Our ambition is to bring international-quality West Coast Swing to every corner of Cape Town - learning it properly, sharing what we discover, and building a community where everyone's welcome to explore it with us.
+        <p className="text-base md:text-lg mb-6 leading-relaxed">
+          We're a <span className="font-semibold">volunteer-driven community with one ambition:</span> bring this wonderful dance to Cape Town and grow a welcoming community — <span className="font-semibold">like the international WCS family that's embraced us.</span>
         </p>
 
         <a
