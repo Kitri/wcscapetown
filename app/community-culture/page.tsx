@@ -137,82 +137,142 @@ export default function CommunityCulture() {
             </p>
 
             {/* Care Section */}
-            <div className="bg-white rounded-xl p-4 md:p-6 mb-4 shadow-sm">
-              <h3 className="font-spartan font-semibold text-xl md:text-2xl mb-4">
-                Care looks like
-              </h3>
-                
-              <ul className="space-y-3 text-base leading-relaxed list-disc pl-6">
-                  <li>
-                    We actively welcome differences in race, ethnicity, sexual orientation, gender identity, physical appearance, age, ability, and dance experience. <strong>Inclusion is a core value of our community</strong>. We <strong> do not tolerate </strong> behaviour rooted in <strong> hate, discrimination, harassment or threats </strong> of any kind. Any situation which makes another person feel unsafe or uncomfortable to the point of being unable to enjoy the class/event is unacceptable and can be considered harassment. Persistent and unwelcome attention is also considered harassment and will be treated as such. <strong> If you harass or threaten someone, you will be asked to leave.</strong>
+            <div className="bg-white rounded-xl overflow-hidden mb-6 shadow-md">
+              <div className="px-6 pt-6 pb-4">
+                <h3 className="font-spartan font-semibold text-xl md:text-2xl border-b-3 border-yellow-accent pb-3 inline-block">
+                  Care looks like
+                </h3>
+              </div>
+              <div className="px-6 py-6">
+                <ul className="space-y-6 text-base leading-loose">
+                  <li className="font-light">
+                    <div className="mb-2">We actively welcome differences in race, ethnicity, sexual orientation, gender identity, physical appearance, age, ability, and dance experience.</div>
+                    <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-yellow-accent/30 pl-4">
+                      <li><strong>Inclusion is a core value of our community</strong></li>
+                      <li>We <strong>do not tolerate</strong> behaviour rooted in <strong>hate, discrimination, harassment or threats</strong></li>
+                      <li><strong>If you harass or threaten someone, you will be asked to leave</strong></li>
+                    </ul>
                   </li>
                   
-                  <li>
-                    We practice <strong> role freedom and curiosity</strong>. Lead and follow are choices, <strong>not gendered</strong> roles, and dancers are welcome to explore across roles with mutual respect. We <strong> value dancing across experience levels </strong>, seeing it as part of learning, sharing, and growing a connected community.
+                  <li className="font-light">
+                    <div className="mb-2">We practice <strong>role freedom and curiosity</strong>.</div>
+                    <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-yellow-accent/30 pl-4">
+                      <li>Lead and follow are choices, <strong>not gendered</strong> roles</li>
+                      <li>We <strong>value dancing across experience levels</strong></li>
+                    </ul>
                   </li>
                   
-                  <li>
-                    <strong> Care</strong> on the dance floor <strong>requires awareness and responsibility</strong>. This includes being mindful of those around you, apologising if you bump into or hurt someone, and adjusting your behaviour when needed. It also means <strong>recognising</strong> that everyone has <strong>different comfort levels</strong>, and that those <strong>boundaries should be respected </strong> at all times.
+                  <li className="font-light">
+                    <div className="mb-2"><strong>Care</strong> on the dance floor <strong>requires awareness and responsibility</strong>.</div>
+                    <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-yellow-accent/30 pl-4">
+                      <li>Be mindful of those around you</li>
+                      <li>Apologise if you bump into or hurt someone</li>
+                      <li>Everyone has <strong>different comfort levels</strong> - <strong>boundaries should be respected</strong></li>
+                    </ul>
                   </li>
                   
-                  <li>
-                    Care also includes how we use our words. <strong> Feedback and advice </strong> are part of learning <strong> when they are invited</strong> . If you have something to share about someone&apos;s dancing, <strong>ask first </strong> if they would like to hear it. Our teachers are there to offer guidance and supported learning, and we trust that process.
+                  <li className="font-light">
+                    <div className="mb-2">Care includes how we use our words.</div>
+                    <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-yellow-accent/30 pl-4">
+                      <li><strong>Feedback and advice</strong> are part of learning <strong>when they are invited</strong></li>
+                      <li><strong>Ask first</strong> if they would like to hear it</li>
+                    </ul>
                   </li>
-              </ul>
+                </ul>
+              </div>
             </div>
 
             {/* Consent Section */}
-            <div className="bg-white rounded-xl p-4 md:p-6 mb-4 shadow-sm">
-              <h3 className="font-spartan font-semibold text-xl md:text-2xl mb-4">
-                Consent looks like
-              </h3>
-                
-              <ul className="space-y-3 text-base leading-relaxed list-disc pl-6">
-                  <li>
-                    Consent means <strong>asking before dancing with anyone </strong>, and <strong> accepting a "no" with grace and without pressure</strong>. A refusal is not an invitation to persuade, joke, negotiate, or revisit later.
+            <div className="bg-white rounded-xl overflow-hidden mb-6 shadow-md">
+              <div className="px-6 pt-6 pb-4">
+                <h3 className="font-spartan font-semibold text-xl md:text-2xl border-b-3 border-yellow-accent pb-3 inline-block">
+                  Consent looks like
+                </h3>
+              </div>
+              <div className="px-6 py-6">
+                <ul className="space-y-6 text-base leading-loose">
+                  <li className="font-light">
+                    <div className="mb-2">Consent means <strong>asking before dancing with anyone</strong>, and <strong>accepting a "no" with grace and without pressure</strong>.</div>
+                    <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-pink-accent/30 pl-4">
+                      <li>A refusal is not an invitation to persuade, joke, negotiate, or revisit later</li>
+                    </ul>
                   </li>
                   
-                  <li>
-                    Consent also means listening to <strong>verbal and non-verbal cues</strong>, <strong>respecting personal boundaries </strong>, and understanding that <strong>anyone can change their mind</strong> at any time.
+                  <li className="font-light">
+                    <div className="mb-2">Consent also means:</div>
+                    <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-pink-accent/30 pl-4">
+                      <li>Listening to <strong>verbal and non-verbal cues</strong></li>
+                      <li><strong>Respecting personal boundaries</strong></li>
+                      <li>Understanding that <strong>anyone can change their mind</strong> at any time</li>
+                    </ul>
                   </li>
                   
-                  <li>
-                    <strong>Consent is contextual</strong>. Just because someone dances a certain way with one person does not mean they want the same with someone else. <strong>If you are unsure, ask</strong>. If someone asks you to stop, whether verbally or through body language, stop. If you are uncomfortable with someone&apos;s behaviour, then politely inform them if it feels safe enough to do so. Requests made for <strong>personal comfort or safety</strong> are part of <strong>consent and mutual care</strong>, not criticism.
+                  <li className="font-light">
+                    <div className="mb-2"><strong>Consent is contextual</strong>.</div>
+                    <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-pink-accent/30 pl-4">
+                      <li>Just because someone dances a certain way with one person doesn't mean they want the same with someone else</li>
+                      <li><strong>If you are unsure, ask</strong></li>
+                      <li>If someone asks you to stop, <strong>stop</strong></li>
+                      <li>Requests for <strong>personal comfort or safety</strong> are part of <strong>consent and mutual care</strong>, not criticism</li>
+                    </ul>
                   </li>
                   
-                  <li>
-                    Please also be mindful that <strong>alcohol</strong> or other substances can make it <strong>harder to read boundaries</strong> accurately. Knowing your limits helps you <strong>respect others</strong>.
+                  <li className="font-light">
+                    <div className="mb-2"><strong>Alcohol</strong> or other substances can make it <strong>harder to read boundaries</strong> accurately.</div>
+                    <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-pink-accent/30 pl-4">
+                      <li>Knowing your limits helps you <strong>respect others</strong></li>
+                    </ul>
                   </li>
-              </ul>
+                </ul>
+              </div>
             </div>
 
             {/* Looking Out Section */}
-            <div className="bg-white rounded-xl p-4 md:p-6 mb-6 shadow-sm">
-              <h3 className="font-spartan font-semibold text-xl md:text-2xl mb-4">
-                Looking out for each other
-              </h3>
-                
-              <ul className="space-y-3 text-base leading-relaxed list-disc pl-6">
-                  <li>
-                    <strong>Care and consent are a shared responsibility</strong>. If you are unsure whether someone is okay, <strong>check in</strong>. This might look like asking them if they need help, or inviting them to dance to create space.
+            <div className="bg-white rounded-xl overflow-hidden mb-6 shadow-md">
+              <div className="px-6 pt-6 pb-4">
+                <h3 className="font-spartan font-semibold text-xl md:text-2xl border-b-3 border-yellow-accent pb-3 inline-block">
+                  Looking out for each other
+                </h3>
+              </div>
+              <div className="px-6 py-6">
+                <ul className="space-y-6 text-base leading-loose">
+                  <li className="font-light">
+                    <div className="mb-2"><strong>Care and consent are a shared responsibility</strong>.</div>
+                    <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-pink-accent/30 pl-4">
+                      <li>If you're unsure whether someone is okay, <strong>check in</strong></li>
+                      <li>Ask if they need help, or invite them to dance to create space</li>
+                    </ul>
                   </li>
                   
-                  <li>
-                    If you experience or <strong>witness behaviour </strong> that goes <strong>against our principles</strong> of care or consent, whether on or off the dance floor, you are encouraged to <strong>reach out to our community organisers or teaching team</strong>, or contact us privately through our official channels (<a href="https://www.instagram.com/wcscapetown/?hl=en" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">instagram</a> or <a href="mailto:community@wcscapetown.co.za" className="text-pink-accent hover:text-yellow-accent underline">community@wcscapetown.co.za</a>).
+                  <li className="font-light">
+                    <div className="mb-2">If you experience or <strong>witness behaviour</strong> that goes <strong>against our principles</strong>:</div>
+                    <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-pink-accent/30 pl-4">
+                      <li><strong>Reach out to our community organisers or teaching team</strong></li>
+                      <li>Contact us privately: <a href="https://www.instagram.com/wcscapetown/?hl=en" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline font-semibold">Instagram</a> or <a href="mailto:community@wcscapetown.co.za" className="text-pink-accent hover:text-yellow-accent underline font-semibold">Email</a></li>
+                    </ul>
                   </li>
                   
-                  <li>
-                    <strong>Concerns</strong> may be addressed <strong>in the moment, or followed up privately</strong>, depending on what feels most appropriate and safe. Our approach is grounded in <strong>conversation and clarity</strong>. Sometimes <strong>harm</strong> comes from <strong>misunderstanding</strong>, and we are open to <strong>addressing that with care</strong>.
+                  <li className="font-light">
+                    <div className="mb-2"><strong>Concerns</strong> may be addressed <strong>in the moment, or followed up privately</strong>.</div>
+                    <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-pink-accent/30 pl-4">
+                      <li>Our approach is grounded in <strong>conversation and clarity</strong></li>
+                      <li>Sometimes <strong>harm</strong> comes from <strong>misunderstanding</strong> - we're open to <strong>addressing that with care</strong></li>
+                    </ul>
                   </li>
                   
-                  <li>
-                    However, if someone <strong>repeatedly or intentionally ignores boundaries or causes discomfort</strong>, they may be <strong>asked to stop</strong> certain behaviours <strong>or to refrain from returning</strong>, in order to protect the wellbeing of the community.
+                  <li className="font-light">
+                    <div className="mb-2">However, if someone <strong>repeatedly or intentionally ignores boundaries or causes discomfort</strong>:</div>
+                    <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-pink-accent/30 pl-4">
+                      <li>They may be <strong>asked to stop</strong> certain behaviours</li>
+                      <li><strong>Or to refrain from returning</strong>, to protect the wellbeing of the community</li>
+                    </ul>
                   </li>
                   
-                  <li>
-                    <strong>We are grateful for everyone&apos;s care, attention, and commitment to making this a space where all can feel safe, respected, and welcome</strong>.
+                  <li className="font-light">
+                    <strong>We are grateful for everyone's care, attention, and commitment to making this a space where all can feel safe, respected, and welcome</strong>.
                   </li>
-              </ul>
+                </ul>
+              </div>
             </div>
             <p className="text-sm text-text-dark/70 italic text-center">
               This policy was created by West Coast Swing Cape Town in 2026, informed by the international standards of the <a href="https://www.worldsdc.com/code-of-conduct/" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">World Swing Dance Council</a> and adapted from code of conduct policies developed by WCS communities including <a href="https://www.asiawcsopen.com/code-of-conduct/" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">Asia West Coast Swing Open</a>, and <a href="https://www.nycswings.net/wcs-code-of-conduct/" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">NYC Swings</a>.
