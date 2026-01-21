@@ -136,93 +136,84 @@ export default function CommunityCulture() {
               Our dance community is intended to be a fun, welcoming place where everyone can enjoy learning, dancing, and connecting. This shared agreement outlines how we look after one another and what helps keep our spaces safe, respectful, and joyful.
             </p>
 
-            {/* Care Dropdown */}
-            <details className="bg-white rounded-xl p-4 md:p-6 mb-4 shadow-sm group [&>summary::-webkit-details-marker]:hidden [&>summary::marker]:hidden">
-              <summary className="font-spartan font-semibold text-lg md:text-xl cursor-pointer hover:text-pink-accent transition-colors list-none flex items-center gap-2">
-                <svg className="w-5 h-5 fill-pink-accent transition-transform group-open:rotate-90" viewBox="0 0 24 24">
-                  <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-                </svg>
+            {/* Care Section */}
+            <div className="bg-white rounded-xl p-4 md:p-6 mb-4 shadow-sm">
+              <h3 className="font-spartan font-semibold text-xl md:text-2xl mb-4">
                 Care looks like
-              </summary>
+              </h3>
                 
-                <ul className="mt-4 space-y-3 text-base leading-relaxed list-disc pl-6">
+              <ul className="space-y-3 text-base leading-relaxed list-disc pl-6">
                   <li>
-                    <strong>We actively welcome differences in race, ethnicity, sexual orientation, gender identity, physical appearance, age, ability, and dance experience.</strong> Inclusion is a core value of our community. We do not tolerate behaviour rooted in hate, discrimination, harassment or threats of any kind. Any situation which makes another person feel unsafe or uncomfortable to the point of being unable to enjoy the class/event is unacceptable and can be considered harassment. Persistent and unwelcome attention is also considered harassment and will be treated as such. If you harass or threaten someone, you will be asked to leave.
+                    We actively welcome differences in race, ethnicity, sexual orientation, gender identity, physical appearance, age, ability, and dance experience. <strong>Inclusion is a core value of our community</strong>. We <strong> do not tolerate </strong> behaviour rooted in <strong> hate, discrimination, harassment or threats </strong> of any kind. Any situation which makes another person feel unsafe or uncomfortable to the point of being unable to enjoy the class/event is unacceptable and can be considered harassment. Persistent and unwelcome attention is also considered harassment and will be treated as such. <strong> If you harass or threaten someone, you will be asked to leave.</strong>
                   </li>
                   
                   <li>
-                    <strong>We practice role freedom and curiosity.</strong> Lead and follow are choices, not gendered roles, and dancers are welcome to explore across roles with mutual respect. We value dancing across experience levels, seeing it as part of learning, sharing, and growing a connected community.
+                    We practice <strong> role freedom and curiosity</strong>. Lead and follow are choices, <strong>not gendered</strong> roles, and dancers are welcome to explore across roles with mutual respect. We <strong> value dancing across experience levels </strong>, seeing it as part of learning, sharing, and growing a connected community.
                   </li>
                   
                   <li>
-                    <strong>Care on the dance floor requires awareness and responsibility.</strong> This includes being mindful of those around you, apologising if you bump into or hurt someone, and adjusting your behaviour when needed. It also means recognising that everyone has different comfort levels, and that those boundaries should be respected at all times.
+                    <strong> Care</strong> on the dance floor <strong>requires awareness and responsibility</strong>. This includes being mindful of those around you, apologising if you bump into or hurt someone, and adjusting your behaviour when needed. It also means <strong>recognising</strong> that everyone has <strong>different comfort levels</strong>, and that those <strong>boundaries should be respected </strong> at all times.
                   </li>
                   
                   <li>
-                    <strong>Care also includes how we use our words.</strong> Feedback and advice are part of learning when they are invited. If you have something to share about someone&apos;s dancing, ask first if they would like to hear it. Our teachers are there to offer guidance and supported learning, and we trust that process.
+                    Care also includes how we use our words. <strong> Feedback and advice </strong> are part of learning <strong> when they are invited</strong> . If you have something to share about someone&apos;s dancing, <strong>ask first </strong> if they would like to hear it. Our teachers are there to offer guidance and supported learning, and we trust that process.
                   </li>
-                </ul>
-              </details>
+              </ul>
+            </div>
 
-              {/* Consent Dropdown */}
-              <details className="bg-white rounded-xl p-4 md:p-6 mb-4 shadow-sm group [&>summary::-webkit-details-marker]:hidden [&>summary::marker]:hidden">
-                <summary className="font-spartan font-semibold text-lg md:text-xl cursor-pointer hover:text-pink-accent transition-colors list-none flex items-center gap-2">
-                  <svg className="w-5 h-5 fill-pink-accent transition-transform group-open:rotate-90" viewBox="0 0 24 24">
-                    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-                  </svg>
-                  Consent looks like
-                </summary>
+            {/* Consent Section */}
+            <div className="bg-white rounded-xl p-4 md:p-6 mb-4 shadow-sm">
+              <h3 className="font-spartan font-semibold text-xl md:text-2xl mb-4">
+                Consent looks like
+              </h3>
                 
-                <ul className="mt-4 space-y-3 text-base leading-relaxed list-disc pl-6">
+              <ul className="space-y-3 text-base leading-relaxed list-disc pl-6">
                   <li>
-                    <strong>Consent means asking before dancing with anyone, and accepting a "no" with grace and without pressure.</strong> A refusal is not an invitation to persuade, joke, negotiate, or revisit later.
+                    Consent means <strong>asking before dancing with anyone </strong>, and <strong> accepting a "no" with grace and without pressure</strong>. A refusal is not an invitation to persuade, joke, negotiate, or revisit later.
                   </li>
                   
                   <li>
-                    <strong>Consent also means listening to verbal and non-verbal cues, respecting personal boundaries, and understanding that anyone can change their mind at any time.</strong>
+                    Consent also means listening to <strong>verbal and non-verbal cues</strong>, <strong>respecting personal boundaries </strong>, and understanding that <strong>anyone can change their mind</strong> at any time.
                   </li>
                   
                   <li>
-                    <strong>Consent is contextual.</strong> Just because someone dances a certain way with one person does not mean they want the same with someone else. If you are unsure, ask. If someone asks you to stop, whether verbally or through body language, stop. If you are uncomfortable with someone&apos;s behaviour, then politely inform them if it feels safe enough to do so. Requests made for personal comfort or safety are part of consent and mutual care, not criticism.
+                    <strong>Consent is contextual</strong>. Just because someone dances a certain way with one person does not mean they want the same with someone else. <strong>If you are unsure, ask</strong>. If someone asks you to stop, whether verbally or through body language, stop. If you are uncomfortable with someone&apos;s behaviour, then politely inform them if it feels safe enough to do so. Requests made for <strong>personal comfort or safety</strong> are part of <strong>consent and mutual care</strong>, not criticism.
                   </li>
                   
                   <li>
-                    <strong>Please also be mindful that alcohol or other substances can make it harder to read boundaries accurately.</strong> Knowing your limits helps you respect others.
+                    Please also be mindful that <strong>alcohol</strong> or other substances can make it <strong>harder to read boundaries</strong> accurately. Knowing your limits helps you <strong>respect others</strong>.
                   </li>
-                </ul>
-              </details>
+              </ul>
+            </div>
 
-              {/* Looking Out Dropdown */}
-              <details className="bg-white rounded-xl p-4 md:p-6 mb-6 shadow-sm group [&>summary::-webkit-details-marker]:hidden [&>summary::marker]:hidden">
-                <summary className="font-spartan font-semibold text-lg md:text-xl cursor-pointer hover:text-pink-accent transition-colors list-none flex items-center gap-2">
-                  <svg className="w-5 h-5 fill-pink-accent transition-transform group-open:rotate-90" viewBox="0 0 24 24">
-                    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-                  </svg>
-                  Looking out for each other
-                </summary>
+            {/* Looking Out Section */}
+            <div className="bg-white rounded-xl p-4 md:p-6 mb-6 shadow-sm">
+              <h3 className="font-spartan font-semibold text-xl md:text-2xl mb-4">
+                Looking out for each other
+              </h3>
                 
-                <ul className="mt-4 space-y-3 text-base leading-relaxed list-disc pl-6">
+              <ul className="space-y-3 text-base leading-relaxed list-disc pl-6">
                   <li>
-                    <strong>Care and consent are a shared responsibility.</strong> If you are unsure whether someone is okay, check in. This might look like asking them if they need help, or inviting them to dance to create space.
+                    <strong>Care and consent are a shared responsibility</strong>. If you are unsure whether someone is okay, <strong>check in</strong>. This might look like asking them if they need help, or inviting them to dance to create space.
                   </li>
                   
                   <li>
-                    <strong>If you experience or witness behaviour that goes against our principles of care or consent, whether on or off the dance floor, you are encouraged to reach out to our community organisers or teaching team, or contact us privately through our official channels</strong> (<a href="https://www.instagram.com/wcscapetown/?hl=en" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">instagram</a> or <a href="mailto:community@wcscapetown.co.za" className="text-pink-accent hover:text-yellow-accent underline">community@wcscapetown.co.za</a>).
+                    If you experience or <strong>witness behaviour </strong> that goes <strong>against our principles</strong> of care or consent, whether on or off the dance floor, you are encouraged to <strong>reach out to our community organisers or teaching team</strong>, or contact us privately through our official channels (<a href="https://www.instagram.com/wcscapetown/?hl=en" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">instagram</a> or <a href="mailto:community@wcscapetown.co.za" className="text-pink-accent hover:text-yellow-accent underline">community@wcscapetown.co.za</a>).
                   </li>
                   
                   <li>
-                    <strong>Concerns may be addressed in the moment, or followed up privately, depending on what feels most appropriate and safe.</strong> Our approach is grounded in conversation and clarity. Sometimes harm comes from misunderstanding, and we are open to addressing that with care.
+                    <strong>Concerns</strong> may be addressed <strong>in the moment, or followed up privately</strong>, depending on what feels most appropriate and safe. Our approach is grounded in <strong>conversation and clarity</strong>. Sometimes <strong>harm</strong> comes from <strong>misunderstanding</strong>, and we are open to <strong>addressing that with care</strong>.
                   </li>
                   
                   <li>
-                    <strong>However, if someone repeatedly or intentionally ignores boundaries or causes discomfort, they may be asked to stop certain behaviours or to refrain from returning, in order to protect the wellbeing of the community.</strong>
+                    However, if someone <strong>repeatedly or intentionally ignores boundaries or causes discomfort</strong>, they may be <strong>asked to stop</strong> certain behaviours <strong>or to refrain from returning</strong>, in order to protect the wellbeing of the community.
                   </li>
                   
                   <li>
-                    <strong>We are grateful for everyone&apos;s care, attention, and commitment to making this a space where all can feel safe, respected, and welcome.</strong>
+                    <strong>We are grateful for everyone&apos;s care, attention, and commitment to making this a space where all can feel safe, respected, and welcome</strong>.
                   </li>
-                </ul>
-              </details>
+              </ul>
+            </div>
             <p className="text-sm text-text-dark/70 italic text-center">
               This policy was created by West Coast Swing Cape Town in 2026, informed by the international standards of the <a href="https://www.worldsdc.com/code-of-conduct/" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">World Swing Dance Council</a> and adapted from code of conduct policies developed by WCS communities including <a href="https://www.asiawcsopen.com/code-of-conduct/" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">Asia West Coast Swing Open</a>, and <a href="https://www.nycswings.net/wcs-code-of-conduct/" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">NYC Swings</a>.
             </p>

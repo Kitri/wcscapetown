@@ -82,11 +82,15 @@ export default function WeekenderPoll() {
         </h2>
         
         <p className="text-lg md:text-xl font-medium mb-2">
-          March 14-15, 2026 • Cape Town
+          March 20-22, 2026 • Cape Town
         </p>
         
         <p className="text-base md:text-lg mb-2 max-w-[600px] mx-auto">
-          <span className="font-semibold">Harold Baker & Kristen Wallace</span>
+          <a href="https://www.instagram.com/haroldwestcoastswing" target="_blank" rel="noopener noreferrer" className="font-semibold text-pink-accent hover:text-yellow-accent underline">Harold Baker</a> & <a href="https://www.instagram.com/kwalla.bear" target="_blank" rel="noopener noreferrer" className="font-semibold text-pink-accent hover:text-yellow-accent underline">Kristen Wallace</a>
+        </p>
+        
+        <p className="text-sm md:text-base text-text-dark/70 mb-2 max-w-[600px] mx-auto italic">
+          + potentially 2 more world-class WCS pros
         </p>
         
         <p className="text-base md:text-lg text-text-dark/80 mb-6 max-w-[600px] mx-auto">
