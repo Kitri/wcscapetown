@@ -20,7 +20,7 @@ export default function WhatsOn() {
         {/* Quick Overview */}
         <section className="px-[5%] py-[30px] bg-white border-b border-text-dark/10">
           <div className="max-w-[900px] mx-auto">
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="flex justify-center">
               {/* Monday Classes */}
               <a href="#monday-classes" className="text-center hover:scale-105 transition-transform">
                 <div className="inline-block bg-yellow-accent text-text-dark px-4 py-2 rounded-full font-semibold text-sm mb-2">
@@ -31,15 +31,15 @@ export default function WhatsOn() {
                 <p className="text-sm italic font-semibold mt-1">* Newbie January promo</p>
               </a>
               
-              {/* Strictly Social */}
-              <a href="#strictly-social" className="text-center hover:scale-105 transition-transform">
+              {/* Strictly Social - HIDDEN - Uncomment when next date is known */}
+              {/* <a href="#strictly-social" className="text-center hover:scale-105 transition-transform">
                 <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-sm mb-2">
                   SAT 24 JAN
                 </div>
                 <h3 className="font-spartan font-semibold text-xl mb-1">Strictly Social</h3>
                 <p className="text-text-dark/70">8 PM | Scout Hall, Claremont</p>
                 <p className="text-sm italic font-semibold mt-1">West Coast Swing Taster & Social</p>
-              </a>
+              </a> */}
             </div>
           </div>
         </section>
@@ -125,7 +125,7 @@ export default function WhatsOn() {
           </div>
         </section>
 
-        {/* Strictly Social - Full Details */}
+        {/* Strictly Social - Full Details - HIDDEN - Uncomment when next date is known
         <section 
           id="strictly-social"
           className="px-[5%] py-[50px] bg-cloud-dancer"
@@ -139,7 +139,7 @@ export default function WhatsOn() {
               Pure WCS. All night.
             </p>
             
-            {/* Bonus Taster Class Highlight */}
+            Bonus Taster Class Highlight
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
               <p className="text-lg md:text-xl font-semibold mb-2">
                 🎓 Bonus: Taster Class
@@ -150,7 +150,7 @@ export default function WhatsOn() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
-              {/* Left Column - Event Details */}
+              Left Column - Event Details
               <div>
                 <h3 className="font-spartan font-semibold text-xl mb-4">Event Details</h3>
                 <div className="space-y-4 text-base md:text-lg">
@@ -169,7 +169,7 @@ export default function WhatsOn() {
                 </div>
               </div>
 
-              {/* Right Column - Venue & Parking */}
+              Right Column - Venue & Parking
               <div>
                 <h3 className="font-spartan font-semibold text-xl mb-4">Venue & Parking</h3>
                 <div className="space-y-4 text-base md:text-lg">
@@ -194,6 +194,7 @@ export default function WhatsOn() {
             </div>
           </div>
         </section>
+        */}
 
         {/* Coming Soon */}
         <section className="px-[5%] py-[50px] bg-cloud-dancer">
