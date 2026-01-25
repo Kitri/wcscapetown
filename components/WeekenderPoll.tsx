@@ -223,8 +223,7 @@ export default function WeekenderPoll() {
 
         {/* Fine Print */}
         <p className="text-xs text-text-dark/60 mt-6 max-w-[600px] mx-auto">
-          Nothing confirmed yet - we're gauging interest to see if this is possible. 
-          Need 40 people minimum to cover workshop & venue costs.
+          Watch this space! Details coming soon!
         </p>
       </div>
     </section>
