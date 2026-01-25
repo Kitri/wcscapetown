@@ -79,7 +79,7 @@ export default function WeekenderPoll() {
         </div>
         
         <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] mb-3">
-          WCS Weekender with International All Stars?
+          WCS Weekender with Seasoned International Dancers?
         </h2>
         
         <p className="text-lg md:text-xl font-medium mb-6">
