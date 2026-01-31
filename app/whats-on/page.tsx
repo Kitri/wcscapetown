@@ -18,75 +18,82 @@ export default function WhatsOn() {
         </section>
 
         {/* Quick Overview */}
-        <section className="px-[5%] py-[30px] bg-white border-b border-text-dark/10">
-          <div className="max-w-[900px] mx-auto">
-            <h2 className="font-spartan font-semibold text-2xl text-center mb-6">Regular Events</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <section className="px-[5%] py-[40px] bg-white">
+          <div className="max-w-[1100px] mx-auto">
+            <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Regular Events</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
               {/* Monday Classes */}
-              <a href="#monday-classes" className="text-center hover:scale-105 transition-transform">
-                <div className="inline-block bg-yellow-accent text-text-dark px-4 py-2 rounded-full font-semibold text-sm mb-2">
+              <a href="#monday-classes" className="group border-2 border-yellow-accent/30 hover:border-yellow-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
+                <div className="inline-block bg-yellow-accent text-text-dark px-4 py-2 rounded-full font-semibold text-xs mb-3">
                   EVERY MONDAY
                 </div>
-                <h3 className="font-spartan font-semibold text-xl mb-1">Level 1 & 2 Classes & Social</h3>
-                <p className="text-text-dark/70">7-10 PM | Havana Nights, Plumstead</p>
-                <p className="text-sm italic mt-1">
-                  <a href="#class-levels" className="text-text-dark/60 hover:text-pink-accent underline">
-                    See level descriptions
-                  </a>
+                <h3 className="font-spartan font-semibold text-lg mb-2">Level 1 & 2 Classes & Social</h3>
+                <p className="text-sm text-text-dark/70 mb-1">7-10 PM</p>
+                <p className="text-sm text-text-dark/70">Havana Nights, Plumstead</p>
+                <p className="text-xs mt-3 text-text-dark/60">
+                  See level descriptions below
                 </p>
               </a>
               
               {/* Tuesday Classes */}
-              <a href="#tuesday-classes" className="text-center hover:scale-105 transition-transform">
-                <div className="inline-block bg-purple-accent text-white px-4 py-2 rounded-full font-semibold text-sm mb-2">
+              <a href="#tuesday-classes" className="group border-2 border-purple-accent/30 hover:border-purple-accent rounded-xl p-6 text-center transition-all hover:shadow-lg relative overflow-hidden">
+                <div className="absolute top-2 right-2 bg-purple-accent text-white px-2 py-1 rounded text-xs font-semibold">
+                  NEW!
+                </div>
+                <div className="inline-block bg-purple-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
                   EVERY TUESDAY
                 </div>
-                <h3 className="font-spartan font-semibold text-xl mb-1">Level 1 Class & Social</h3>
-                <p className="text-text-dark/70">7:30-10 PM | Pinelands Bowling Club</p>
-                <p className="text-sm italic font-semibold mt-1 text-purple-accent">✨ Launching February 2026</p>
+                <h3 className="font-spartan font-semibold text-lg mb-2">Level 1 Class & Social</h3>
+                <p className="text-sm text-text-dark/70 mb-1">7:30-10 PM</p>
+                <p className="text-sm text-text-dark/70">Pinelands Bowling Club</p>
+                <p className="text-xs italic font-semibold mt-3 text-purple-accent">✨ Launching February 2026</p>
               </a>
 
               {/* Wednesday Down to Earth Market */}
-              <a href="#down-to-earth" className="text-center hover:scale-105 transition-transform">
-                <div className="inline-block bg-text-dark text-cloud-dancer px-4 py-2 rounded-full font-semibold text-sm mb-2">
+              <a href="#down-to-earth" className="group border-2 border-text-dark/20 hover:border-text-dark/40 rounded-xl p-6 text-center transition-all hover:shadow-lg">
+                <div className="inline-block bg-text-dark/10 text-text-dark px-4 py-2 rounded-full font-semibold text-xs mb-3">
                   EVERY WEDNESDAY
                 </div>
-                <h3 className="font-spartan font-semibold text-xl mb-1">Casual Dancing</h3>
-                <p className="text-text-dark/70">6-8 PM | Down to Earth Market</p>
-                <p className="text-sm italic font-semibold mt-1">Where we hang out on Wednesdays</p>
+                <h3 className="font-spartan font-semibold text-lg mb-2">Casual Dancing</h3>
+                <p className="text-sm text-text-dark/70 mb-1">6-8 PM</p>
+                <p className="text-sm text-text-dark/70">Down to Earth Market</p>
+                <p className="text-xs italic mt-3 text-text-dark/60">Informal hangout</p>
               </a>
             </div>
 
-            <h2 className="font-spartan font-semibold text-2xl text-center mb-6">Special Events</h2>
+            <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Upcoming Events</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* WCS Weekender */}
-              <a href="/#weekender" className="text-center hover:scale-105 transition-transform">
-                <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-sm mb-2">
+              {/* WCS Weekender - Featured with gradient background */}
+              <a href="/#weekender" className="group relative overflow-hidden rounded-xl p-6 text-center transition-all hover:shadow-xl bg-gradient-to-br from-pink-accent/10 via-pink-accent/5 to-transparent border-2 border-pink-accent/50 hover:border-pink-accent">
+                <div className="absolute top-2 right-2 bg-pink-accent text-white px-2 py-1 rounded text-xs font-semibold">
+                  🌟 FEATURED
+                </div>
+                <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
                   MAR 20-22
                 </div>
-                <h3 className="font-spartan font-semibold text-xl mb-1">WCS Weekender</h3>
-                <p className="text-text-dark/70">International Pros</p>
-                <p className="text-sm italic font-semibold mt-1 text-pink-accent">Cape Town</p>
+                <h3 className="font-spartan font-semibold text-lg mb-2">WCS Weekender</h3>
+                <p className="text-sm text-text-dark/70 mb-1">International Pros</p>
+                <p className="text-xs italic mt-2 text-pink-accent font-semibold">Learn more on home page</p>
               </a>
 
               {/* Monthly Social */}
-              <a href="#monthly-social" className="text-center hover:scale-105 transition-transform">
-                <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-sm mb-2">
+              <a href="#monthly-social" className="group border-2 border-pink-accent/30 hover:border-pink-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
+                <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
                   FEBRUARY
                 </div>
-                <h3 className="font-spartan font-semibold text-xl mb-1">Monthly Social</h3>
-                <p className="text-text-dark/70">Scout Hall, Claremont</p>
-                <p className="text-sm italic font-semibold mt-1">Date TBA</p>
+                <h3 className="font-spartan font-semibold text-lg mb-2">Monthly Social</h3>
+                <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
+                <p className="text-xs italic mt-2 text-text-dark/60">Date TBA</p>
               </a>
 
               {/* Beginner Bootcamp */}
-              <a href="#beginner-bootcamp" className="text-center hover:scale-105 transition-transform">
-                <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-sm mb-2">
+              <a href="#beginner-bootcamp" className="group border-2 border-pink-accent/30 hover:border-pink-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
+                <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
                   FEBRUARY
                 </div>
-                <h3 className="font-spartan font-semibold text-xl mb-1">Beginner Bootcamp</h3>
-                <p className="text-text-dark/70">3-hour WCS fundamentals</p>
-                <p className="text-sm italic font-semibold mt-1">Date & Venue TBA</p>
+                <h3 className="font-spartan font-semibold text-lg mb-2">Beginner Bootcamp</h3>
+                <p className="text-sm text-text-dark/70 mb-1">3-hour WCS fundamentals</p>
+                <p className="text-xs italic mt-2 text-text-dark/60">Date & Venue TBA</p>
               </a>
             </div>
           </div>
