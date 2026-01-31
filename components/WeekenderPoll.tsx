@@ -74,7 +74,7 @@ export default function WeekenderPoll() {
         {/* Title */}
         <div className="mb-2">
           <span className="inline-block bg-pink-accent text-white px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
-            Quick Poll
+            Announcement
           </span>
         </div>
         
