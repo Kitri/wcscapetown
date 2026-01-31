@@ -119,7 +119,7 @@ export default function WeekenderPoll() {
           </a>
           
           {/* Harold */}
-          <a href="https://www.instagram.com/haroldwestcoastswing" target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center">
+          <a href="https://www.instagram.com/harold_baker_dance" target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center">
             <div className="w-full aspect-square rounded-lg mb-3 overflow-hidden border-2 border-text-dark/10 group-hover:border-pink-accent transition-all shadow-sm relative">
               <Image
                 src="/images/harold1.jpg"
