@@ -11,13 +11,13 @@ export default function WeekenderPoll() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!selectedInterest) return;
+    if (!selectedInterest || !email) return;
     
     setIsSubmitting(true);
 
     const data = {
       interest: selectedInterest,
-      email: email || "(not provided)",
+      email: email,
       timestamp: new Date().toISOString(),
       sessionId: getOrCreateSessionId(),
     };
@@ -51,10 +51,10 @@ export default function WeekenderPoll() {
       >
         <div className="max-w-[900px] mx-auto text-center">
           <h2 className="font-spartan font-semibold text-[24px] md:text-[32px] mb-4">
-            Thank you!
+            You're on the list!
           </h2>
           <p className="text-lg">
-            Your response helps us plan what's possible.
+            We'll send you details soon.
           </p>
         </div>
       </section>
@@ -139,11 +139,10 @@ export default function WeekenderPoll() {
         </p>
 
         {/* Interest Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 max-w-[700px] mx-auto mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-[600px] mx-auto mb-6">
           {[
             { label: "I'm in! 🚀", value: "excited-yes", gradient: "from-yellow-accent to-pink-accent" },
             { label: "Depends on cost", value: "cost-dependent", gradient: "from-yellow-accent/70 to-yellow-accent/40" },
-            { label: "Not for me", value: "no", gradient: "" },
           ].map((option) => (
             <button
               key={option.value}
@@ -153,12 +152,8 @@ export default function WeekenderPoll() {
                 relative border-2 rounded-lg p-4 font-medium text-base transition-all duration-200
                 ${
                   selectedInterest === option.value
-                    ? option.gradient
-                      ? `bg-gradient-to-r ${option.gradient} border-yellow-accent text-text-dark scale-105 shadow-lg`
-                      : "bg-gray-100 border-gray-300 text-text-dark scale-105"
-                    : option.gradient
-                      ? "bg-white border-text-dark/20 hover:bg-yellow-accent/10 hover:border-yellow-accent"
-                      : "bg-white border-text-dark/20 hover:bg-gray-50 hover:border-gray-300"
+                    ? `bg-gradient-to-r ${option.gradient} border-yellow-accent text-text-dark scale-105 shadow-lg`
+                    : "bg-white border-text-dark/20 hover:bg-yellow-accent/10 hover:border-yellow-accent"
                 }
                 disabled:opacity-50 disabled:cursor-not-allowed
               `}
@@ -183,7 +178,7 @@ export default function WeekenderPoll() {
         {/* Email Input */}
         <div className="mb-6 max-w-md mx-auto">
           <label htmlFor="weekender-email" className="block text-sm font-medium mb-2">
-            Notify me about this event
+            Add your name to the list
           </label>
           <input
             id="weekender-email"
@@ -191,10 +186,11 @@ export default function WeekenderPoll() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="your.email@example.com"
+            required
             className="w-full p-3 rounded-lg border-2 border-text-dark/20 focus:border-yellow-accent focus:outline-none bg-white"
           />
           <p className="text-xs text-text-dark/60 mt-1">
-            Optional - all details will be shared on our community channels
+            We'll send you details soon
           </p>
         </div>
 
@@ -203,7 +199,7 @@ export default function WeekenderPoll() {
           <div className="mt-6">
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !email}
               className="bg-pink-accent text-white px-10 py-4 rounded-lg font-medium text-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-pink-accent/30 disabled:opacity-50 active:scale-95"
             >
               {isSubmitting ? (
@@ -215,7 +211,7 @@ export default function WeekenderPoll() {
                   Submitting...
                 </span>
               ) : (
-                "Submit Response"
+                "Add Me to the List"
               )}
             </button>
           </div>
