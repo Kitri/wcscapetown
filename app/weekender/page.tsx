@@ -7,72 +7,119 @@ export default function Weekender() {
       <Header />
       <main>
         {/* Hero */}
-        <section className="px-[5%] py-[50px] bg-gradient-to-br from-pink-accent/20 via-pink-accent/10 to-transparent">
+        <section className="px-[5%] py-[60px] bg-gradient-to-br from-pink-accent/20 via-pink-accent/10 to-transparent">
           <div className="max-w-[1100px] mx-auto text-center">
-            <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-sm mb-4">
-              🌟 MARCH 20-22, 2026
-            </div>
-            <h1 className="font-spartan font-semibold text-[36px] md:text-[52px] mb-4">
-              WCS Weekender
+            <h1 className="font-spartan font-semibold text-[36px] md:text-[56px] mb-4">
+              West Coast Swing Weekender
             </h1>
-            <p className="text-xl md:text-2xl mb-8">
-              Cape Town's Premier West Coast Swing Weekend
+            <p className="text-3xl md:text-4xl font-bold text-pink-accent mb-6">
+              March 20-22, 2026
             </p>
-            <p className="text-lg md:text-xl text-text-dark/80 max-w-[700px] mx-auto mb-8">
-              Three days of world-class instruction, evening socials, and unforgettable dancing
+            <p className="text-xl md:text-2xl text-text-dark/80 max-w-[800px] mx-auto mb-8">
+              Experience world-class WCS festival vibes right here in Cape Town
             </p>
-
-            {/* Instructors */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 max-w-[800px] mx-auto mb-8">
-              <a href="https://www.instagram.com/igorandfernanda/" target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center col-span-2 md:col-span-1">
-                <div className="w-full max-w-[200px] md:max-w-none aspect-square rounded-xl mb-3 overflow-hidden border-2 border-text-dark/10 group-hover:border-pink-accent transition-all shadow-md relative">
-                  <Image
-                    src="/images/igor_fernanda1.jpg"
-                    alt="Igor Pitangui and Fernanda Dubiel"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <p className="text-base md:text-lg font-semibold text-center text-pink-accent group-hover:text-yellow-accent transition-colors">
-                  Igor Pitangui &<br />Fernanda Dubiel
-                </p>
-              </a>
-              
-              <a href="https://www.instagram.com/kwalla.bear" target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center">
-                <div className="w-full aspect-square rounded-xl mb-3 overflow-hidden border-2 border-text-dark/10 group-hover:border-pink-accent transition-all shadow-md relative">
-                  <Image
-                    src="/images/kristen1.jpg"
-                    alt="Kristen Wallace"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <p className="text-base md:text-lg font-semibold text-center text-pink-accent group-hover:text-yellow-accent transition-colors">
-                  Kristen Wallace
-                </p>
-              </a>
-              
-              <a href="https://www.instagram.com/harold_baker_dance" target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center">
-                <div className="w-full aspect-square rounded-xl mb-3 overflow-hidden border-2 border-text-dark/10 group-hover:border-pink-accent transition-all shadow-md relative">
-                  <Image
-                    src="/images/harold1.jpg"
-                    alt="Harold Baker"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <p className="text-base md:text-lg font-semibold text-center text-pink-accent group-hover:text-yellow-accent transition-colors">
-                  Harold Baker
-                </p>
-              </a>
-            </div>
+            <p className="text-lg text-text-dark/70 max-w-[700px] mx-auto mb-10">
+              Two full days of workshops with international pros, three evenings of social dancing — bringing the international festival experience to your doorstep
+            </p>
 
             <a 
               href="/#weekender" 
-              className="inline-block bg-pink-accent text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-pink-accent/90 hover:shadow-xl transition-all"
+              className="inline-block bg-pink-accent text-white px-10 py-4 rounded-lg font-semibold text-lg hover:bg-pink-accent/90 hover:shadow-xl transition-all"
             >
               Register Your Interest
             </a>
+          </div>
+        </section>
+
+        {/* Meet Your Pros */}
+        <section className="px-[5%] py-[60px] bg-white">
+          <div className="max-w-[1100px] mx-auto">
+            <h2 className="font-spartan font-semibold text-[32px] md:text-[40px] text-center mb-4">
+              Meet Your Pros
+            </h2>
+            <p className="text-center text-lg text-text-dark/70 mb-12">
+              Four world-class instructors from around the globe
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-[900px] mx-auto">
+              {/* Igor & Fernanda */}
+              <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-24 h-24 rounded-xl overflow-hidden border-2 border-pink-accent flex-shrink-0 relative">
+                    <Image
+                      src="/images/igor_fernanda1.jpg"
+                      alt="Igor & Fernanda"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-spartan font-semibold text-xl text-pink-accent mb-1">
+                      Igor Pitangui & Fernanda Dubiel
+                    </h3>
+                    <p className="text-sm text-text-dark/70 mb-2">🇧🇷 Brazil</p>
+                    <a href="https://www.instagram.com/igorandfernanda/" target="_blank" rel="noopener noreferrer" className="text-sm text-pink-accent hover:text-yellow-accent underline">
+                      @igorandfernanda
+                    </a>
+                  </div>
+                </div>
+                <p className="text-sm text-text-dark/80 mb-3">
+                  Bio coming soon. Videos to be embedded.
+                </p>
+              </div>
+
+              {/* Harold */}
+              <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-24 h-24 rounded-xl overflow-hidden border-2 border-pink-accent flex-shrink-0 relative">
+                    <Image
+                      src="/images/harold1.jpg"
+                      alt="Harold Baker"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-spartan font-semibold text-xl text-pink-accent mb-1">
+                      Harold Baker
+                    </h3>
+                    <p className="text-sm text-text-dark/70 mb-2">🇬🇧 United Kingdom</p>
+                    <a href="https://www.instagram.com/harold_baker_dance" target="_blank" rel="noopener noreferrer" className="text-sm text-pink-accent hover:text-yellow-accent underline">
+                      @harold_baker_dance
+                    </a>
+                  </div>
+                </div>
+                <p className="text-sm text-text-dark/80 mb-3">
+                  Bio coming soon. Videos to be embedded.
+                </p>
+              </div>
+
+              {/* Kristen */}
+              <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-24 h-24 rounded-xl overflow-hidden border-2 border-pink-accent flex-shrink-0 relative">
+                    <Image
+                      src="/images/kristen1.jpg"
+                      alt="Kristen Wallace"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-spartan font-semibold text-xl text-pink-accent mb-1">
+                      Kristen Wallace
+                    </h3>
+                    <p className="text-sm text-text-dark/70 mb-2">🇺🇸 United States</p>
+                    <a href="https://www.instagram.com/kwalla.bear" target="_blank" rel="noopener noreferrer" className="text-sm text-pink-accent hover:text-yellow-accent underline">
+                      @kwalla.bear
+                    </a>
+                  </div>
+                </div>
+                <p className="text-sm text-text-dark/80 mb-3">
+                  Bio coming soon. Videos to be embedded.
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -104,110 +151,119 @@ export default function Weekender() {
               <h3 className="font-spartan font-semibold text-2xl md:text-3xl mb-6 text-pink-accent">
                 Saturday, March 21
               </h3>
-              <div className="space-y-3">
-                <div className="bg-purple-accent/10 rounded-lg p-4 md:p-6 border-l-4 border-purple-accent">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">09:00-11:30</div>
-                    <div>
-                      <p className="font-semibold mb-1">Private Lesson Slots Available</p>
-                      <p className="text-sm text-text-dark/70">45-minute sessions with the pros (by appointment)</p>
+              
+              <div className="overflow-x-auto">
+                <div className="min-w-[700px]">
+                  {/* Header */}
+                  <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-3 font-semibold text-sm">
+                    <div className="text-text-dark/70">Time</div>
+                    <div className="bg-purple-accent/20 rounded-t-lg p-2 text-center">Main Hall</div>
+                    <div className="bg-yellow-accent/20 rounded-t-lg p-2 text-center">Side Hall</div>
+                  </div>
+
+                  {/* 09:00-11:30 Private Lessons & Spotlight Critique */}
+                  <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                    <div className="font-semibold text-sm text-text-dark/70 flex items-center">09:00-11:30</div>
+                    <div className="bg-purple-accent/10 rounded-lg p-3 text-sm col-span-2">
+                      <p className="font-semibold">Private Lesson Slots Available</p>
+                      <p className="text-xs text-text-dark/70 mt-1">45-min sessions with all pros (by appointment)</p>
                     </div>
                   </div>
-                </div>
 
-                <div className="bg-yellow-accent/10 rounded-lg p-4 md:p-6 border-l-4 border-yellow-accent">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">10:00-11:00</div>
-                    <div>
-                      <p className="font-semibold mb-1">Spotlight Critique</p>
-                      <p className="text-sm text-text-dark/70">Harold & Kristen (Optional add-on, limited to 10 couples)</p>
+                  {/* 10:00-11:00 Spotlight Critique (overlaps with private lessons) */}
+                  <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                    <div className="font-semibold text-sm text-text-dark/70 flex items-center">10:00-11:00</div>
+                    <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm border-2 border-yellow-accent/30">
+                      <p className="font-semibold">Spotlight Critique</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen (Optional add-on, limited to 10 couples)</p>
+                    </div>
+                    <div className="bg-text-dark/5 rounded-lg p-3 flex items-center justify-center text-xs text-text-dark/50">Private lessons</div>
+                  </div>
+
+                  {/* 11:30-12:30 Workshops */}
+                  <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                    <div className="font-semibold text-sm text-text-dark/70 flex items-center">11:30-12:30</div>
+                    <div className="bg-purple-accent/10 rounded-lg p-3 text-sm">
+                      <p className="font-semibold">Level 1</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
+                    </div>
+                    <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
+                      <p className="font-semibold">Level 2</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
                     </div>
                   </div>
-                </div>
 
-                <div className="bg-cloud-dancer rounded-lg p-4 md:p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">11:30-12:30</div>
-                    <div>
-                      <p className="font-semibold mb-1">Workshops</p>
-                      <p className="text-sm text-text-dark/70">Level 1: Harold & Kristen | Level 2: Igor & Fernanda</p>
+                  {/* 12:30-14:00 Lunch */}
+                  <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                    <div className="font-semibold text-sm text-text-dark/70 flex items-center">12:30-14:00</div>
+                    <div className="bg-pink-accent/10 rounded-lg p-3 text-sm col-span-2 border-2 border-pink-accent/30">
+                      <p className="font-semibold">Community Lunch</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Bring and share - included with Weekend & Day Pass</p>
                     </div>
                   </div>
-                </div>
 
-                <div className="bg-pink-accent/10 rounded-lg p-4 md:p-6 border-l-4 border-pink-accent">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">12:30-14:00</div>
-                    <div>
-                      <p className="font-semibold mb-1">Community Lunch</p>
-                      <p className="text-sm text-text-dark/70">Bring and share - included with Weekend & Day Pass</p>
+                  {/* 14:00-15:00 Workshops */}
+                  <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                    <div className="font-semibold text-sm text-text-dark/70 flex items-center">14:00-15:00</div>
+                    <div className="bg-purple-accent/10 rounded-lg p-3 text-sm">
+                      <p className="font-semibold">Level 1</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
+                    </div>
+                    <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
+                      <p className="font-semibold">Level 2</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
                     </div>
                   </div>
-                </div>
 
-                <div className="bg-cloud-dancer rounded-lg p-4 md:p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">14:00-15:00</div>
-                    <div>
-                      <p className="font-semibold mb-1">Workshops</p>
-                      <p className="text-sm text-text-dark/70">Level 1: Igor & Fernanda | Level 2: Harold & Kristen</p>
+                  {/* 15:00-16:00 Workshops */}
+                  <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                    <div className="font-semibold text-sm text-text-dark/70 flex items-center">15:00-16:00</div>
+                    <div className="bg-purple-accent/10 rounded-lg p-3 text-sm">
+                      <p className="font-semibold">Level 1</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
+                    </div>
+                    <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
+                      <p className="font-semibold">Level 2</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
                     </div>
                   </div>
-                </div>
 
-                <div className="bg-cloud-dancer rounded-lg p-4 md:p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">15:00-16:00</div>
-                    <div>
-                      <p className="font-semibold mb-1">Workshops</p>
-                      <p className="text-sm text-text-dark/70">Level 1: Harold & Kristen | Level 2: Igor & Fernanda</p>
+                  {/* 16:00-16:15 Break */}
+                  <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                    <div className="font-semibold text-sm text-text-dark/70 flex items-center">16:00-16:15</div>
+                    <div className="bg-text-dark/5 rounded-lg p-3 text-sm col-span-2 text-center font-semibold">Break</div>
+                  </div>
+
+                  {/* 16:15-17:15 Level 2 Only */}
+                  <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                    <div className="font-semibold text-sm text-text-dark/70 flex items-center">16:15-17:15</div>
+                    <div className="bg-text-dark/5 rounded-lg p-3 flex items-center justify-center text-xs text-text-dark/50"></div>
+                    <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
+                      <p className="font-semibold">Level 2</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
                     </div>
                   </div>
-                </div>
 
-                <div className="bg-text-dark/5 rounded-lg p-4 md:p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">16:00-16:15</div>
-                    <div>
-                      <p className="font-semibold mb-1">Break</p>
+                  {/* 17:15-18:30 Dinner */}
+                  <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                    <div className="font-semibold text-sm text-text-dark/70 flex items-center">17:15-18:30</div>
+                    <div className="bg-text-dark/5 rounded-lg p-3 text-sm col-span-2 text-center font-semibold">Dinner Break</div>
+                  </div>
+
+                  {/* 18:30-19:30 All Levels */}
+                  <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                    <div className="font-semibold text-sm text-text-dark/70 flex items-center">18:30-19:30</div>
+                    <div className="bg-pink-accent/10 rounded-lg p-3 text-sm col-span-2 border-2 border-pink-accent/30">
+                      <p className="font-semibold">Master Your Social Dance on the Floor</p>
+                      <p className="text-xs text-text-dark/70 mt-1">All levels - Igor & Fernanda</p>
                     </div>
                   </div>
-                </div>
 
-                <div className="bg-cloud-dancer rounded-lg p-4 md:p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">16:15-17:15</div>
-                    <div>
-                      <p className="font-semibold mb-1">Level 2 Workshop</p>
-                      <p className="text-sm text-text-dark/70">Harold & Kristen</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-text-dark/5 rounded-lg p-4 md:p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">17:15-18:30</div>
-                    <div>
-                      <p className="font-semibold mb-1">Dinner Break</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-yellow-accent/10 rounded-lg p-4 md:p-6 border-l-4 border-yellow-accent">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">18:30-19:30</div>
-                    <div>
-                      <p className="font-semibold mb-1">Master Your Social Dance on the Floor</p>
-                      <p className="text-sm text-text-dark/70">All levels - Igor & Fernanda</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-pink-accent/10 rounded-lg p-4 md:p-6 border-l-4 border-pink-accent">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">19:30-23:00</div>
-                    <div>
-                      <p className="font-semibold mb-1">Saturday Night Social</p>
+                  {/* 19:30-23:00 Social */}
+                  <div className="grid grid-cols-[120px_1fr_1fr] gap-3">
+                    <div className="font-semibold text-sm text-text-dark/70 flex items-center">19:30-23:00</div>
+                    <div className="bg-pink-accent/10 rounded-lg p-3 text-sm col-span-2 border-2 border-pink-accent/30">
+                      <p className="font-semibold">Saturday Night Social</p>
                     </div>
                   </div>
                 </div>
@@ -219,103 +275,109 @@ export default function Weekender() {
               <h3 className="font-spartan font-semibold text-2xl md:text-3xl mb-6 text-pink-accent">
                 Sunday, March 22
               </h3>
-              <div className="space-y-3">
-                <div className="bg-purple-accent/10 rounded-lg p-4 md:p-6 border-l-4 border-purple-accent">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">09:00-11:00</div>
-                    <div>
-                      <p className="font-semibold mb-1">Private Lesson Slots Available</p>
-                      <p className="text-sm text-text-dark/70">45-minute sessions with the pros (by appointment)</p>
-                    </div>
+              
+              <div className="overflow-x-auto">
+                <div className="min-w-[700px]">
+                  {/* Header */}
+                  <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-3 font-semibold text-sm">
+                    <div className="text-text-dark/70">Time</div>
+                    <div className="bg-purple-accent/20 rounded-t-lg p-2 text-center">Main Hall</div>
+                    <div className="bg-yellow-accent/20 rounded-t-lg p-2 text-center">Side Hall</div>
                   </div>
-                </div>
 
-                <div className="bg-yellow-accent/10 rounded-lg p-4 md:p-6 border-l-4 border-yellow-accent">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">11:00-12:00</div>
-                    <div>
-                      <p className="font-semibold mb-1">Follower Focus</p>
-                      <p className="text-sm text-text-dark/70">Igor & Fernanda</p>
+                    {/* 09:00-11:00 Private Lessons */}
+                    <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                      <div className="font-semibold text-sm text-text-dark/70 flex items-center">09:00-11:00</div>
+                      <div className="bg-purple-accent/10 rounded-lg p-3 text-sm col-span-2">
+                        <p className="font-semibold">Private Lesson Slots Available</p>
+                        <p className="text-xs text-text-dark/70 mt-1">45-min sessions with all pros (by appointment)</p>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="bg-yellow-accent/10 rounded-lg p-4 md:p-6 border-l-4 border-yellow-accent">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">12:00-13:00</div>
-                    <div>
-                      <p className="font-semibold mb-1">Leads Focus</p>
-                      <p className="text-sm text-text-dark/70">Harold & Kristen</p>
+                    {/* 11:00-12:00 Follower Focus */}
+                    <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                      <div className="font-semibold text-sm text-text-dark/70 flex items-center">11:00-12:00</div>
+                      <div className="bg-pink-accent/10 rounded-lg p-3 text-sm col-span-2 border-2 border-pink-accent/30">
+                        <p className="font-semibold">Follower Focus</p>
+                        <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="bg-text-dark/5 rounded-lg p-4 md:p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">13:00-14:00</div>
-                    <div>
-                      <p className="font-semibold mb-1">Lunch Break</p>
+                    {/* 12:00-13:00 Leads Focus */}
+                    <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                      <div className="font-semibold text-sm text-text-dark/70 flex items-center">12:00-13:00</div>
+                      <div className="bg-pink-accent/10 rounded-lg p-3 text-sm col-span-2 border-2 border-pink-accent/30">
+                        <p className="font-semibold">Leads Focus</p>
+                        <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="bg-cloud-dancer rounded-lg p-4 md:p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">14:00-15:00</div>
-                    <div>
-                      <p className="font-semibold mb-1">Workshops</p>
-                      <p className="text-sm text-text-dark/70">Level 1: Igor & Fernanda | Level 2: Harold & Kristen</p>
+                    {/* 13:00-14:00 Lunch */}
+                    <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                      <div className="font-semibold text-sm text-text-dark/70 flex items-center">13:00-14:00</div>
+                      <div className="bg-text-dark/5 rounded-lg p-3 text-sm col-span-2 text-center font-semibold">Lunch Break</div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="bg-cloud-dancer rounded-lg p-4 md:p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">15:00-16:00</div>
-                    <div>
-                      <p className="font-semibold mb-1">Workshops</p>
-                      <p className="text-sm text-text-dark/70">Level 1: Harold & Kristen | Level 2: Igor & Fernanda</p>
+                    {/* 14:00-15:00 Workshops */}
+                    <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                      <div className="font-semibold text-sm text-text-dark/70 flex items-center">14:00-15:00</div>
+                      <div className="bg-purple-accent/10 rounded-lg p-3 text-sm">
+                        <p className="font-semibold">Level 1</p>
+                        <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
+                      </div>
+                      <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
+                        <p className="font-semibold">Level 2</p>
+                        <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="bg-text-dark/5 rounded-lg p-4 md:p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">16:00-16:15</div>
-                    <div>
-                      <p className="font-semibold mb-1">Break</p>
+                    {/* 15:00-16:00 Workshops */}
+                    <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                      <div className="font-semibold text-sm text-text-dark/70 flex items-center">15:00-16:00</div>
+                      <div className="bg-purple-accent/10 rounded-lg p-3 text-sm">
+                        <p className="font-semibold">Level 1</p>
+                        <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
+                      </div>
+                      <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
+                        <p className="font-semibold">Level 2</p>
+                        <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="bg-cloud-dancer rounded-lg p-4 md:p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">16:15-17:15</div>
-                    <div>
-                      <p className="font-semibold mb-1">Workshops</p>
-                      <p className="text-sm text-text-dark/70">Level 1: Igor & Fernanda | Level 2: Harold & Kristen</p>
+                    {/* 16:00-16:15 Break */}
+                    <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                      <div className="font-semibold text-sm text-text-dark/70 flex items-center">16:00-16:15</div>
+                      <div className="bg-text-dark/5 rounded-lg p-3 text-sm col-span-2 text-center font-semibold">Break</div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="bg-text-dark/5 rounded-lg p-4 md:p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">17:15-18:30</div>
-                    <div>
-                      <p className="font-semibold mb-1">Dinner Break</p>
+                    {/* 16:15-17:15 Workshops */}
+                    <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                      <div className="font-semibold text-sm text-text-dark/70 flex items-center">16:15-17:15</div>
+                      <div className="bg-purple-accent/10 rounded-lg p-3 text-sm">
+                        <p className="font-semibold">Level 1</p>
+                        <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
+                      </div>
+                      <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
+                        <p className="font-semibold">Level 2</p>
+                        <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
+                      </div>
                     </div>
-                  </div>
-                </div>
 
-                <div className="bg-yellow-accent/10 rounded-lg p-4 md:p-6 border-l-4 border-yellow-accent">
-                  <div className="flex items-start gap-4">
-                    <div className="text-base font-semibold text-text-dark/70 min-w-[100px]">18:30-19:30</div>
-                    <div>
-                      <p className="font-semibold mb-1">All Levels Workshop</p>
-                      <p className="text-sm text-text-dark/70">Harold & Kristen</p>
+                    {/* 17:15-18:30 Dinner */}
+                    <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
+                      <div className="font-semibold text-sm text-text-dark/70 flex items-center">17:15-18:30</div>
+                      <div className="bg-text-dark/5 rounded-lg p-3 text-sm col-span-2 text-center font-semibold">Dinner Break</div>
+                    </div>
+
+                    {/* 18:30-19:30 All Levels */}
+                    <div className="grid grid-cols-[120px_1fr_1fr] gap-3">
+                      <div className="font-semibold text-sm text-text-dark/70 flex items-center">18:30-19:30</div>
+                      <div className="bg-pink-accent/10 rounded-lg p-3 text-sm col-span-2 border-2 border-pink-accent/30">
+                        <p className="font-semibold">All Levels Workshop</p>
+                        <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
+                      </div>
                     </div>
                   </div>
-                </div>
               </div>
             </div>
 
@@ -480,36 +542,41 @@ export default function Weekender() {
               Good to Know
             </h2>
 
-            <div className="grid md:grid-cols-2 gap-8">
-              <div className="bg-cloud-dancer rounded-xl p-6">
-                <h3 className="font-spartan font-semibold text-xl mb-3">📍 Venue</h3>
+            <div className="space-y-8">
+              <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">
+                <h3 className="font-spartan font-semibold text-2xl mb-4">📍 Venue</h3>
                 <p className="text-text-dark/80">
-                  Details coming soon. Located in Cape Town with ample space for workshops and socials.
+                  Details coming soon. Cape Town venue with two halls for simultaneous workshops.
                 </p>
               </div>
 
-              <div className="bg-cloud-dancer rounded-xl p-6">
-                <h3 className="font-spartan font-semibold text-xl mb-3">🏨 Accommodation</h3>
-                <p className="text-text-dark/80">
-                  Recommendations for nearby accommodation will be shared with registered participants.
-                </p>
-              </div>
+              <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">
+                <h3 className="font-spartan font-semibold text-2xl mb-4">🎯 Understanding Levels</h3>
+                
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="font-spartan font-semibold text-lg text-purple-accent mb-2">Level 1</h4>
+                    <p className="text-text-dark/80 mb-2">
+                      You know the basics of West Coast Swing, but you still don't feel confident when social dancing. In addition to improving your basics, you want to learn the West Coast Swing fundamentals and be able to dance with any partner.
+                    </p>
+                    <p className="text-sm text-text-dark/70 italic">
+                      All welcome — from never danced to busy learning the dance
+                    </p>
+                  </div>
 
-              <div className="bg-cloud-dancer rounded-xl p-6">
-                <h3 className="font-spartan font-semibold text-xl mb-3">🎯 Levels</h3>
-                <p className="text-text-dark/80 mb-2">
-                  <strong>Level 1:</strong> Comfortable with basics, building confidence and fundamentals.
-                </p>
-                <p className="text-text-dark/80">
-                  <strong>Level 2:</strong> Social dancing confidently at various tempos, exploring style and musicality.
-                </p>
-              </div>
-
-              <div className="bg-cloud-dancer rounded-xl p-6">
-                <h3 className="font-spartan font-semibold text-xl mb-3">🍽️ Food</h3>
-                <p className="text-text-dark/80">
-                  Saturday community lunch is bring-and-share (included with Weekend & Day Pass). Dinner breaks built into schedule.
-                </p>
+                  <div>
+                    <h4 className="font-spartan font-semibold text-lg text-yellow-accent mb-2">Level 2</h4>
+                    <p className="text-text-dark/80 mb-2">
+                      You are not afraid of any tempos. You can social dance with partners of different levels (beginners to advanced) without any problem. Your interest is in trying to find your own style, as well as to start being more musical, not only using the beat of the music, but every bit of its accents. You want to learn new variations, as well as new moves.
+                    </p>
+                    <div className="bg-yellow-accent/20 rounded-lg p-4 mt-3">
+                      <p className="font-semibold text-sm mb-2">✓ Teacher Approval Required for regular classes</p>
+                      <p className="text-sm text-text-dark/80">
+                        For the weekender, you should be comfortable dancing the 5 basics (sugar push, left side pass, underarm turn, sugar tuck, basic whip) and understand concepts like redirections, elasticity, and body-leads.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
