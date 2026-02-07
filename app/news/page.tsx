@@ -70,7 +70,7 @@ export default function News() {
                 Full recap coming soon!
               </p>
               <p className="text-base md:text-lg text-text-dark/80">
-                We're putting together photos, videos, and stories from this incredible weekend with international WCS All Star Harold Baker.
+                We&apos;re putting together photos, videos, and stories from this incredible weekend with international WCS All Star Harold Baker.
               </p>
             </div>
 

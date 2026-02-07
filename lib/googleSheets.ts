@@ -5,7 +5,7 @@ function parsePrivateKey(key: string | undefined): string | undefined {
   if (!key) return undefined;
   
   // If the key contains literal \n strings, replace them with actual newlines
-  let parsedKey = key.replace(/\\n/g, "\n");
+  const parsedKey = key.replace(/\\n/g, "\n");
   
   // Ensure the key has proper BEGIN and END markers
   if (!parsedKey.includes("-----BEGIN PRIVATE KEY-----")) {

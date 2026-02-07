@@ -26,7 +26,7 @@ export default function SkillsTracker() {
       if (response.ok) {
         setSubmitted(true);
       }
-    } catch (error) {
+    } catch {
       // Silently fail - error already logged server-side
     } finally {
       setIsSubmitting(false);
@@ -52,7 +52,7 @@ export default function SkillsTracker() {
         </h2>
 
         <p className="text-base md:text-lg leading-relaxed mb-6">
-          WCS isn't about memorizing patterns - it's about mastering principles.
+          WCS isn&apos;t about memorizing patterns - it&apos;s about mastering principles.
           Our interactive skills tracker breaks down the core concepts
           (connection, rhythm, movement quality) so you always know what to work
           on next.
@@ -60,12 +60,14 @@ export default function SkillsTracker() {
 
         {submitted ? (
           <p className="text-lg font-medium text-pink-accent">
-            Thanks! We'll notify you when it launches.
+            Thanks! We&apos;ll notify you when it launches.
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4">
             <input
               type="email"
+              id="skills-email"
+              name="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}

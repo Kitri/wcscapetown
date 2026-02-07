@@ -13,7 +13,7 @@ export default function WhoAreWe() {
         </h2>
 
         <p className="text-base md:text-lg mb-6 leading-relaxed">
-          We're a <span className="font-semibold">volunteer-driven community with one ambition:</span> bring this wonderful dance to Cape Town and grow a welcoming community — <span className="font-semibold">like the international WCS family that's embraced us.</span>
+          We&apos;re a <span className="font-semibold">volunteer-driven community with one ambition:</span> bring this wonderful dance to Cape Town and grow a welcoming community — <span className="font-semibold">like the international WCS family that&apos;s embraced us.</span>
         </p>
 
         <a

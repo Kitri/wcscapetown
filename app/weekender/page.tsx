@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Weekender() {
   return (
@@ -22,12 +23,12 @@ export default function Weekender() {
               Two full days of workshops with international pros, three evenings of social dancing — bringing the international festival experience to your doorstep
             </p>
 
-            <a 
+            <Link 
               href="/#weekender" 
               className="inline-block bg-pink-accent text-white px-10 py-4 rounded-lg font-semibold text-lg hover:bg-pink-accent/90 hover:shadow-xl transition-all"
             >
               Register Your Interest
-            </a>
+            </Link>
           </div>
         </section>
 
@@ -50,6 +51,7 @@ export default function Weekender() {
                       src="/images/igor_fernanda1.jpg"
                       alt="Igor & Fernanda"
                       fill
+                      sizes="96px"
                       className="object-cover"
                     />
                   </div>
@@ -76,6 +78,7 @@ export default function Weekender() {
                       src="/images/harold1.jpg"
                       alt="Harold Baker"
                       fill
+                      sizes="96px"
                       className="object-cover"
                     />
                   </div>
@@ -102,6 +105,7 @@ export default function Weekender() {
                       src="/images/kristen1.jpg"
                       alt="Kristen Wallace"
                       fill
+                      sizes="96px"
                       className="object-cover"
                     />
                   </div>
@@ -522,12 +526,12 @@ export default function Weekender() {
 
             {/* CTA */}
             <div className="text-center">
-              <a 
+              <Link 
                 href="/#weekender" 
                 className="inline-block bg-pink-accent text-white px-10 py-4 rounded-lg font-semibold text-lg hover:bg-pink-accent/90 hover:shadow-xl transition-all"
               >
                 Register Your Interest
-              </a>
+              </Link>
               <p className="text-sm text-text-dark/60 mt-4">
                 Booking opens soon. Add your name to the list to be notified first.
               </p>
@@ -557,7 +561,7 @@ export default function Weekender() {
                   <div>
                     <h4 className="font-spartan font-semibold text-lg text-purple-accent mb-2">Level 1</h4>
                     <p className="text-text-dark/80 mb-2">
-                      You know the basics of West Coast Swing, but you still don't feel confident when social dancing. In addition to improving your basics, you want to learn the West Coast Swing fundamentals and be able to dance with any partner.
+                      You know the basics of West Coast Swing, but you still don&apos;t feel confident when social dancing. In addition to improving your basics, you want to learn the West Coast Swing fundamentals and be able to dance with any partner.
                     </p>
                     <p className="text-sm text-text-dark/70 italic">
                       All welcome — from never danced to busy learning the dance

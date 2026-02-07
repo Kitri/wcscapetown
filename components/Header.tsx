@@ -17,7 +17,7 @@ export default function Header() {
             alt="WCS Cape Town Logo"
             width={50}
             height={50}
-            className="object-contain"
+            className="object-contain w-auto h-auto"
           />
           <div className="font-spartan font-semibold text-base md:text-lg leading-tight text-text-dark">
             <div>West Coast Swing</div>
@@ -28,7 +28,7 @@ export default function Header() {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
           <Link href="/" className="text-text-dark hover:text-yellow-accent transition-colors">Home</Link>
-          <Link href="/whats-on" className="text-text-dark hover:text-pink-accent transition-colors">What's On</Link>
+          <Link href="/whats-on" className="text-text-dark hover:text-pink-accent transition-colors">What&apos;s On</Link>
           <Link href="/about-us" className="text-text-dark hover:text-yellow-accent transition-colors">About Us</Link>
           <Link href="/community-culture" className="text-text-dark hover:text-pink-accent transition-colors">Community Culture</Link>
           <Link href="/news" className="text-text-dark hover:text-yellow-accent transition-colors">Highlights</Link>
@@ -69,7 +69,7 @@ export default function Header() {
               className="text-text-dark hover:text-pink-accent transition-colors text-lg"
               onClick={() => setIsMenuOpen(false)}
             >
-              What's On
+              What&apos;s On
             </Link>
             <Link 
               href="/about-us" 

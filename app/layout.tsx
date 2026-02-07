@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-behavior="smooth">
       <body
         className={`${leagueSpartan.variable} ${inter.variable} antialiased bg-cloud-dancer text-text-dark`}
       >

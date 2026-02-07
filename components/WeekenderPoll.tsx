@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { getOrCreateSessionId } from "@/lib/sessionId";
 
@@ -32,7 +32,7 @@ export default function WeekenderPoll() {
       if (response.ok) {
         setSubmitted(true);
       }
-    } catch (error) {
+    } catch {
       // Silently fail - error already logged server-side
     } finally {
       setIsSubmitting(false);
@@ -51,10 +51,10 @@ export default function WeekenderPoll() {
       >
         <div className="max-w-[900px] mx-auto text-center">
           <h2 className="font-spartan font-semibold text-[24px] md:text-[32px] mb-4">
-            You're on the list!
+            You&apos;re on the list!
           </h2>
           <p className="text-lg">
-            We'll send you details soon.
+            We&apos;ll send you details soon.
           </p>
         </div>
       </section>
@@ -95,6 +95,7 @@ export default function WeekenderPoll() {
                 src="/images/igor_fernanda1.jpg"
                 alt="Igor Pitangui and Fernanda Dubiel"
                 fill
+                sizes="(max-width: 768px) 200px, 233px"
                 className="object-cover"
               />
             </div>
@@ -110,6 +111,7 @@ export default function WeekenderPoll() {
                 src="/images/kristen1.jpg"
                 alt="Kristen Wallace"
                 fill
+                sizes="(max-width: 768px) 50vw, 233px"
                 className="object-cover"
               />
             </div>
@@ -125,6 +127,7 @@ export default function WeekenderPoll() {
                 src="/images/harold1.jpg"
                 alt="Harold Baker"
                 fill
+                sizes="(max-width: 768px) 50vw, 233px"
                 className="object-cover"
               />
             </div>
@@ -182,6 +185,7 @@ export default function WeekenderPoll() {
           </label>
           <input
             id="weekender-email"
+            name="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -190,7 +194,7 @@ export default function WeekenderPoll() {
             className="w-full p-3 rounded-lg border-2 border-text-dark/20 focus:border-yellow-accent focus:outline-none bg-white"
           />
           <p className="text-xs text-text-dark/60 mt-1">
-            We'll send you details soon
+            We&apos;ll send you details soon
           </p>
         </div>
 

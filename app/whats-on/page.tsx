@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import Link from "next/link";
 
 export default function WhatsOn() {
   return (
@@ -9,7 +10,7 @@ export default function WhatsOn() {
         <section className="px-[5%] py-[40px] bg-cloud-dancer">
           <div className="max-w-[900px] mx-auto text-center">
             <h1 className="font-spartan font-semibold text-[36px] md:text-[52px] mb-4">
-              What's On
+              What&apos;s On
             </h1>
             <p className="text-lg md:text-xl text-text-dark/80">
               West Coast Swing classes & socials
@@ -64,7 +65,7 @@ export default function WhatsOn() {
             <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Upcoming Events</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* WCS Weekender - Featured with gradient background */}
-              <a href="/#weekender" className="group relative overflow-hidden rounded-xl p-6 text-center transition-all hover:shadow-xl bg-gradient-to-br from-pink-accent/10 via-pink-accent/5 to-transparent border-2 border-pink-accent/50 hover:border-pink-accent">
+              <Link href="/#weekender" className="group relative overflow-hidden rounded-xl p-6 text-center transition-all hover:shadow-xl bg-gradient-to-br from-pink-accent/10 via-pink-accent/5 to-transparent border-2 border-pink-accent/50 hover:border-pink-accent">
                 <div className="absolute top-2 right-2 bg-pink-accent text-white px-2 py-1 rounded text-xs font-semibold">
                   🌟 FEATURED
                 </div>
@@ -74,7 +75,7 @@ export default function WhatsOn() {
                 <h3 className="font-spartan font-semibold text-lg mb-2">WCS Weekender</h3>
                 <p className="text-sm text-text-dark/70 mb-1">International Pros</p>
                 <p className="text-xs italic mt-2 text-pink-accent font-semibold">Learn more on home page</p>
-              </a>
+              </Link>
 
               {/* Monthly Social */}
               <a href="#monthly-social" className="group border-2 border-pink-accent/30 hover:border-pink-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
@@ -392,7 +393,7 @@ export default function WhatsOn() {
                     <p className="font-semibold mb-1">🏎️ Parking</p>
                     <p className="text-sm text-text-dark/80">
                       Scout Hall is on the corner of Bowwood and Thelma. 
-                      <a href="https://maps.app.goo.gl/dW2qw4e79TymZuzU9" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline"> Parking</a> is in Thelma, just after the building before the tennis courts. Look for a wired gate with a small purple sign: "SCOUTS - Scout Hall Parking only".
+                      <a href="https://maps.app.goo.gl/dW2qw4e79TymZuzU9" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline"> Parking</a> is in Thelma, just after the building before the tennis courts. Look for a wired gate with a small purple sign: &quot;SCOUTS - Scout Hall Parking only&quot;.
                     </p>
                   </div>
                 </div>
@@ -418,7 +419,7 @@ export default function WhatsOn() {
             <div className="grid md:grid-cols-2 gap-8">
               {/* Left Column - What You'll Learn */}
               <div>
-                <h3 className="font-spartan font-semibold text-xl mb-4">What You'll Learn</h3>
+                <h3 className="font-spartan font-semibold text-xl mb-4">What You&apos;ll Learn</h3>
                 <div className="space-y-3">
                   <div className="bg-white/60 rounded-lg p-4">
                     <p className="font-semibold">Core Basics</p>
@@ -474,7 +475,7 @@ export default function WhatsOn() {
               <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">
                 <h3 className="font-spartan font-semibold text-2xl mb-4 text-purple-accent">Level 1</h3>
                 <p className="text-base md:text-lg mb-4">
-                  You know the basics of West Coast Swing, but you still don't feel confident when social dancing. In addition to improving your basics, you want to learn the West Coast Swing fundamentals and be able to dance with any partner.
+                      You know the basics of West Coast Swing, but you still don&apos;t feel confident when social dancing. In addition to improving your basics, you want to learn the West Coast Swing fundamentals and be able to dance with any partner.
                 </p>
                 <p className="text-sm text-text-dark/70 italic">
                   All welcome — from never danced to busy learning the dance
@@ -517,8 +518,8 @@ export default function WhatsOn() {
                         <li>Dancing in closed position</li>
                         <li>Elasticity</li>
                         <li>Leading with body-leads, not forceful arm leads</li>
-                        <li>Followers don't anticipate the lead, and find resistance away before moving</li>
-                        <li>Followers keep linear and rotational momentum while leads "direct, guide and catch"</li>
+                        <li>Followers don&apos;t anticipate the lead, and find resistance away before moving</li>
+                        <li>Followers keep linear and rotational momentum while leads &quot;direct, guide and catch&quot;</li>
                       </ul>
                     </div>
                   </div>

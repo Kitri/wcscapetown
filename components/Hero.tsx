@@ -73,6 +73,7 @@ export default function Hero() {
             width={300}
             height={200}
             priority
+            className="w-auto h-auto"
           />
         </div>
 
@@ -106,11 +107,10 @@ export default function Hero() {
         <div className="mb-10">
           {/* First Row - 5 blocks */}
           <div className="flex flex-wrap gap-3 justify-center mb-3">
-            {features.slice(0, 5).map((feature, index) => (
+          {features.slice(0, 5).map((feature, index) => (
               <FeatureBlock
                 key={index}
                 title={feature.title}
-                detail={feature.detail}
                 index={index}
                 isActive={expandedFeature === index}
                 onToggle={() => toggleFeature(index)}
@@ -120,11 +120,10 @@ export default function Hero() {
           
           {/* Second Row - 2 blocks centered */}
           <div className="flex flex-wrap gap-3 justify-center mb-3">
-            {features.slice(5, 7).map((feature, index) => (
+          {features.slice(5, 7).map((feature, index) => (
               <FeatureBlock
                 key={index + 5}
                 title={feature.title}
-                detail={feature.detail}
                 index={index + 5}
                 isActive={expandedFeature === index + 5}
                 onToggle={() => toggleFeature(index + 5)}
@@ -147,7 +146,7 @@ export default function Hero() {
         {/* CTA Button */}
         <div className="flex justify-center">
           <Link href="/whats-on" className="bg-yellow-accent text-text-dark px-10 py-4 rounded-lg font-medium text-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-yellow-accent/30 w-full md:w-auto text-center">
-            What's On
+            What&apos;s On
           </Link>
         </div>
       </div>

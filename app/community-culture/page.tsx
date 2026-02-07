@@ -43,7 +43,7 @@ export default function CommunityCulture() {
                     Consent is Key
                   </h3>
                   <p className="text-sm md:text-base text-text-dark/80 leading-relaxed">
-                    Ask before you dance, respect a "no". Read the room and the person. When in doubt, ask.
+                    Ask before you dance, respect a &quot;no&quot;. Read the room and the person. When in doubt, ask.
                   </p>
                 </div>
               </div>
@@ -80,7 +80,7 @@ export default function CommunityCulture() {
                 We are building this community together
               </p>
               <p className="text-sm md:text-base text-text-dark/80 leading-relaxed">
-                Let's dance, connect, and keep this space joyful for everyone.
+                Let&apos;s dance, connect, and keep this space joyful for everyone.
               </p>
             </div>
           </div>
@@ -95,10 +95,10 @@ export default function CommunityCulture() {
         >
           <div className="max-w-[900px] mx-auto text-center">
             <h3 className="font-spartan font-semibold text-[24px] md:text-[28px] mb-4">
-              We're Here to Listen
+              We&apos;re Here to Listen
             </h3>
             <p className="text-base md:text-lg leading-relaxed mb-4">
-              If something doesn't feel right, or you experience or witness behaviour that goes against our values:
+              If something doesn&apos;t feel right, or you experience or witness behaviour that goes against our values:
             </p>
             <p className="text-base md:text-lg font-semibold mb-6">
               Reach out to our community organisers or teaching team in person
@@ -192,7 +192,7 @@ export default function CommunityCulture() {
               <div className="px-6 py-6">
                 <ul className="space-y-6 text-base leading-loose">
                   <li className="font-light">
-                    <div className="mb-2">Consent means <strong>asking before dancing with anyone</strong>, and <strong>accepting a "no" with grace and without pressure</strong>.</div>
+                    <div className="mb-2">Consent means <strong>asking before dancing with anyone</strong>, and <strong>accepting a &quot;no&quot; with grace and without pressure</strong>.</div>
                     <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-pink-accent/30 pl-4">
                       <li>A refusal is not an invitation to persuade, joke, negotiate, or revisit later</li>
                     </ul>
@@ -210,7 +210,7 @@ export default function CommunityCulture() {
                   <li className="font-light">
                     <div className="mb-2"><strong>Consent is contextual</strong>.</div>
                     <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-pink-accent/30 pl-4">
-                      <li>Just because someone dances a certain way with one person doesn't mean they want the same with someone else</li>
+                      <li>Just because someone dances a certain way with one person doesn&apos;t mean they want the same with someone else</li>
                       <li><strong>If you are unsure, ask</strong></li>
                       <li>If someone asks you to stop, <strong>stop</strong></li>
                       <li>Requests for <strong>personal comfort or safety</strong> are part of <strong>consent and mutual care</strong>, not criticism</li>
@@ -239,7 +239,7 @@ export default function CommunityCulture() {
                   <li className="font-light">
                     <div className="mb-2"><strong>Care and consent are a shared responsibility</strong>.</div>
                     <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-pink-accent/30 pl-4">
-                      <li>If you're unsure whether someone is okay, <strong>check in</strong></li>
+                      <li>If you&apos;re unsure whether someone is okay, <strong>check in</strong></li>
                       <li>Ask if they need help, or invite them to dance to create space</li>
                     </ul>
                   </li>
@@ -256,7 +256,7 @@ export default function CommunityCulture() {
                     <div className="mb-2"><strong>Concerns</strong> may be addressed <strong>in the moment, or followed up privately</strong>.</div>
                     <ul className="list-none space-y-2 mt-3 ml-4 border-l-2 border-pink-accent/30 pl-4">
                       <li>Our approach is grounded in <strong>conversation and clarity</strong></li>
-                      <li>Sometimes <strong>harm</strong> comes from <strong>misunderstanding</strong> - we're open to <strong>addressing that with care</strong></li>
+                      <li>Sometimes <strong>harm</strong> comes from <strong>misunderstanding</strong> - we&apos;re open to <strong>addressing that with care</strong></li>
                     </ul>
                   </li>
                   
@@ -269,7 +269,7 @@ export default function CommunityCulture() {
                   </li>
                   
                   <li className="font-light">
-                    <strong>We are grateful for everyone's care, attention, and commitment to making this a space where all can feel safe, respected, and welcome</strong>.
+                    <strong>We are grateful for everyone&apos;s care, attention, and commitment to making this a space where all can feel safe, respected, and welcome</strong>.
                   </li>
                 </ul>
               </div>

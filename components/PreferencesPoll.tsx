@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { getOrCreateSessionId } from "@/lib/sessionId";
 
 export default function PreferencesPoll() {
@@ -67,7 +67,7 @@ export default function PreferencesPoll() {
       if (response.ok) {
         setSubmitted(true);
       }
-    } catch (error) {
+    } catch {
       // Silently fail - error already logged server-side
     } finally {
       setIsSubmitting(false);
@@ -110,7 +110,7 @@ export default function PreferencesPoll() {
           Help Us Shape 2026! ✨
         </h2>
         <p className="text-center text-lg mb-2">
-          We're planning big things. What sounds most like you?
+          We&apos;re planning big things. What sounds most like you?
         </p>
         <p className="text-center text-sm text-text-dark/70 mb-8">
           (You can choose more than one option)
@@ -137,6 +137,7 @@ export default function PreferencesPoll() {
                 >
                   <input
                     type="checkbox"
+                    name="learning"
                     value={option}
                     checked={selectedLearning.includes(option)}
                     onChange={(e) => handleLearningChange(e.target.value)}
@@ -166,6 +167,7 @@ export default function PreferencesPoll() {
                 >
                   <input
                     type="checkbox"
+                    name="events"
                     value={option}
                     checked={selectedEvents.includes(option)}
                     onChange={(e) => handleEventsChange(e.target.value)}
@@ -197,6 +199,7 @@ export default function PreferencesPoll() {
             <input
               type="email"
               id="email"
+              name="email"
               value={email}
               onChange={(e) => handleEmailChange(e.target.value)}
               placeholder="your@email.com"

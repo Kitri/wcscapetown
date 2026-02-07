@@ -12,7 +12,7 @@ export default function Contact() {
             </h1>
 
             <p className="text-base md:text-lg leading-relaxed mb-10 text-center">
-              We'd love to hear from you! Reach out through any of these channels:
+              We&apos;d love to hear from you! Reach out through any of these channels:
             </p>
 
             <div className="grid md:grid-cols-3 gap-6 mb-6">

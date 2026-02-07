@@ -61,7 +61,7 @@ export default function MapSection() {
         }),
       });
       setSubmitted(true);
-    } catch (error) {
+    } catch {
       // Silently fail - error already logged server-side
     } finally {
       setIsSubmitting(false);
@@ -91,7 +91,7 @@ export default function MapSection() {
     >
       <div className="max-w-[700px] mx-auto">
         <h2 className="font-spartan font-semibold text-[24px] md:text-[32px] text-center mb-2">
-          I'm Interested In...
+          I&apos;m Interested In...
         </h2>
         <p className="text-center text-sm text-text-dark/70 mb-8">
           (Choose all that apply)
@@ -135,7 +135,7 @@ export default function MapSection() {
         <div className="mb-6">
           <h3 className="font-semibold text-lg mb-1">Where in Cape Town?</h3>
           <p className="text-sm text-text-dark/70 mb-3">
-            We're currently in <strong>Plumstead, Southern Suburbs</strong>
+            We&apos;re currently in <strong>Plumstead, Southern Suburbs</strong>
           </p>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
@@ -175,6 +175,7 @@ export default function MapSection() {
           </label>
           <input
             id="other-zone"
+            name="other-zone"
             type="text"
             value={otherText}
             onChange={(e) => setOtherText(e.target.value)}

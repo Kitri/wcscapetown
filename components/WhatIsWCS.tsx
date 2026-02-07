@@ -7,9 +7,9 @@ export default function WhatIsWCS() {
         </h2>
 
         <p className="text-base md:text-lg leading-relaxed mb-4">
-          WCS is a "living" dance that evolves with modern music (Pop, R&B,
+          WCS is a &quot;living&quot; dance that evolves with modern music (Pop, R&B,
           Blues, Hip Hop...), a smoothed-out evolution from Lindy Hop primarily
-          danced to swing jazz music. It's a contemporary partner dance built on
+          danced to swing jazz music. It&apos;s a contemporary partner dance built on
           principles rather than patterns, allowing for endless creativity and
           personal expression.
         </p>

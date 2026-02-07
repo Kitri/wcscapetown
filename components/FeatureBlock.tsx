@@ -2,7 +2,6 @@
 
 interface FeatureBlockProps {
   title: string;
-  detail: string;
   index: number;
   isActive: boolean;
   onToggle: () => void;
@@ -10,7 +9,6 @@ interface FeatureBlockProps {
 
 export default function FeatureBlock({
   title,
-  detail,
   index,
   isActive,
   onToggle,
