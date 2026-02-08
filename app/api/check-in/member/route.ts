@@ -5,6 +5,7 @@ import { isCheckinAuthed } from "@/lib/server/checkinAuth";
 
 function parseMemberId(raw: string): number {
   const digits = raw.replace(/[^0-9]/g, "");
+  if (!digits) return NaN;
   const id = Number(digits);
   return Number.isFinite(id) ? id : NaN;
 }
