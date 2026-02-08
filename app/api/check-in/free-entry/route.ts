@@ -4,6 +4,7 @@ import {
   formatZaDateISO,
   formatZaMonthYear,
   isZaMonday,
+  parseZaDateISO,
 } from "@/lib/zaDate";
 import { CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
@@ -23,7 +24,11 @@ function parseMemberId(raw: string): number {
   return Number.isFinite(id) ? id : NaN;
 }
 
-function matchesApplicableDate(applicable: string, todayISO: string): number {
+function matchesApplicableDate(
+  applicable: string,
+  todayISO: string,
+  ctx: { monthYear: string; isMonday: boolean }
+): number {
   // returns priority (higher is better), or 0 if no match
   const v = applicable.trim();
   if (!v) return 0;
@@ -35,12 +40,11 @@ function matchesApplicableDate(applicable: string, todayISO: string): number {
 
   // Month-year (e.g. "February 2026") applies only on Mondays of that month
   if (/^[A-Za-z]+\s+\d{4}$/.test(v)) {
-    const monthYear = formatZaMonthYear();
-    return v === monthYear && isZaMonday() ? 2 : 0;
+    return v === ctx.monthYear && ctx.isMonday ? 2 : 0;
   }
 
   if (v === "All Mondays") {
-    return isZaMonday() ? 1 : 0;
+    return ctx.isMonday ? 1 : 0;
   }
 
   // Try parsing other date formats (best-effort)
@@ -67,7 +71,18 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Invalid member_id" }, { status: 400 });
     }
 
-    const todayISO = formatZaDateISO();
+    const dateISOParam = (searchParams.get("date") ?? "").trim();
+    const date = dateISOParam ? parseZaDateISO(dateISOParam) : null;
+
+    if (dateISOParam && !date) {
+      return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+    }
+
+    const todayISO = dateISOParam || formatZaDateISO(date ?? undefined);
+    const ctx = {
+      monthYear: date ? formatZaMonthYear(date) : formatZaMonthYear(),
+      isMonday: date ? isZaMonday(date) : isZaMonday(),
+    };
 
     const rows = await getSheetValues(
       CHECKIN_SPREADSHEET_ID,
@@ -84,7 +99,7 @@ export async function GET(request: Request) {
       const id = parseMemberId(idRaw ?? "");
       if (!Number.isFinite(id) || id !== member_id) continue;
 
-      const priority = matchesApplicableDate(applicable_date ?? "", todayISO);
+      const priority = matchesApplicableDate(applicable_date ?? "", todayISO, ctx);
       if (!priority) continue;
 
       const match: FreeEntryMatch & { priority: number } = {

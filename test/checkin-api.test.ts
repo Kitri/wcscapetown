@@ -15,11 +15,13 @@ jest.mock("@/lib/googleSheets", () => ({
 const mockFormatZaDateISO = jest.fn();
 const mockFormatZaMonthYear = jest.fn();
 const mockIsZaMonday = jest.fn();
+const mockParseZaDateISO = jest.fn();
 
 jest.mock("@/lib/zaDate", () => ({
   formatZaDateISO: (...args: unknown[]) => mockFormatZaDateISO(...args),
   formatZaMonthYear: (...args: unknown[]) => mockFormatZaMonthYear(...args),
   isZaMonday: (...args: unknown[]) => mockIsZaMonday(...args),
+  parseZaDateISO: (...args: unknown[]) => mockParseZaDateISO(...args),
 }));
 
 function jsonRequest(url: string, body: unknown): Request {
@@ -68,6 +70,7 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
     mockFormatZaDateISO.mockReset();
     mockFormatZaMonthYear.mockReset();
     mockIsZaMonday.mockReset();
+    mockParseZaDateISO.mockReset();
 
     mockFormatZaDateISO.mockImplementation(() => "2026-02-03");
     mockFormatZaMonthYear.mockImplementation(() => "February 2026");

@@ -25,6 +25,36 @@ const auth = new google.auth.GoogleAuth({
 
 const sheets = google.sheets({ version: "v4", auth });
 
+const sheetIdCache = new Map<string, Map<string, number>>();
+
+async function getSheetIdByName(
+  spreadsheetId: string,
+  sheetName: string
+): Promise<number> {
+  const cachedForSpreadsheet = sheetIdCache.get(spreadsheetId);
+  const cached = cachedForSpreadsheet?.get(sheetName);
+  if (typeof cached === "number") return cached;
+
+  const res = await sheets.spreadsheets.get({
+    spreadsheetId,
+    fields: "sheets(properties(sheetId,title))",
+  });
+
+  const found = res.data.sheets?.find(
+    (s) => s.properties?.title === sheetName
+  )?.properties?.sheetId;
+
+  if (typeof found !== "number") {
+    throw new Error(`Sheet not found: ${sheetName}`);
+  }
+
+  const map = cachedForSpreadsheet ?? new Map<string, number>();
+  map.set(sheetName, found);
+  sheetIdCache.set(spreadsheetId, map);
+
+  return found;
+}
+
 export async function getSheetValues(
   spreadsheetId: string,
   range: string
@@ -79,6 +109,47 @@ export async function updateSheetValues(
     return response.data;
   } catch (error) {
     console.error("Error updating sheet:", error);
+    throw error;
+  }
+}
+
+export async function deleteSheetRowByNumber(
+  spreadsheetId: string,
+  sheetName: string,
+  rowNumber1Based: number
+) {
+  if (!Number.isFinite(rowNumber1Based) || rowNumber1Based < 1) {
+    throw new Error("Invalid row number");
+  }
+
+  const sheetId = await getSheetIdByName(spreadsheetId, sheetName);
+
+  // Google Sheets API uses 0-based, end-exclusive indices.
+  const startIndex = rowNumber1Based - 1;
+  const endIndex = rowNumber1Based;
+
+  try {
+    const response = await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      requestBody: {
+        requests: [
+          {
+            deleteDimension: {
+              range: {
+                sheetId,
+                dimension: "ROWS",
+                startIndex,
+                endIndex,
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting sheet row:", error);
     throw error;
   }
 }

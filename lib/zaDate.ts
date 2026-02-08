@@ -47,3 +47,14 @@ export function isZaMonday(date: Date = getZaNow()): boolean {
 export function isZaFirstMonday(date: Date = getZaNow()): boolean {
   return isZaMonday(date) && getZaDayOfMonth(date) <= 7;
 }
+
+export function parseZaDateISO(dateISO: string): Date | null {
+  const v = (dateISO ?? "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;
+
+  // Use midday to avoid timezone-boundary edge cases.
+  // South Africa does not observe DST, so +02:00 is stable.
+  const d = new Date(`${v}T12:00:00+02:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  return d;
+}

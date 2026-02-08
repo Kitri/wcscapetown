@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type Member = {
   member_id: number;
@@ -48,6 +49,51 @@ const MONTHLY_TYPES = [
   "Pensioner monthly",
   "Student monthly",
 ] as const;
+
+const ZA_TIME_ZONE = "Africa/Johannesburg";
+
+const CHECKIN_EVENT_OPTIONS = [
+  "Monday Plumstead",
+  "Tuesday Pinelands",
+  "Thursday Pinelands",
+  "Saturday scout hall",
+] as const;
+
+type CheckinEvent = (typeof CHECKIN_EVENT_OPTIONS)[number];
+
+function getZaTodayISO(): string {
+  // en-CA gives YYYY-MM-DD
+  return new Date().toLocaleDateString("en-CA", { timeZone: ZA_TIME_ZONE });
+}
+
+function weekdayZa(dateISO: string): string {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) return "";
+
+  // Midday to avoid timezone boundaries.
+  const d = new Date(`${dateISO}T12:00:00+02:00`);
+  if (Number.isNaN(d.getTime())) return "";
+
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "long",
+    timeZone: ZA_TIME_ZONE,
+  }).format(d);
+}
+
+function defaultEventForDateISO(dateISO: string): CheckinEvent {
+  const weekday = weekdayZa(dateISO);
+  switch (weekday) {
+    case "Monday":
+      return "Monday Plumstead";
+    case "Tuesday":
+      return "Tuesday Pinelands";
+    case "Thursday":
+      return "Thursday Pinelands";
+    case "Saturday":
+      return "Saturday scout hall";
+    default:
+      return "Monday Plumstead";
+  }
+}
 
 function formatZar(amount: number): string {
   return `R${amount}`;
@@ -151,10 +197,14 @@ function AddNewPersonForm({
   open,
   onClose,
   onCreated,
+  dateISO,
+  event,
 }: {
   open: boolean;
   onClose: () => void;
   onCreated: (member: Member) => void;
+  dateISO: string;
+  event: CheckinEvent;
 }) {
   const [firstName, setFirstName] = useState("");
   const [surname, setSurname] = useState("");
@@ -168,6 +218,13 @@ function AddNewPersonForm({
   const [level2Reason, setLevel2Reason] = useState<
     NewMemberPayload["level2Reason"] | ""
   >("");
+
+  const [showLevelDescription, setShowLevelDescription] = useState(false);
+
+  const [infoPersonalOpen, setInfoPersonalOpen] = useState(false);
+  const [infoContactOpen, setInfoContactOpen] = useState(false);
+  const [infoDancerOpen, setInfoDancerOpen] = useState(false);
+  const [infoAdditionalOpen, setInfoAdditionalOpen] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -229,7 +286,7 @@ function AddNewPersonForm({
 
     setSaving(true);
     try {
-      const payload: NewMemberPayload = {
+      const payload: NewMemberPayload & { date: string; event: string } = {
         firstName: firstName.trim(),
         surname: surname.trim(),
         contactNumber: contactTrim || undefined,
@@ -243,6 +300,8 @@ function AddNewPersonForm({
             : undefined,
         howFoundUs: howFoundUs.trim() || undefined,
         visitor,
+        date: dateISO,
+        event,
       };
 
       const res = await fetchJson<{ member: Member }>("/api/check-in/members", {
@@ -275,16 +334,29 @@ function AddNewPersonForm({
   return (
     <Modal title="Add new person" open={open} onClose={onClose}>
       <div className="space-y-5">
-        <div className="bg-white/60 rounded-xl border border-text-dark/10 p-4 text-sm text-text-dark/80">
-          <p className="font-semibold mb-1">Welcoming committee script</p>
-          <p>
-            Ask for a <span className="font-semibold">contact number or email</span> (only one is
-            fine). If they give you one, ask:
-            <span className="font-semibold">
-              {" "}“Is it OK if we use that to ask for feedback very occasionally?”
-            </span>
-          </p>
+        <div className="flex items-center justify-between gap-3">
+          <div className="font-spartan font-semibold text-lg">Required Personal Information</div>
+          <button
+            type="button"
+            onClick={() => setInfoPersonalOpen((v) => !v)}
+            className={
+              "w-8 h-8 rounded-full border font-bold flex items-center justify-center transition-colors " +
+              (infoPersonalOpen
+                ? "bg-yellow-accent/20 border-yellow-accent text-text-dark"
+                : "bg-white border-text-dark/20 text-text-dark/60 hover:text-text-dark")
+            }
+            aria-label="Personal information help"
+            title="Info"
+          >
+            i
+          </button>
         </div>
+
+        {infoPersonalOpen && (
+          <div className="bg-yellow-accent/20 rounded-xl border border-yellow-accent p-4 text-sm text-text-dark/90">
+            They can type their name themselves if it&apos;s easier
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <label className="space-y-2">
@@ -307,6 +379,35 @@ function AddNewPersonForm({
             />
           </label>
         </div>
+
+        <div className="flex items-center justify-between gap-3">
+          <div className="font-spartan font-semibold text-lg">
+            <span className="italic">Optional</span> Contact information
+          </div>
+          <button
+            type="button"
+            onClick={() => setInfoContactOpen((v) => !v)}
+            className={
+              "w-8 h-8 rounded-full border font-bold flex items-center justify-center transition-colors " +
+              (infoContactOpen
+                ? "bg-yellow-accent/20 border-yellow-accent text-text-dark"
+                : "bg-white border-text-dark/20 text-text-dark/60 hover:text-text-dark")
+            }
+            aria-label="Contact information help"
+            title="Info"
+          >
+            i
+          </button>
+        </div>
+
+        {infoContactOpen && (
+          <div className="bg-yellow-accent/20 rounded-xl border border-yellow-accent p-4 text-sm text-text-dark/90">
+            Ask for a contact number or email (only one is fine). If they give you one, ask:
+            <span className="font-semibold">
+              {" "}“Is it OK if we use that to ask for feedback very occasionally?”
+            </span>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <label className="space-y-2">
@@ -338,13 +439,36 @@ function AddNewPersonForm({
             className="mt-1"
           />
           <div>
-            <div className="font-semibold">Consent to feedback follow-up (optional)</div>
-            <div className="text-sm text-text-dark/70">
-              OK to contact them using the number/email above, very occasionally (e.g. if they stop
-              coming, ask why once-off).
+            <div className="font-semibold">
+              Consent to feedback follow-up (required if given contact information)
             </div>
           </div>
         </label>
+
+        <div className="flex items-center justify-between gap-3">
+          <div className="font-spartan font-semibold text-lg">Dancer Details (required)</div>
+          <button
+            type="button"
+            onClick={() => setInfoDancerOpen((v) => !v)}
+            className={
+              "w-8 h-8 rounded-full border font-bold flex items-center justify-center transition-colors " +
+              (infoDancerOpen
+                ? "bg-yellow-accent/20 border-yellow-accent text-text-dark"
+                : "bg-white border-text-dark/20 text-text-dark/60 hover:text-text-dark")
+            }
+            aria-label="Dancer details help"
+            title="Info"
+          >
+            i
+          </button>
+        </div>
+
+        {infoDancerOpen && (
+          <div className="bg-yellow-accent/20 rounded-xl border border-yellow-accent p-4 text-sm text-text-dark/90">
+            Ask if they&apos;re joining as a lead or a follow. If they&apos;re unsure, choose “I don&apos;t know”.
+            Ask them about their wcs dance experience
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <label className="space-y-2">
@@ -358,37 +482,47 @@ function AddNewPersonForm({
               <option>Follow</option>
               <option>I don&apos;t know</option>
             </select>
-            <div className="text-sm text-text-dark/70">
-              Ask if they&apos;re joining as a lead or a follow. If unsure, choose “I don&apos;t know”.
-            </div>
           </label>
-        </div>
 
-        <label className="space-y-2">
-          <div className="font-semibold">Level (required)</div>
-          <select
-            value={level}
-            onChange={(e) => setLevel(e.target.value as NewMemberPayload["level"])}
-            className="w-full px-4 py-3 rounded-xl border-2 border-text-dark/20 text-lg bg-white"
-          >
-            <option value="first timer">first timer</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-          </select>
-          <div className="text-sm text-text-dark/70 space-y-2">
-            <div>
-              <span className="font-semibold">first timer</span>: new to WCS.
+          <label className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="font-semibold">Level (required)</div>
+              <button
+                type="button"
+                onClick={() => setShowLevelDescription((v) => !v)}
+                className="text-pink-accent font-bold italic underline"
+              >
+                Level description
+              </button>
             </div>
-            <div>
-              <span className="font-semibold">level 1</span>: has done some classes in Cape Town.
-              If they&apos;re unsure, default to level 1.
+            <select
+              value={level}
+              onChange={(e) => setLevel(e.target.value as NewMemberPayload["level"])}
+              className="w-full px-4 py-3 rounded-xl border-2 border-text-dark/20 text-lg bg-white"
+            >
+              <option value="first timer">first timer</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+            </select>
+          </label>
+
+          {showLevelDescription && (
+            <div className="md:col-span-2 bg-pink-accent/10 border border-pink-accent/40 rounded-xl p-4 text-sm text-text-dark/90 space-y-2">
+              <div>
+                <span className="font-semibold italic">First Timer:</span> Has never done WCS or can&apos;t remember anything from way back when they did
+              </div>
+              <div>
+                <span className="font-semibold italic">Level 1:</span> Has done some classes locally, knows at least basic the sugar push and one type of pass. They&apos;re not yet comfortable with social dancing.
+              </div>
+              <div>
+                <span className="font-semibold italic">Level 2:</span> Comfortable with 5 basics and variations thereof, can social dance with a variety of levels and interested in being more musical, not only using the beat of the music.
+              </div>
+              <div>
+                <span className="font-semibold italic">International visitors:</span> If they have been frequently dancing WCS internationally for more than a year, they can join level 2 without approval. If it&apos;s less, ask a teacher for advice.
+              </div>
             </div>
-            <div>
-              <span className="font-semibold">level 2</span>: international dancer (dancing
-              frequently). If 6+ months: ask a teacher. If 1+ year: can join level 2.
-            </div>
-          </div>
-        </label>
+          )}
+        </div>
 
         {level === "2" && (
           <label className="space-y-2">
@@ -410,11 +544,35 @@ function AddNewPersonForm({
         )}
 
         {level === "first timer" && (
-          <div className="bg-yellow-accent/30 border-2 border-yellow-accent rounded-xl p-4">
-            <div className="font-semibold">First timer note</div>
+          <div className="bg-pink-accent/10 border-2 border-pink-accent/40 rounded-xl p-4">
+            <div className="font-semibold text-pink-accent">First timer note</div>
             <div className="text-sm text-text-dark/80">
-              Tim will take first timers through the basics — they should not join Level 1.
+              They should not join Level 1 tonight, they can from next week. This is to ensure some base level of skill
             </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between gap-3">
+          <div className="font-spartan font-semibold text-lg">Optional Additional Information</div>
+          <button
+            type="button"
+            onClick={() => setInfoAdditionalOpen((v) => !v)}
+            className={
+              "w-8 h-8 rounded-full border font-bold flex items-center justify-center transition-colors " +
+              (infoAdditionalOpen
+                ? "bg-yellow-accent/20 border-yellow-accent text-text-dark"
+                : "bg-white border-text-dark/20 text-text-dark/60 hover:text-text-dark")
+            }
+            aria-label="Additional information help"
+            title="Info"
+          >
+            i
+          </button>
+        </div>
+
+        {infoAdditionalOpen && (
+          <div className="bg-yellow-accent/20 rounded-xl border border-yellow-accent p-4 text-sm text-text-dark/90">
+            To help us focus our efforts on the right channels to grow this beautiful dance in Cape Town
           </div>
         )}
 
@@ -474,10 +632,63 @@ export default function CheckInClient({
   initialAuthed: boolean;
 }) {
   const [authed, setAuthed] = useState(initialAuthed);
+
+  const [selectedDateISO, setSelectedDateISO] = useState(() => getZaTodayISO());
+  const [selectedEvent, setSelectedEvent] = useState<CheckinEvent>(() =>
+    defaultEventForDateISO(getZaTodayISO())
+  );
+
   const [passcode, setPasscode] = useState("");
   const [showPasscode, setShowPasscode] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
+
+  // Keep date/event selection for this browser tab (session).
+  useEffect(() => {
+    try {
+      const ev = window.sessionStorage.getItem("checkin_selected_event");
+      const dt = window.sessionStorage.getItem("checkin_selected_date");
+
+      const hasValidDt = Boolean(dt && /^\d{4}-\d{2}-\d{2}$/.test(dt));
+      if (hasValidDt) {
+        setSelectedDateISO(dt as string);
+      }
+
+      if (ev && (CHECKIN_EVENT_OPTIONS as readonly string[]).includes(ev)) {
+        setSelectedEvent(ev as CheckinEvent);
+      } else if (hasValidDt) {
+        setSelectedEvent(defaultEventForDateISO(dt as string));
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem("checkin_selected_event", selectedEvent);
+      window.sessionStorage.setItem("checkin_selected_date", selectedDateISO);
+    } catch {
+      // ignore
+    }
+  }, [selectedEvent, selectedDateISO]);
+
+  // On the login screen, if the date changes and the event is still the default for the previous date,
+  // auto-pick the default event for the new date.
+  const prevDateISORef = useRef<string>(selectedDateISO);
+  useEffect(() => {
+    if (authed) return;
+
+    const prev = prevDateISORef.current;
+    if (prev === selectedDateISO) return;
+
+    const prevDefault = defaultEventForDateISO(prev);
+    if (selectedEvent === prevDefault) {
+      setSelectedEvent(defaultEventForDateISO(selectedDateISO));
+    }
+
+    prevDateISORef.current = selectedDateISO;
+  }, [authed, selectedDateISO, selectedEvent]);
 
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<Member[]>([]);
@@ -494,6 +705,7 @@ export default function CheckInClient({
       paid_via: string;
       paid_amount: number;
       comment: string;
+      rowNumber: number;
     }[]
   >([]);
 
@@ -529,8 +741,17 @@ export default function CheckInClient({
 
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [overrideComment, setOverrideComment] = useState("");
+  const [overrideAmount, setOverrideAmount] = useState("");
   const [overrideError, setOverrideError] = useState<string | null>(null);
   const [overriding, setOverriding] = useState(false);
+
+  const [undoOpen, setUndoOpen] = useState(false);
+  const [undoTarget, setUndoTarget] = useState<
+    { member_id: number; full_name: string; rowNumber?: number } | null
+  >(null);
+  const [undoReason, setUndoReason] = useState("");
+  const [undoError, setUndoError] = useState<string | null>(null);
+  const [undoing, setUndoing] = useState(false);
 
   const searchAbortRef = useRef<AbortController | null>(null);
 
@@ -597,7 +818,9 @@ export default function CheckInClient({
     (async () => {
       setCostsError(null);
       try {
-        const res = await fetchJson<CostsResponse>("/api/check-in/costs");
+        const res = await fetchJson<CostsResponse>(
+          `/api/check-in/costs?date=${encodeURIComponent(selectedDateISO)}`
+        );
         if (cancelled) return;
         setCosts(res);
       } catch (e) {
@@ -609,7 +832,7 @@ export default function CheckInClient({
     return () => {
       cancelled = true;
     };
-  }, [authed]);
+  }, [authed, selectedDateISO]);
 
   // Search members
   useEffect(() => {
@@ -649,6 +872,32 @@ export default function CheckInClient({
     return () => window.clearTimeout(handle);
   }, [authed, search, selected, step1Mode]);
 
+  const refreshCheckedInList = useCallback(async () => {
+    setCheckedInError(null);
+    setCheckedInLoading(true);
+    try {
+      const res = await fetchJson<{
+        items: {
+          member_id: number;
+          full_name: string;
+          type: string;
+          paid_via: string;
+          paid_amount: number;
+          comment: string;
+          rowNumber: number;
+        }[];
+      }>(
+        `/api/check-in/checked-in-today?date=${encodeURIComponent(selectedDateISO)}&event=${encodeURIComponent(selectedEvent)}`
+      );
+      setCheckedInItems(res.items);
+    } catch (e) {
+      setCheckedInError(e instanceof Error ? e.message : "Failed to load");
+      setCheckedInItems([]);
+    } finally {
+      setCheckedInLoading(false);
+    }
+  }, [selectedDateISO, selectedEvent]);
+
   async function selectMember(member: Member) {
     setSelected(member);
     setAlreadyCheckedIn(false);
@@ -668,10 +917,10 @@ export default function CheckInClient({
     try {
       const [freeEntryRes, checkedRes] = await Promise.all([
         fetchJson<FreeEntryResponse>(
-          `/api/check-in/free-entry?member_id=${member.member_id}`
+          `/api/check-in/free-entry?member_id=${member.member_id}&date=${encodeURIComponent(selectedDateISO)}`
         ).catch(() => ({ applies: false, today: costs?.today ?? "" } as const)),
         fetchJson<{ alreadyCheckedIn: boolean }>(
-          `/api/check-in/already-checked-in?member_id=${member.member_id}`
+          `/api/check-in/already-checked-in?member_id=${member.member_id}&date=${encodeURIComponent(selectedDateISO)}&event=${encodeURIComponent(selectedEvent)}`
         ).catch(() => ({ alreadyCheckedIn: false })),
       ]);
 
@@ -682,7 +931,7 @@ export default function CheckInClient({
     }
   }
 
-  function resetToSearch() {
+  const resetToSearch = useCallback(() => {
     setSelected(null);
     setAlreadyCheckedIn(false);
     setFreeEntry(null);
@@ -703,9 +952,22 @@ export default function CheckInClient({
 
     setOverrideOpen(false);
     setOverrideComment("");
+    setOverrideAmount("");
     setOverrideError(null);
     setOverriding(false);
-  }
+
+    setUndoOpen(false);
+    setUndoTarget(null);
+    setUndoReason("");
+    setUndoError(null);
+    setUndoing(false);
+  }, []);
+
+  // If the operator changes event/date, clear the current flow to avoid mixing contexts.
+  useEffect(() => {
+    if (!authed) return;
+    resetToSearch();
+  }, [authed, resetToSearch, selectedDateISO, selectedEvent]);
 
   async function doCheckIn() {
     if (!selected || !checkinEnabled) return;
@@ -713,7 +975,7 @@ export default function CheckInClient({
     setBanner(null);
     setCheckingIn(true);
     try {
-      const payload = effectiveFreeEntry?.applies
+      const payloadBase = effectiveFreeEntry?.applies
         ? isDoorVolunteer
           ? {
               member_id: selected.member_id,
@@ -741,6 +1003,12 @@ export default function CheckInClient({
             comment: comment.trim(),
             free_entry_reason: "",
           };
+
+      const payload = {
+        ...payloadBase,
+        date: selectedDateISO,
+        event: selectedEvent,
+      };
 
       await fetchJson<{ ok: true }>("/api/check-in/attendance", {
         method: "POST",
@@ -779,13 +1047,39 @@ export default function CheckInClient({
     }
   }
 
+  async function logout() {
+    try {
+      await fetchJson<{ ok: true }>("/api/check-in/logout", { method: "POST" });
+    } catch {
+      // ignore
+    }
+
+    setAuthed(false);
+    setPasscode("");
+    setShowPasscode(false);
+    setAuthError(null);
+    setBanner(null);
+    setCosts(null);
+    setCostsError(null);
+    setAddModalOpen(false);
+    resetToSearch();
+  }
+
   async function doOverrideCheckIn() {
     if (!selected) return;
 
     setOverrideError(null);
+
     const comment = overrideComment.trim();
     if (!comment) {
       setOverrideError("Comment is required for an override check-in.");
+      return;
+    }
+
+    const amountRaw = overrideAmount.trim();
+    const amount = amountRaw ? Number(amountRaw) : 0;
+    if (amountRaw && !Number.isFinite(amount)) {
+      setOverrideError("Amount must be a number.");
       return;
     }
 
@@ -798,14 +1092,17 @@ export default function CheckInClient({
           member_id: selected.member_id,
           type: "Override",
           paid_via: "Override",
-          paid_amount: 0,
+          paid_amount: amount,
           comment,
+          date: selectedDateISO,
+          event: selectedEvent,
         }),
       });
 
       setBanner({ kind: "ok", text: "Checked in successfully (override)." });
       setOverrideOpen(false);
       setOverrideComment("");
+      setOverrideAmount("");
       window.setTimeout(() => resetToSearch(), 900);
     } catch (e) {
       setOverrideError(e instanceof Error ? e.message : "Override failed");
@@ -814,14 +1111,107 @@ export default function CheckInClient({
     }
   }
 
+  function openUndoModal(target: {
+    member_id: number;
+    full_name: string;
+    rowNumber?: number;
+  }) {
+    setUndoTarget(target);
+    setUndoReason("");
+    setUndoError(null);
+    setUndoOpen(true);
+  }
+
+  async function submitUndo() {
+    if (!undoTarget) return;
+
+    setUndoError(null);
+    const reason = undoReason.trim();
+    if (!reason) {
+      setUndoError("Reason is required.");
+      return;
+    }
+
+    setUndoing(true);
+    try {
+      await fetchJson<{ ok: true }>("/api/check-in/revert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          member_id: undoTarget.member_id,
+          date: selectedDateISO,
+          event: selectedEvent,
+          revert_reason: reason,
+          rowNumber: undoTarget.rowNumber,
+        }),
+      });
+
+      setBanner({ kind: "ok", text: "Check-in undone." });
+      setUndoOpen(false);
+      setUndoTarget(null);
+      setUndoReason("");
+
+      if (selected?.member_id === undoTarget.member_id) {
+        setAlreadyCheckedIn(false);
+      }
+
+      if (step1Mode === "checkedIn") {
+        await refreshCheckedInList();
+      }
+    } catch (e) {
+      setUndoError(e instanceof Error ? e.message : "Undo failed");
+    } finally {
+      setUndoing(false);
+    }
+  }
+
   if (!authed) {
     return (
       <main className="min-h-screen flex items-center justify-center px-[5%] py-10">
         <div className="w-full max-w-[520px] bg-white/70 border border-text-dark/10 rounded-2xl p-6 shadow-lg">
-          <h1 className="font-spartan font-semibold text-2xl mb-2">Check-in</h1>
-          <p className="text-text-dark/70 mb-6">
-            Enter the passcode to access the welcoming committee check-in.
-          </p>
+          <div className="flex flex-col items-center text-center mb-6">
+            <Image
+              src="/images/WCS CT Logo black.png"
+              alt="WCS Cape Town"
+              width={320}
+              height={80}
+              priority
+              className="h-20 w-auto"
+            />
+            <div className="font-spartan font-bold text-pink-accent mt-2">
+              Backend
+            </div>
+          </div>
+
+          <h1 className="font-spartan font-semibold text-2xl mb-2">Log in</h1>
+          <p className="text-text-dark/70 mb-6">Log in to Check-in portal</p>
+
+          <div className="grid grid-cols-1 gap-4 mb-4">
+            <label className="space-y-2 block">
+              <div className="font-semibold">Event</div>
+              <select
+                value={selectedEvent}
+                onChange={(e) => setSelectedEvent(e.target.value as CheckinEvent)}
+                className="w-full px-4 py-3 rounded-xl border-2 border-text-dark/20 text-lg bg-white"
+              >
+                {CHECKIN_EVENT_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="space-y-2 block">
+              <div className="font-semibold">Date</div>
+              <input
+                type="date"
+                value={selectedDateISO}
+                onChange={(e) => setSelectedDateISO(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border-2 border-text-dark/20 text-lg bg-white"
+              />
+            </label>
+          </div>
 
           <label className="space-y-2 block mb-4">
             <div className="font-semibold">Passcode</div>
@@ -851,10 +1241,10 @@ export default function CheckInClient({
           <button
             type="button"
             onClick={submitPasscode}
-            disabled={authLoading || !passcode}
+            disabled={authLoading || !passcode || !selectedDateISO || !selectedEvent}
             className={
               "w-full py-4 rounded-xl font-spartan font-semibold text-xl border-2 transition-colors " +
-              (authLoading || !passcode
+              (authLoading || !passcode || !selectedDateISO || !selectedEvent
                 ? "opacity-50 border-text-dark/20"
                 : "border-pink-accent bg-pink-accent text-white hover:bg-pink-accent/90")
             }
@@ -871,21 +1261,33 @@ export default function CheckInClient({
       <div className="max-w-[980px] mx-auto">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div>
-            <h1 className="font-spartan font-semibold text-3xl">Welcoming committee check-in</h1>
+            <h1 className="font-spartan font-semibold text-3xl">WCS Cape Town Check-in Portal</h1>
             <div className="text-text-dark/70">
-              {costs?.today ? `Today (Cape Town): ${costs.today}` : ""}
+              {selectedEvent} • {costs?.today ?? selectedDateISO}
             </div>
           </div>
 
-          {selected && (
-            <button
-              type="button"
-              onClick={resetToSearch}
-              className="px-4 py-3 rounded-xl border-2 border-text-dark/20 bg-white text-text-dark font-semibold"
-            >
-              New person
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {!selected && !addModalOpen && (
+              <button
+                type="button"
+                onClick={logout}
+                className="px-4 py-3 rounded-xl border-2 border-text-dark/20 bg-white text-text-dark font-semibold"
+              >
+                Logout
+              </button>
+            )}
+
+            {selected && (
+              <button
+                type="button"
+                onClick={resetToSearch}
+                className="px-4 py-3 rounded-xl border-2 border-text-dark/20 bg-white text-text-dark font-semibold"
+              >
+                Go Back
+              </button>
+            )}
+          </div>
         </div>
 
         {banner && (
@@ -915,34 +1317,22 @@ export default function CheckInClient({
                       : "border-text-dark/20 bg-white")
                   }
                 >
-                  Search
+                  Check in existing member
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setAddModalOpen(true)}
+                  className="px-4 py-3 rounded-xl border-2 border-purple-accent bg-purple-accent text-white font-semibold"
+                >
+                  Add new person
+                </button>
+
                 <button
                   type="button"
                   onClick={async () => {
                     setStep1Mode("checkedIn");
-                    setCheckedInError(null);
-                    setCheckedInLoading(true);
-                    try {
-                      const res = await fetchJson<{
-                        items: {
-                          member_id: number;
-                          full_name: string;
-                          type: string;
-                          paid_via: string;
-                          paid_amount: number;
-                          comment: string;
-                        }[];
-                      }>("/api/check-in/checked-in-today");
-                      setCheckedInItems(res.items);
-                    } catch (e) {
-                      setCheckedInError(
-                        e instanceof Error ? e.message : "Failed to load"
-                      );
-                      setCheckedInItems([]);
-                    } finally {
-                      setCheckedInLoading(false);
-                    }
+                    await refreshCheckedInList();
                   }}
                   className={
                     "px-4 py-3 rounded-xl border-2 font-semibold " +
@@ -951,17 +1341,9 @@ export default function CheckInClient({
                       : "border-text-dark/20 bg-white")
                   }
                 >
-                  Checked in tonight
+                  Who&apos;s checked in
                 </button>
               </div>
-
-              <button
-                type="button"
-                onClick={() => setAddModalOpen(true)}
-                className="px-5 py-4 rounded-xl border-2 border-purple-accent bg-purple-accent text-white font-spartan font-semibold text-lg"
-              >
-                Add new person
-              </button>
             </div>
 
             {step1Mode === "search" && (
@@ -1009,7 +1391,9 @@ export default function CheckInClient({
 
             {step1Mode === "checkedIn" && (
               <div>
-                <div className="font-semibold mb-2">Checked in tonight</div>
+                <div className="font-semibold mb-2">
+                  Who&apos;s checked in — {selectedEvent} • {selectedDateISO}
+                </div>
 
                 {checkedInLoading && (
                   <div className="text-text-dark/70">Loading…</div>
@@ -1043,13 +1427,30 @@ export default function CheckInClient({
                                 : "border-text-dark/10");
 
                     return (
-                      <div key={`${i.member_id}-${i.full_name}`} className={rowClass}>
+                      <div key={i.rowNumber} className={rowClass}>
                         <div className="flex items-center justify-between gap-3">
-                          <div className="font-semibold truncate">{i.full_name}</div>
-                          <div className="text-sm text-text-dark/70 whitespace-nowrap">
-                            <span className="font-semibold">{i.type}</span>
-                            {i.paid_amount > 0 ? ` • ${formatZar(i.paid_amount)}` : ""}
-                            {i.paid_via ? ` • ${i.paid_via}` : ""}
+                          <div className="font-semibold truncate min-w-0">{i.full_name}</div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-sm text-text-dark/70 whitespace-nowrap">
+                              <span className="font-semibold">{i.type}</span>
+                              {i.paid_amount > 0 ? ` • ${formatZar(i.paid_amount)}` : ""}
+                              {i.paid_via ? ` • ${i.paid_via}` : ""}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                openUndoModal({
+                                  member_id: i.member_id,
+                                  full_name: i.full_name,
+                                  rowNumber: i.rowNumber,
+                                })
+                              }
+                              className="px-3 py-2 rounded-lg border border-text-dark/20 bg-white text-text-dark/70 hover:text-text-dark font-semibold"
+                              title="Undo check in"
+                              aria-label={`Undo check-in for ${i.full_name}`}
+                            >
+                              ↩︎
+                            </button>
                           </div>
                         </div>
                         {i.comment && (
@@ -1082,8 +1483,20 @@ export default function CheckInClient({
                 </div>
 
                 {alreadyCheckedIn && (
-                  <div className="mt-3 bg-pink-accent/10 border border-pink-accent/40 rounded-xl px-4 py-3 font-semibold">
-                    Member already checked in
+                  <div className="mt-3 bg-pink-accent/10 border border-pink-accent/40 rounded-xl px-4 py-3 font-semibold flex items-center justify-between gap-3">
+                    <div>Member already checked in</div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openUndoModal({
+                          member_id: selected.member_id,
+                          full_name: selected.full_name,
+                        })
+                      }
+                      className="text-sm underline text-pink-accent hover:text-text-dark font-semibold whitespace-nowrap"
+                    >
+                      Undo check in
+                    </button>
                   </div>
                 )}
               </div>
@@ -1103,10 +1516,10 @@ export default function CheckInClient({
             </div>
 
             {selected.level === "First timer" && (
-              <div className="mt-4 bg-yellow-accent/30 border-2 border-yellow-accent rounded-xl p-4">
-                <div className="font-semibold">First timer</div>
+              <div className="mt-4 bg-pink-accent/10 border-2 border-pink-accent/40 rounded-xl p-4">
+                <div className="font-semibold text-pink-accent">First timer</div>
                 <div className="text-text-dark/80">
-                  Tim will take first timers through the basics — they should not join Level 1.
+                  They should not join Level 1 tonight, they can from next week. This is to ensure some base level of skill
                 </div>
               </div>
             )}
@@ -1117,7 +1530,7 @@ export default function CheckInClient({
           <div className="bg-white/60 rounded-2xl border border-text-dark/10 p-5">
             <div className="font-semibold mb-2">Step 2 — Entry rules & payment</div>
 
-            {freeEntryLoading && <div className="text-text-dark/70">Checking free entry…</div>}
+            {freeEntryLoading && <div className="text-text-dark/70">Loading…</div>}
 
             {!freeEntryLoading && effectiveFreeEntry?.applies && (
               <>
@@ -1224,9 +1637,6 @@ export default function CheckInClient({
                   </div>
                 )}
 
-                <div className="text-text-dark/70 mb-3">
-                  Choose entry type and payment.
-                </div>
 
                 {selected && normalizePensionerStudent(selected.pensionerStudent) && (
                   <div
@@ -1254,7 +1664,6 @@ export default function CheckInClient({
                       selected={selectedType === t}
                       onClick={() => {
                         setSelectedType(t);
-                        setSelectedPaidVia(null);
                       }}
                       disabled={!costs}
                     >
@@ -1268,29 +1677,30 @@ export default function CheckInClient({
                   ))}
                 </div>
 
+                <div className="bg-white rounded-xl border border-text-dark/10 p-4 mb-4">
+                  <div className="font-semibold mb-2">Payment method</div>
+                  <div className="flex gap-3 flex-wrap">
+                    <PillButton
+                      selected={selectedPaidVia === "Cash"}
+                      onClick={() => setSelectedPaidVia("Cash")}
+                    >
+                      Cash
+                    </PillButton>
+                    <PillButton
+                      selected={selectedPaidVia === "Yoco"}
+                      onClick={() => setSelectedPaidVia("Yoco")}
+                    >
+                      Yoco
+                    </PillButton>
+                  </div>
+                </div>
+
                 {selectedType && (
                   <div className="bg-white rounded-xl border border-text-dark/10 p-4">
-                    <div className="flex items-center justify-between gap-3 flex-wrap">
-                      <div>
-                        <div className="text-text-dark/70 text-sm">Amount</div>
-                        <div className="font-spartan font-semibold text-3xl">
-                          {formatZar(payableAmount)}
-                        </div>
-                      </div>
-
-                      <div className="flex gap-3">
-                        <PillButton
-                          selected={selectedPaidVia === "Cash"}
-                          onClick={() => setSelectedPaidVia("Cash")}
-                        >
-                          Cash
-                        </PillButton>
-                        <PillButton
-                          selected={selectedPaidVia === "Yoco"}
-                          onClick={() => setSelectedPaidVia("Yoco")}
-                        >
-                          Yoco
-                        </PillButton>
+                    <div>
+                      <div className="text-text-dark/70 text-sm">Amount</div>
+                      <div className="font-spartan font-semibold text-3xl">
+                        {formatZar(payableAmount)}
                       </div>
                     </div>
 
@@ -1323,6 +1733,12 @@ export default function CheckInClient({
                 </label>
               )}
 
+              {!effectiveFreeEntry?.applies && !alreadyCheckedIn && (
+                <div className="text-center text-pink-accent font-semibold mb-3">
+                  Once payment is made, you may check in the person
+                </div>
+              )}
+
               <button
                 type="button"
                 onClick={doCheckIn}
@@ -1349,48 +1765,47 @@ export default function CheckInClient({
                 </div>
               )}
 
-              <div className="text-sm text-text-dark/70 mt-2">
-                {alreadyCheckedIn
-                  ? "Member already checked in."
-                  : effectiveFreeEntry?.applies
-                    ? isDoorVolunteer
-                      ? "Enter a custom amount. Select Cash/Yoco if needed (optional for R0)."
-                      : String(effectiveFreeEntry.entry_type)
-                            .toLowerCase()
-                            .includes("monthly")
-                        ? "You can check them in without payment."
-                        : "If the details above are correct, you can check them in now."
-                    : "Once payment is made, select Cash or Yoco to enable check-in."}
-              </div>
-
               {!checkinEnabled && !freeEntryLoading && (
-                <div className="mt-3">
+                <div className="mt-4">
+                  <div className="text-sm text-text-dark/60 mb-2">
+                    Only use override if something goes wrong.
+                  </div>
+
                   <button
                     type="button"
                     onClick={() => {
                       setOverrideError(null);
                       setOverrideOpen((v) => !v);
                     }}
-                    className="w-full md:w-auto px-6 py-4 rounded-2xl font-spartan font-semibold text-xl border-2 border-pink-accent bg-white text-text-dark"
+                    className={
+                      "w-full md:w-auto px-5 py-3 rounded-xl font-semibold border-2 transition-colors " +
+                      (overrideOpen
+                        ? "border-text-dark/30 bg-white text-text-dark"
+                        : "border-text-dark/20 bg-white/50 text-text-dark/70 hover:text-text-dark")
+                    }
                   >
                     {overrideOpen ? "Close override" : "Override check-in"}
                   </button>
-                  <div className="text-xs text-text-dark/70 mt-2">
-                    Use only if something goes wrong. A comment is required.
-                  </div>
 
                   {overrideOpen && (
                     <div className="mt-3 bg-white rounded-2xl border border-text-dark/10 p-4 max-w-[640px]">
                       <div className="font-spartan font-semibold text-lg mb-2">
                         Override check-in
                       </div>
-                      <div className="text-text-dark/70 text-sm mb-3">
-                        This will log an override check-in for{" "}
-                        <span className="font-semibold">
-                          {selected?.full_name ?? ""}
-                        </span>
-                        . Please explain why.
+                      <div className="text-text-dark/70 text-sm mb-4">
+                        Above options does not apply to this person. Please describe the scenario below to check in the member with custom rules
                       </div>
+
+                      <label className="space-y-2 block mb-4">
+                        <div className="font-semibold">Amount (Optional)</div>
+                        <input
+                          value={overrideAmount}
+                          onChange={(e) => setOverrideAmount(e.target.value)}
+                          inputMode="decimal"
+                          className="w-full px-4 py-3 rounded-xl border-2 border-text-dark/20 text-lg bg-white"
+                          placeholder="0"
+                        />
+                      </label>
 
                       <label className="space-y-2 block mb-3">
                         <div className="font-semibold">Comment (required)</div>
@@ -1433,7 +1848,60 @@ export default function CheckInClient({
           open={addModalOpen}
           onClose={() => setAddModalOpen(false)}
           onCreated={(m) => selectMember(m)}
+          dateISO={selectedDateISO}
+          event={selectedEvent}
         />
+
+        <Modal
+          title="Undo check in"
+          open={undoOpen}
+          onClose={() => {
+            setUndoOpen(false);
+            setUndoTarget(null);
+            setUndoReason("");
+            setUndoError(null);
+          }}
+        >
+          <div className="space-y-4">
+            <div className="text-text-dark/80">
+              Undo check-in for{" "}
+              <span className="font-semibold">
+                {undoTarget?.full_name ?? ""}
+              </span>
+              ?
+            </div>
+
+            <label className="space-y-2 block">
+              <div className="font-semibold">Reason (required)</div>
+              <textarea
+                value={undoReason}
+                onChange={(e) => setUndoReason(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border-2 border-text-dark/20 text-lg bg-white"
+                rows={3}
+              />
+            </label>
+
+            {undoError && (
+              <div className="bg-pink-accent/10 border border-pink-accent/40 rounded-xl p-4 text-text-dark">
+                {undoError}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={submitUndo}
+              disabled={undoing || !undoReason.trim()}
+              className={
+                "w-full py-4 rounded-xl font-spartan font-semibold text-xl border-2 transition-colors " +
+                (undoing || !undoReason.trim()
+                  ? "opacity-50 border-text-dark/20"
+                  : "border-pink-accent bg-pink-accent text-white hover:bg-pink-accent/90")
+              }
+            >
+              {undoing ? "Undoing…" : "Undo check in"}
+            </button>
+          </div>
+        </Modal>
       </div>
     </main>
   );

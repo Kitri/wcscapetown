@@ -4,14 +4,15 @@ import Image from "next/image";
 import Link from "next/link";
 
 const WEEKENDER_SOLD_OUT = {
-  blizzardWeekend: false,
-  earlyWeekend: false,
-  earlyDay: false,
-  normalWeekend: false,
-  normalDay: false,
-  weekendOfWeekend: false,
-  weekendOfDay: false,
+  nowWeekend: false,
+  nowNowWeekend: false,
+  nowNowDay: false,
+  justNowWeekend: false,
+  justNowDay: false,
+  aiTogWeekend: false,
+  aiTogDay: false,
   partyPass: false,
+  spotlightCritique: false,
 } as const;
 
 function PriceCell({
@@ -91,7 +92,7 @@ export default function Weekender() {
               <div className="bg-cloud-dancer rounded-2xl overflow-hidden border-2 border-text-dark/10">
                 <div className="relative w-full pb-[125%]">
                   <Image
-                    src="/images/pros/Igor_Fernanda.jpg"
+                    src="/images/pros/Igor_Fernanda2.jpg"
                     alt="Igor Pitangui & Fernanda Dubiel"
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -121,7 +122,7 @@ export default function Weekender() {
               <div className="bg-cloud-dancer rounded-2xl overflow-hidden border-2 border-text-dark/10">
                 <div className="relative w-full pb-[125%]">
                   <Image
-                    src="/images/pros/harold_baker.jpg"
+                    src="/images/pros/harold2.jpg"
                     alt="Harold Baker"
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -242,6 +243,163 @@ export default function Weekender() {
           </div>
         </section>
 
+        {/* Booking & Pricing */}
+        <section id="booking" className="px-[5%] py-[60px] bg-cloud-dancer">
+          <div className="max-w-[1100px] mx-auto">
+            <h2 className="font-spartan font-semibold text-[32px] md:text-[40px] text-center mb-4">
+              Book Your Pass
+            </h2>
+            <p className="text-center text-lg text-text-dark/70 mb-10 max-w-[700px] mx-auto">
+              To book, email us or message us via the WhatsApp community. We&apos;ll confirm availability and how to secure your spot.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12">
+              <a
+                href="mailto:hello@wcscapetown.co.za?subject=WCS%20Weekender%20Booking"
+                className="inline-block bg-pink-accent text-white px-6 py-3 rounded-lg font-semibold hover:bg-pink-accent/90 hover:shadow-xl transition-all"
+              >
+                Email to Book
+              </a>
+              <Link
+                href="/contact"
+                className="inline-block bg-white text-text-dark px-6 py-3 rounded-lg font-semibold border-2 border-text-dark/10 hover:border-text-dark/20 hover:shadow-lg transition-all"
+              >
+                Other contact options
+              </Link>
+            </div>
+
+            {/* Pass summary */}
+            <div className="sm:hidden text-xs text-text-dark/60 mb-2 text-center">
+              Swipe left/right to compare passes →
+            </div>
+            <div className="relative bg-white rounded-xl border-2 border-text-dark/10 overflow-hidden mb-12">
+              <div className="overflow-x-auto pb-2">
+                <div className="min-w-[760px] grid grid-cols-[180px_1fr_1fr_1fr]">
+                  <div className="p-4 bg-text-dark/5 font-semibold">Includes</div>
+                  <div className="p-4 bg-pink-accent/10 font-semibold text-center">Full Weekend Pass</div>
+                  <div className="p-4 bg-purple-accent/10 font-semibold text-center">Day Pass</div>
+                  <div className="p-4 bg-yellow-accent/10 font-semibold text-center">Party Pass</div>
+                  <div className="p-4 border-t text-sm text-text-dark/70">Friday pre-party</div>
+                  <div className="p-4 border-t text-center">Included</div>
+                  <div className="p-4 border-t text-center">Add-on (R200)</div>
+                  <div className="p-4 border-t text-center">Included</div>
+                  <div className="p-4 border-t text-sm text-text-dark/70">Evening parties</div>
+                  <div className="p-4 border-t text-center">Saturday + Sunday</div>
+                  <div className="p-4 border-t text-center">One night (your day)</div>
+                  <div className="p-4 border-t text-center">Friday + Saturday + Sunday</div>
+                  <div className="p-4 border-t text-sm text-text-dark/70">Workshops</div>
+                  <div className="p-4 border-t text-center">Saturday + Sunday (8 hours)</div>
+                  <div className="p-4 border-t text-center">One day (4 hours)</div>
+                  <div className="p-4 border-t text-center text-text-dark/40">—</div>
+                  <div className="p-4 border-t text-sm text-text-dark/70">Community lunch with pros (Saturday)</div>
+                  <div className="p-4 border-t text-center">Included</div>
+                  <div className="p-4 border-t text-center">Included (Saturday only)</div>
+                  <div className="p-4 border-t text-center text-text-dark/40">—</div>
+                </div>
+              </div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent sm:hidden" />
+            </div>
+
+            {/* Price tiers */}
+            <div className="sm:hidden text-xs text-text-dark/60 mb-2 text-center">
+              Swipe left/right to see all pricing columns →
+            </div>
+            <div className="relative">
+              <div className="overflow-x-auto pb-2">
+                <div className="min-w-[760px] bg-white rounded-xl border-2 border-text-dark/10 overflow-hidden">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr>
+                        <th className="p-4 bg-text-dark/5 font-semibold text-left">Pricing tier</th>
+                        <th className="p-4 bg-pink-accent/10 font-semibold text-center">Full Weekend Pass</th>
+                        <th className="p-4 bg-purple-accent/10 font-semibold text-center">Day Pass</th>
+                        <th className="p-4 bg-yellow-accent/10 font-semibold text-center">Party Pass</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-t border-text-dark/10">
+                        <td className="p-4">
+                          <p className="font-semibold">Now</p>
+                          <p className="text-xs text-text-dark/60">Literally right now, urgent, grab it immediately</p>
+                          <p className="text-xs text-text-dark/60">24 hours • limited to 10 tickets • opens 19 March</p>
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={1600} isSoldOut={soldOut.nowWeekend} />
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={null} isSoldOut={false} />
+                        </td>
+                        <td className="p-4 text-center align-top" rowSpan={4}>
+                          <div className="flex flex-col items-center gap-2">
+                            <PriceCell price={800} isSoldOut={soldOut.partyPass} />
+                            <p className="text-xs text-text-dark/60">Static price (not linked to tiers)</p>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr className="border-t border-text-dark/10">
+                        <td className="p-4">
+                          <p className="font-semibold">Now-now</p>
+                          <p className="text-xs text-text-dark/60">Classic SA “soonish but not really now”</p>
+                          <p className="text-xs text-text-dark/60">Until 28 Feb • 30 tickets or 9 March</p>
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={1800} isSoldOut={soldOut.nowNowWeekend} />
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={1000} isSoldOut={soldOut.nowNowDay} />
+                        </td>
+                      </tr>
+                      <tr className="border-t border-text-dark/10">
+                        <td className="p-4">
+                          <p className="font-semibold">Just-now</p>
+                          <p className="text-xs text-text-dark/60">The famous “eventually, maybe later today, who knows”</p>
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={2200} isSoldOut={soldOut.justNowWeekend} />
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={1200} isSoldOut={soldOut.justNowDay} />
+                        </td>
+                      </tr>
+                      <tr className="border-t border-text-dark/10">
+                        <td className="p-4">
+                          <p className="font-semibold">Ai tog</p>
+                          <p className="text-xs text-text-dark/60">“Ai-tog, I should&apos;ve bought earlier” • on the day</p>
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={2400} isSoldOut={soldOut.aiTogWeekend} />
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={1400} isSoldOut={soldOut.aiTogDay} />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent sm:hidden" />
+            </div>
+
+            <div className="mt-8 bg-white rounded-xl p-6 md:p-8 border-2 border-yellow-accent/30">
+              <h3 className="font-spartan font-semibold text-2xl mb-2 text-pink-accent">Spotlight Critique (Add-on)</h3>
+              <p className="text-text-dark/80">
+                R300 per couple • limited to 8 couples • not included in any pass price.
+              </p>
+              <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+                <p className="text-sm text-text-dark/70">Booked during the dedicated Saturday slot with Harold & Kristen.</p>
+                <div className="text-lg">
+                  <span className="text-text-dark/70 mr-2">Price:</span>
+                  <PriceCell price={300} isSoldOut={soldOut.spotlightCritique} />
+                </div>
+              </div>
+            </div>
+
+            <p className="text-sm text-text-dark/60 mt-4 text-center">
+              Prices are in ZAR. Availability is limited — if a tier sells out, the next tier applies.
+            </p>
+          </div>
+        </section>
+
         {/* Schedule */}
         <section className="px-[5%] py-[60px] bg-white">
           <div className="max-w-[1100px] mx-auto">
@@ -305,7 +463,7 @@ export default function Weekender() {
                     <div className="font-semibold text-sm text-text-dark/70 flex items-center">10:00-11:00</div>
                     <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm border-2 border-yellow-accent/30">
                       <p className="font-semibold">Spotlight Critique</p>
-                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen (Optional add-on, limited to 10 couples)</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen (R300 per couple • optional add-on • limited to 8 couples)</p>
                     </div>
                     <div className="bg-text-dark/5 rounded-lg p-3 flex items-center justify-center text-xs text-text-dark/50">Warm-up / practice</div>
                   </div>
@@ -540,147 +698,6 @@ export default function Weekender() {
                 Private lessons can be shared. Book as a couple and split the time (and cost). Limited slots available — see the schedule for the dedicated private lesson windows.
               </p>
             </div>
-          </div>
-        </section>
-
-        {/* Booking & Pricing */}
-        <section id="booking" className="px-[5%] py-[60px] bg-cloud-dancer">
-          <div className="max-w-[1100px] mx-auto">
-            <h2 className="font-spartan font-semibold text-[32px] md:text-[40px] text-center mb-4">
-              Book Your Pass
-            </h2>
-            <p className="text-center text-lg text-text-dark/70 mb-10 max-w-[700px] mx-auto">
-              To book, email us or message us via the WhatsApp community. We&apos;ll confirm availability and how to secure your spot.
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12">
-              <a
-                href="mailto:hello@wcscapetown.co.za?subject=WCS%20Weekender%20Booking"
-                className="inline-block bg-pink-accent text-white px-6 py-3 rounded-lg font-semibold hover:bg-pink-accent/90 hover:shadow-xl transition-all"
-              >
-                Email to Book
-              </a>
-              <Link
-                href="/contact"
-                className="inline-block bg-white text-text-dark px-6 py-3 rounded-lg font-semibold border-2 border-text-dark/10 hover:border-text-dark/20 hover:shadow-lg transition-all"
-              >
-                Other contact options
-              </Link>
-            </div>
-
-            {/* Pass summary */}
-            <div className="sm:hidden text-xs text-text-dark/60 mb-2 text-center">
-              Swipe left/right to compare passes →
-            </div>
-            <div className="relative bg-white rounded-xl border-2 border-text-dark/10 overflow-hidden mb-12">
-              <div className="overflow-x-auto pb-2">
-                <div className="min-w-[760px] grid grid-cols-[180px_1fr_1fr_1fr]">
-                  <div className="p-4 bg-text-dark/5 font-semibold">Includes</div>
-                  <div className="p-4 bg-pink-accent/10 font-semibold text-center">Full Weekend Pass</div>
-                  <div className="p-4 bg-purple-accent/10 font-semibold text-center">Day Pass</div>
-                  <div className="p-4 bg-yellow-accent/10 font-semibold text-center">Party Pass</div>
-                  <div className="p-4 border-t text-sm text-text-dark/70">Friday pre-party</div>
-                  <div className="p-4 border-t text-center">Included</div>
-                  <div className="p-4 border-t text-center">Add-on (R200)</div>
-                  <div className="p-4 border-t text-center">Included</div>
-                  <div className="p-4 border-t text-sm text-text-dark/70">Evening parties</div>
-                  <div className="p-4 border-t text-center">Saturday + Sunday</div>
-                  <div className="p-4 border-t text-center">One night (your day)</div>
-                  <div className="p-4 border-t text-center">Friday + Saturday + Sunday</div>
-                  <div className="p-4 border-t text-sm text-text-dark/70">Workshops</div>
-                  <div className="p-4 border-t text-center">Saturday + Sunday (8 hours)</div>
-                  <div className="p-4 border-t text-center">One day (4 hours)</div>
-                  <div className="p-4 border-t text-center text-text-dark/40">—</div>
-                  <div className="p-4 border-t text-sm text-text-dark/70">Community lunch with pros (Saturday)</div>
-                  <div className="p-4 border-t text-center">Included</div>
-                  <div className="p-4 border-t text-center">Included (Saturday only)</div>
-                  <div className="p-4 border-t text-center text-text-dark/40">—</div>
-                </div>
-              </div>
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent sm:hidden" />
-            </div>
-
-            {/* Price tiers */}
-            <div className="sm:hidden text-xs text-text-dark/60 mb-2 text-center">
-              Swipe left/right to see all pricing columns →
-            </div>
-            <div className="relative">
-              <div className="overflow-x-auto pb-2">
-                <div className="min-w-[760px] bg-white rounded-xl border-2 border-text-dark/10 overflow-hidden">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr>
-                        <th className="p-4 bg-text-dark/5 font-semibold text-left">Pricing tier</th>
-                        <th className="p-4 bg-pink-accent/10 font-semibold text-center">Full Weekend Pass</th>
-                        <th className="p-4 bg-purple-accent/10 font-semibold text-center">Day Pass</th>
-                        <th className="p-4 bg-yellow-accent/10 font-semibold text-center">Party Pass</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr className="border-t border-text-dark/10">
-                        <td className="p-4">
-                          <p className="font-semibold">Blizzard Bird</p>
-                          <p className="text-xs text-text-dark/60">24 hours • limited to 10</p>
-                        </td>
-                        <td className="p-4 text-center">
-                          <PriceCell price={1600} isSoldOut={soldOut.blizzardWeekend} />
-                        </td>
-                        <td className="p-4 text-center">
-                          <PriceCell price={null} isSoldOut={false} />
-                        </td>
-                        <td className="p-4 text-center align-top" rowSpan={4}>
-                          <div className="flex flex-col items-center gap-2">
-                            <PriceCell price={600} isSoldOut={soldOut.partyPass} />
-                            <p className="text-xs text-text-dark/60">Single price</p>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr className="border-t border-text-dark/10">
-                        <td className="p-4">
-                          <p className="font-semibold">Early Bird</p>
-                          <p className="text-xs text-text-dark/60">Limited to 30 full passes and 10 day passes</p>
-                        </td>
-                        <td className="p-4 text-center">
-                          <PriceCell price={1800} isSoldOut={soldOut.earlyWeekend} />
-                        </td>
-                        <td className="p-4 text-center">
-                          <PriceCell price={1000} isSoldOut={soldOut.earlyDay} />
-                        </td>
-                      </tr>
-                      <tr className="border-t border-text-dark/10">
-                        <td className="p-4">
-                          <p className="font-semibold">Normal</p>
-                          <p className="text-xs text-text-dark/60">Until sold out</p>
-                        </td>
-                        <td className="p-4 text-center">
-                          <PriceCell price={2000} isSoldOut={soldOut.normalWeekend} />
-                        </td>
-                        <td className="p-4 text-center">
-                          <PriceCell price={1100} isSoldOut={soldOut.normalDay} />
-                        </td>
-                      </tr>
-                      <tr className="border-t border-text-dark/10">
-                        <td className="p-4">
-                          <p className="font-semibold">Weekend of (March 20–22)</p>
-                          <p className="text-xs text-text-dark/60">Weekend pass available on March 20 only</p>
-                        </td>
-                        <td className="p-4 text-center">
-                          <PriceCell price={2200} isSoldOut={soldOut.weekendOfWeekend} />
-                        </td>
-                        <td className="p-4 text-center">
-                          <PriceCell price={1300} isSoldOut={soldOut.weekendOfDay} />
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-              <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent sm:hidden" />
-            </div>
-
-            <p className="text-sm text-text-dark/60 mt-4 text-center">
-              Prices are in ZAR. Availability is limited — if a tier sells out, the next tier applies.
-            </p>
           </div>
         </section>
 

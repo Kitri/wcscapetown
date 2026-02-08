@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { appendToSheet, getSheetValues } from "@/lib/googleSheets";
-import { formatZaDateISO } from "@/lib/zaDate";
+import { formatZaDateISO, parseZaDateISO } from "@/lib/zaDate";
 import { CHECKIN_EVENT_NAME, CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
 
@@ -158,6 +158,8 @@ type NewMemberPayload = {
   level2Reason?: "International experience" | "Teacher approval received";
   howFoundUs?: string;
   visitor?: boolean;
+  date?: string; // YYYY-MM-DD (Cape Town)
+  event?: string;
 };
 
 export async function POST(request: Request) {
@@ -207,7 +209,20 @@ export async function POST(request: Request) {
     }
 
     const nextId = await getNextMemberId();
-    const today = formatZaDateISO();
+
+    const dateISOParam = (body.date ?? "").trim();
+    const date = dateISOParam ? parseZaDateISO(dateISOParam) : null;
+
+    if (dateISOParam && !date) {
+      return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+    }
+
+    const event = (body.event ?? "").trim() || CHECKIN_EVENT_NAME;
+    if (event.length > 80) {
+      return NextResponse.json({ error: "Invalid event" }, { status: 400 });
+    }
+
+    const today = dateISOParam || formatZaDateISO(date ?? undefined);
 
     const role = mapRoleToSheet(body.role ?? "I don't know");
     const level = mapLevelToSheet(body.level ?? "1");
@@ -223,7 +238,7 @@ export async function POST(request: Request) {
       "", // pensioner/student (leave blank)
       today, // first_date
       "", // last_date (leave blank on creation)
-      CHECKIN_EVENT_NAME,
+      event,
       contactNumber,
       email,
       body.feedbackConsent ? "Yes" : "",

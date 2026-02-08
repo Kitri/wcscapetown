@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { appendToSheet } from "@/lib/googleSheets";
-import { formatZaDateISO } from "@/lib/zaDate";
+import { formatZaDateISO, parseZaDateISO } from "@/lib/zaDate";
 import {
   CHECKIN_EVENT_NAME,
   CHECKIN_SPREADSHEET_ID,
@@ -14,6 +14,8 @@ type Payload = {
   paid_amount?: number;
   comment?: string;
   free_entry_reason?: string;
+  date?: string; // YYYY-MM-DD (Cape Town)
+  event?: string;
 };
 
 export async function POST(request: Request) {
@@ -39,14 +41,26 @@ export async function POST(request: Request) {
     const comment = (body.comment ?? "").trim();
     const free_entry_reason = (body.free_entry_reason ?? "").trim();
 
-    const today = formatZaDateISO();
+    const dateISOParam = (body.date ?? "").trim();
+    const date = dateISOParam ? parseZaDateISO(dateISOParam) : null;
+
+    if (dateISOParam && !date) {
+      return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+    }
+
+    const event = (body.event ?? "").trim() || CHECKIN_EVENT_NAME;
+    if (event.length > 80) {
+      return NextResponse.json({ error: "Invalid event" }, { status: 400 });
+    }
+
+    const today = dateISOParam || formatZaDateISO(date ?? undefined);
 
     // Append optional columns: comment (G) + free_entry_reason (H)
     await appendToSheet(CHECKIN_SPREADSHEET_ID, "Attendance!A:H", [
       [
         member_id,
         today,
-        CHECKIN_EVENT_NAME,
+        event,
         paid_via,
         paid_amount,
         type,

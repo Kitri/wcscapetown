@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSheetValues } from "@/lib/googleSheets";
-import { isZaFirstMonday, formatZaDateISO } from "@/lib/zaDate";
+import { isZaFirstMonday, formatZaDateISO, parseZaDateISO } from "@/lib/zaDate";
 import { CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
 
@@ -24,11 +24,21 @@ function parsePrice(raw: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     if (!(await isCheckinAuthed())) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const { searchParams } = new URL(request.url);
+    const dateISOParam = (searchParams.get("date") ?? "").trim();
+    const date = dateISOParam ? parseZaDateISO(dateISOParam) : null;
+
+    if (dateISOParam && !date) {
+      return NextResponse.json({ error: "Invalid date" }, { status: 400 });
+    }
+
+    const effectiveDate = date ?? undefined;
 
     // Read full columns (includes header row); skip any header-like rows ourselves.
     const values = await getSheetValues(CHECKIN_SPREADSHEET_ID, "Costs!A:B");
@@ -45,8 +55,8 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      today: formatZaDateISO(),
-      isFirstMonday: isZaFirstMonday(),
+      today: dateISOParam || formatZaDateISO(effectiveDate),
+      isFirstMonday: isZaFirstMonday(effectiveDate),
       costs,
     });
   } catch (error) {
