@@ -1,40 +1,84 @@
 import Header from "@/components/Header";
+import VideoGallery from "@/components/VideoGallery";
 import Image from "next/image";
 import Link from "next/link";
 
+const WEEKENDER_SOLD_OUT = {
+  blizzardWeekend: false,
+  earlyWeekend: false,
+  earlyDay: false,
+  normalWeekend: false,
+  normalDay: false,
+  weekendOfWeekend: false,
+  weekendOfDay: false,
+  partyPass: false,
+} as const;
+
+function PriceCell({
+  price,
+  isSoldOut,
+}: {
+  price: number | null;
+  isSoldOut: boolean;
+}) {
+  if (price === null) {
+    return <span className="text-text-dark/40">—</span>;
+  }
+
+  if (isSoldOut) {
+    return (
+      <div className="flex flex-col items-center gap-1">
+        <span className="text-text-dark/40 line-through">
+          R{price.toLocaleString("en-ZA")}
+        </span>
+        <span className="inline-block bg-red-600 text-white text-xs font-semibold px-2 py-1 rounded">
+          SOLD OUT
+        </span>
+      </div>
+    );
+  }
+
+  return <span className="font-semibold">R{price.toLocaleString("en-ZA")}</span>;
+}
+
+
 export default function Weekender() {
+  const soldOut = WEEKENDER_SOLD_OUT;
+
   return (
     <>
       <Header />
       <main>
         {/* Hero */}
-        <section className="px-[5%] py-[60px] bg-gradient-to-br from-pink-accent/20 via-pink-accent/10 to-transparent">
-          <div className="max-w-[1100px] mx-auto text-center">
-            <h1 className="font-spartan font-semibold text-[36px] md:text-[56px] mb-4">
-              West Coast Swing Weekender
-            </h1>
-            <p className="text-3xl md:text-4xl font-bold text-pink-accent mb-6">
-              March 20-22, 2026
-            </p>
-            <p className="text-xl md:text-2xl text-text-dark/80 max-w-[800px] mx-auto mb-8">
-              Experience world-class WCS festival vibes right here in Cape Town
-            </p>
-            <p className="text-lg text-text-dark/70 max-w-[700px] mx-auto mb-10">
-              Two full days of workshops with international pros, three evenings of social dancing — bringing the international festival experience to your doorstep
-            </p>
+        <section className="bg-black text-white">
+          <div className="relative w-full pb-[36.33%]">
+            <Image
+              src="/images/pros/banner-2026-02-08.jpg"
+              alt="West Coast Swing Weekender banner"
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover"
+            />
+          </div>
 
-            <Link 
-              href="/#weekender" 
+          <div className="px-[5%] py-10 text-center">
+            <p className="text-lg md:text-xl font-semibold mb-2">March 20–22, 2026</p>
+            <p className="text-base md:text-lg text-white/90 max-w-[900px] mx-auto mb-6">
+              Experience world-class WCS festival vibes right here in Cape Town!
+            </p>
+            <Link
+              href="#booking"
               className="inline-block bg-pink-accent text-white px-10 py-4 rounded-lg font-semibold text-lg hover:bg-pink-accent/90 hover:shadow-xl transition-all"
             >
-              Register Your Interest
+              Book Now
             </Link>
           </div>
         </section>
 
         {/* Meet Your Pros */}
         <section className="px-[5%] py-[60px] bg-white">
-          <div className="max-w-[1100px] mx-auto">
+          <div className="w-full mx-auto">
             <h2 className="font-spartan font-semibold text-[32px] md:text-[40px] text-center mb-4">
               Meet Your Pros
             </h2>
@@ -42,87 +86,158 @@ export default function Weekender() {
               Four world-class instructors from around the globe
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-[900px] mx-auto">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Igor & Fernanda */}
-              <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-24 h-24 rounded-xl overflow-hidden border-2 border-pink-accent flex-shrink-0 relative">
-                    <Image
-                      src="/images/igor_fernanda1.jpg"
-                      alt="Igor & Fernanda"
-                      fill
-                      sizes="96px"
-                      className="object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="font-spartan font-semibold text-xl text-pink-accent mb-1">
-                      Igor Pitangui & Fernanda Dubiel
-                    </h3>
-                    <p className="text-sm text-text-dark/70 mb-2">🇧🇷 Brazil</p>
-                    <a href="https://www.instagram.com/igorandfernanda/" target="_blank" rel="noopener noreferrer" className="text-sm text-pink-accent hover:text-yellow-accent underline">
-                      @igorandfernanda
-                    </a>
-                  </div>
+              <div className="bg-cloud-dancer rounded-2xl overflow-hidden border-2 border-text-dark/10">
+                <div className="relative w-full pb-[125%]">
+                  <Image
+                    src="/images/pros/Igor_Fernanda.jpg"
+                    alt="Igor Pitangui & Fernanda Dubiel"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover"
+                  />
                 </div>
-                <p className="text-sm text-text-dark/80 mb-3">
-                  Bio coming soon. Videos to be embedded.
-                </p>
+                <div className="p-6">
+                  <h3 className="font-spartan font-semibold text-xl text-pink-accent mb-1">
+                    Igor Pitangui & Fernanda Dubiel
+                  </h3>
+                  <p className="text-sm text-text-dark/70 mb-2">🇧🇷 Brazil</p>
+                  <a
+                    href="https://www.instagram.com/igorandfernanda/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-pink-accent hover:text-yellow-accent underline"
+                  >
+                    @igorandfernanda
+                  </a>
+                  <p className="text-sm text-text-dark/80 mt-4">
+                    Dynamic movement, clear technique, musicality, and playful improvisation.
+                  </p>
+                </div>
               </div>
 
               {/* Harold */}
-              <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-24 h-24 rounded-xl overflow-hidden border-2 border-pink-accent flex-shrink-0 relative">
-                    <Image
-                      src="/images/harold1.jpg"
-                      alt="Harold Baker"
-                      fill
-                      sizes="96px"
-                      className="object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="font-spartan font-semibold text-xl text-pink-accent mb-1">
-                      Harold Baker
-                    </h3>
-                    <p className="text-sm text-text-dark/70 mb-2">🇬🇧 United Kingdom</p>
-                    <a href="https://www.instagram.com/harold_baker_dance" target="_blank" rel="noopener noreferrer" className="text-sm text-pink-accent hover:text-yellow-accent underline">
-                      @harold_baker_dance
-                    </a>
-                  </div>
+              <div className="bg-cloud-dancer rounded-2xl overflow-hidden border-2 border-text-dark/10">
+                <div className="relative w-full pb-[125%]">
+                  <Image
+                    src="/images/pros/harold_baker.jpg"
+                    alt="Harold Baker"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover"
+                  />
                 </div>
-                <p className="text-sm text-text-dark/80 mb-3">
-                  Bio coming soon. Videos to be embedded.
-                </p>
+                <div className="p-6">
+                  <h3 className="font-spartan font-semibold text-xl text-pink-accent mb-1">
+                    Harold Baker
+                  </h3>
+                  <p className="text-sm text-text-dark/70 mb-2">🇬🇧 United Kingdom</p>
+                  <a
+                    href="https://www.instagram.com/harold_baker_dance"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-pink-accent hover:text-yellow-accent underline"
+                  >
+                    @harold_baker_dance
+                  </a>
+                  <p className="text-sm text-text-dark/80 mt-4">
+                    Musical, grounded, and seriously fun.
+                  </p>
+                </div>
               </div>
 
               {/* Kristen */}
-              <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-24 h-24 rounded-xl overflow-hidden border-2 border-pink-accent flex-shrink-0 relative">
-                    <Image
-                      src="/images/kristen1.jpg"
-                      alt="Kristen Wallace"
-                      fill
-                      sizes="96px"
-                      className="object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="font-spartan font-semibold text-xl text-pink-accent mb-1">
-                      Kristen Wallace
-                    </h3>
-                    <p className="text-sm text-text-dark/70 mb-2">🇺🇸 United States</p>
-                    <a href="https://www.instagram.com/kwalla.bear" target="_blank" rel="noopener noreferrer" className="text-sm text-pink-accent hover:text-yellow-accent underline">
-                      @kwalla.bear
-                    </a>
-                  </div>
+              <div className="bg-cloud-dancer rounded-2xl overflow-hidden border-2 border-text-dark/10">
+                <div className="relative w-full pb-[125%]">
+                  <Image
+                    src="/images/pros/kristen_wallace.png"
+                    alt="Kristen Wallace"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover"
+                  />
                 </div>
-                <p className="text-sm text-text-dark/80 mb-3">
-                  Bio coming soon. Videos to be embedded.
-                </p>
+                <div className="p-6">
+                  <h3 className="font-spartan font-semibold text-xl text-pink-accent mb-1">
+                    Kristen Wallace
+                  </h3>
+                  <p className="text-sm text-text-dark/70 mb-2">🇺🇸 United States</p>
+                  <a
+                    href="https://www.instagram.com/kwalla.bear"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-pink-accent hover:text-yellow-accent underline"
+                  >
+                    @kwalla.bear
+                  </a>
+                  <p className="text-sm text-text-dark/80 mt-4">
+                    Style, performance quality, and plenty of play.
+                  </p>
+                </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Videos */}
+        <section className="px-[5%] py-[60px] bg-white">
+          <div className="max-w-[1100px] mx-auto">
+            <h2 className="font-spartan font-semibold text-[32px] md:text-[40px] text-center mb-4">
+              Watch the Pros
+            </h2>
+            <p className="text-center text-lg text-text-dark/70 mb-12 max-w-[800px] mx-auto">
+              Click any video to watch it larger.
+            </p>
+
+            <div className="mb-12">
+              <h3 className="font-spartan font-semibold text-2xl mb-6 text-pink-accent">Improv</h3>
+              <VideoGallery
+                videos={[
+                  {
+                    label: "Fernanda — Improv",
+                    url: "https://youtu.be/yNcBBiN-REc?si=BD9hYQkP9_6Wd8-_",
+                  },
+                  {
+                    label: "Harold — Improv",
+                    url: "https://youtu.be/FR6q9AJWKrY?si=tH8rRv8DIDghEsiv",
+                  },
+                  {
+                    label: "Kristen — Improv",
+                    url: "https://youtu.be/iqXJ9iz3fg8?si=3kOClm-9XyAhG5ol",
+                  },
+                  {
+                    label: "Igor — Improv (Lead)",
+                    url: "https://youtu.be/M5tz_9ECBTw?si=6XjwDu8TWsoox5-P",
+                  },
+                  {
+                    label: "Igor — Improv (Follower)",
+                    url: "https://youtu.be/qL9gECRyhgY?si=KUxj2ab3VkjNdKnm",
+                  },
+                ]}
+              />
+            </div>
+
+            <div>
+              <h3 className="font-spartan font-semibold text-2xl mb-6 text-pink-accent">Routines & Showcases</h3>
+              <VideoGallery
+                videos={[
+                  {
+                    label: "Kristen — Routine",
+                    url: "https://youtu.be/Z76ybrXpnSw?si=vOjXixCE7BibMKoH",
+                    note: "Rising Star showcase winner — US Open 2025",
+                  },
+                  {
+                    label: "Igor & Fernanda — Routine",
+                    url: "https://youtu.be/40yvzp4IGE8?si=4XD5SpkzjJ3i8ILT",
+                  },
+                  {
+                    label: "Harold — Cardio Cameraman",
+                    url: "https://www.instagram.com/p/DIqQi2LBhCp/",
+                    note: "A little taste of Harold’s other talents.",
+                  },
+                ]}
+              />
             </div>
           </div>
         </section>
@@ -143,8 +258,8 @@ export default function Weekender() {
                 <div className="flex items-start gap-4">
                   <div className="text-lg font-semibold text-text-dark/70 min-w-[100px]">19:30-23:00</div>
                   <div>
-                    <p className="font-semibold text-lg mb-1">Pre-Weekend Social</p>
-                    <p className="text-text-dark/70">Kick off the weekend with an evening of social dancing</p>
+                    <p className="font-semibold text-lg mb-1">Pre-party & Meet the Pros</p>
+                    <p className="text-text-dark/70">Kick off the weekend, say hi to the pros, and get in some relaxed social dancing</p>
                   </div>
                 </div>
               </div>
@@ -152,12 +267,19 @@ export default function Weekender() {
 
             {/* Saturday */}
             <div className="mb-12">
-              <h3 className="font-spartan font-semibold text-2xl md:text-3xl mb-6 text-pink-accent">
-                Saturday, March 21
+              <h3 className="font-spartan font-semibold text-2xl md:text-3xl mb-2 text-pink-accent">
+                Saturday, March 21 — Technique & Connection
               </h3>
+              <p className="text-sm md:text-base text-text-dark/70 mb-6">
+                Highly recommended to build and solidify technique & connection on Saturday before Sunday&apos;s fun & style focus.
+              </p>
               
-              <div className="overflow-x-auto">
-                <div className="min-w-[700px]">
+              <div className="sm:hidden text-xs text-text-dark/60 mb-2 text-center">
+                Swipe left/right to see both halls →
+              </div>
+              <div className="relative">
+                <div className="overflow-x-auto pb-2">
+                  <div className="min-w-[700px]">
                   {/* Header */}
                   <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-3 font-semibold text-sm">
                     <div className="text-text-dark/70">Time</div>
@@ -165,23 +287,27 @@ export default function Weekender() {
                     <div className="bg-yellow-accent/20 rounded-t-lg p-2 text-center">Side Hall</div>
                   </div>
 
-                  {/* 09:00-11:30 Private Lessons & Spotlight Critique */}
+                  {/* 09:00-10:00 Private Lessons */}
                   <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
-                    <div className="font-semibold text-sm text-text-dark/70 flex items-center">09:00-11:30</div>
-                    <div className="bg-purple-accent/10 rounded-lg p-3 text-sm col-span-2">
-                      <p className="font-semibold">Private Lesson Slots Available</p>
-                      <p className="text-xs text-text-dark/70 mt-1">45-min sessions with all pros (by appointment)</p>
+                    <div className="font-semibold text-sm text-text-dark/70 flex items-center">09:00-10:00</div>
+                    <div className="bg-purple-accent/10 rounded-lg p-3 text-sm">
+                      <p className="font-semibold">Private Lesson Slot</p>
+                      <p className="text-xs text-text-dark/70 mt-1">All pros (by appointment)</p>
+                    </div>
+                    <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
+                      <p className="font-semibold">Private Lessons</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda only (Side Hall)</p>
                     </div>
                   </div>
 
-                  {/* 10:00-11:00 Spotlight Critique (overlaps with private lessons) */}
+                  {/* 10:00-11:00 Spotlight Critique */}
                   <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
                     <div className="font-semibold text-sm text-text-dark/70 flex items-center">10:00-11:00</div>
                     <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm border-2 border-yellow-accent/30">
                       <p className="font-semibold">Spotlight Critique</p>
                       <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen (Optional add-on, limited to 10 couples)</p>
                     </div>
-                    <div className="bg-text-dark/5 rounded-lg p-3 flex items-center justify-center text-xs text-text-dark/50">Private lessons</div>
+                    <div className="bg-text-dark/5 rounded-lg p-3 flex items-center justify-center text-xs text-text-dark/50">Warm-up / practice</div>
                   </div>
 
                   {/* 11:30-12:30 Workshops */}
@@ -210,11 +336,11 @@ export default function Weekender() {
                   <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
                     <div className="font-semibold text-sm text-text-dark/70 flex items-center">14:00-15:00</div>
                     <div className="bg-purple-accent/10 rounded-lg p-3 text-sm">
-                      <p className="font-semibold">Level 1</p>
+                      <p className="font-semibold">Level 2</p>
                       <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
                     </div>
                     <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
-                      <p className="font-semibold">Level 2</p>
+                      <p className="font-semibold">Level 1</p>
                       <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
                     </div>
                   </div>
@@ -223,12 +349,12 @@ export default function Weekender() {
                   <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
                     <div className="font-semibold text-sm text-text-dark/70 flex items-center">15:00-16:00</div>
                     <div className="bg-purple-accent/10 rounded-lg p-3 text-sm">
-                      <p className="font-semibold">Level 1</p>
-                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
-                    </div>
-                    <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
                       <p className="font-semibold">Level 2</p>
                       <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
+                    </div>
+                    <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
+                      <p className="font-semibold">Level 1</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
                     </div>
                   </div>
 
@@ -238,13 +364,16 @@ export default function Weekender() {
                     <div className="bg-text-dark/5 rounded-lg p-3 text-sm col-span-2 text-center font-semibold">Break</div>
                   </div>
 
-                  {/* 16:15-17:15 Level 2 Only */}
+                  {/* 16:15-17:15 Level 2 + Private Lessons */}
                   <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
                     <div className="font-semibold text-sm text-text-dark/70 flex items-center">16:15-17:15</div>
-                    <div className="bg-text-dark/5 rounded-lg p-3 flex items-center justify-center text-xs text-text-dark/50"></div>
-                    <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
+                    <div className="bg-purple-accent/10 rounded-lg p-3 text-sm">
                       <p className="font-semibold">Level 2</p>
-                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen (Main Hall)</p>
+                    </div>
+                    <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
+                      <p className="font-semibold">Private Lessons</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda only (Side Hall)</p>
                     </div>
                   </div>
 
@@ -270,18 +399,27 @@ export default function Weekender() {
                       <p className="font-semibold">Saturday Night Social</p>
                     </div>
                   </div>
+                  </div>
                 </div>
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent sm:hidden" />
               </div>
             </div>
 
             {/* Sunday */}
             <div className="mb-12">
-              <h3 className="font-spartan font-semibold text-2xl md:text-3xl mb-6 text-pink-accent">
-                Sunday, March 22
+              <h3 className="font-spartan font-semibold text-2xl md:text-3xl mb-2 text-pink-accent">
+                Sunday, March 22 — Fun & Style
               </h3>
+              <p className="text-sm md:text-base text-text-dark/70 mb-6">
+                Fun, creativity, and style-building — highly recommended after you&apos;ve solidified technique & connection on Saturday.
+              </p>
               
-              <div className="overflow-x-auto">
-                <div className="min-w-[700px]">
+              <div className="sm:hidden text-xs text-text-dark/60 mb-2 text-center">
+                Swipe left/right to see both halls →
+              </div>
+              <div className="relative">
+                <div className="overflow-x-auto pb-2">
+                  <div className="min-w-[700px]">
                   {/* Header */}
                   <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-3 font-semibold text-sm">
                     <div className="text-text-dark/70">Time</div>
@@ -326,12 +464,12 @@ export default function Weekender() {
                     <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
                       <div className="font-semibold text-sm text-text-dark/70 flex items-center">14:00-15:00</div>
                       <div className="bg-purple-accent/10 rounded-lg p-3 text-sm">
-                        <p className="font-semibold">Level 1</p>
-                        <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
-                      </div>
-                      <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
                         <p className="font-semibold">Level 2</p>
                         <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
+                      </div>
+                      <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
+                        <p className="font-semibold">Level 1</p>
+                        <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
                       </div>
                     </div>
 
@@ -358,11 +496,11 @@ export default function Weekender() {
                     <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
                       <div className="font-semibold text-sm text-text-dark/70 flex items-center">16:15-17:15</div>
                       <div className="bg-purple-accent/10 rounded-lg p-3 text-sm">
-                        <p className="font-semibold">Level 1</p>
+                        <p className="font-semibold">Level 2</p>
                         <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
                       </div>
                       <div className="bg-yellow-accent/10 rounded-lg p-3 text-sm">
-                        <p className="font-semibold">Level 2</p>
+                        <p className="font-semibold">Level 1</p>
                         <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
                       </div>
                     </div>
@@ -374,14 +512,24 @@ export default function Weekender() {
                     </div>
 
                     {/* 18:30-19:30 All Levels */}
-                    <div className="grid grid-cols-[120px_1fr_1fr] gap-3">
+                    <div className="grid grid-cols-[120px_1fr_1fr] gap-3 mb-2">
                       <div className="font-semibold text-sm text-text-dark/70 flex items-center">18:30-19:30</div>
                       <div className="bg-pink-accent/10 rounded-lg p-3 text-sm col-span-2 border-2 border-pink-accent/30">
                         <p className="font-semibold">All Levels Workshop</p>
                         <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
                       </div>
                     </div>
+
+                    {/* 19:30-23:00 Social */}
+                    <div className="grid grid-cols-[120px_1fr_1fr] gap-3">
+                      <div className="font-semibold text-sm text-text-dark/70 flex items-center">19:30-23:00</div>
+                      <div className="bg-pink-accent/10 rounded-lg p-3 text-sm col-span-2 border-2 border-pink-accent/30">
+                        <p className="font-semibold">Sunday Night Social</p>
+                      </div>
+                    </div>
                   </div>
+                </div>
+                <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent sm:hidden" />
               </div>
             </div>
 
@@ -389,153 +537,150 @@ export default function Weekender() {
             <div className="bg-purple-accent/10 rounded-xl p-6 md:p-8 border-2 border-purple-accent">
               <p className="font-semibold text-lg mb-2">💡 Pro Tip: Private Lessons</p>
               <p className="text-text-dark/80">
-                Private lessons can be shared! Book as a couple and split the time (and cost) — 20 minutes each, plus 5 minutes for a video recap. Limited slots available. Reach out for pricing and booking.
+                Private lessons can be shared. Book as a couple and split the time (and cost). Limited slots available — see the schedule for the dedicated private lesson windows.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Pricing */}
-        <section className="px-[5%] py-[60px] bg-cloud-dancer">
+        {/* Booking & Pricing */}
+        <section id="booking" className="px-[5%] py-[60px] bg-cloud-dancer">
           <div className="max-w-[1100px] mx-auto">
             <h2 className="font-spartan font-semibold text-[32px] md:text-[40px] text-center mb-4">
-              Pass Options
+              Book Your Pass
             </h2>
-            <p className="text-center text-lg text-text-dark/70 mb-12 max-w-[600px] mx-auto">
-              Choose the pass that fits your weekend plans
+            <p className="text-center text-lg text-text-dark/70 mb-10 max-w-[700px] mx-auto">
+              To book, email us or message us via the WhatsApp community. We&apos;ll confirm availability and how to secure your spot.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-              {/* Weekend Pass */}
-              <div className="bg-white rounded-xl p-6 border-2 border-pink-accent shadow-lg">
-                <div className="text-center mb-4">
-                  <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-sm mb-3">
-                    MOST POPULAR
-                  </div>
-                  <h3 className="font-spartan font-semibold text-2xl mb-2">Weekend Pass</h3>
-                  <p className="text-sm text-text-dark/70 mb-4">The full experience</p>
-                </div>
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-600">✓</span>
-                    <span>All workshops (Sat & Sun)</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-600">✓</span>
-                    <span>All socials (Fri, Sat, Sun)</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-600">✓</span>
-                    <span>Community lunch (Sat)</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-text-dark/60">
-                    <span>+</span>
-                    <span>Spotlight critique (optional)</span>
-                  </div>
-                </div>
-                <div className="border-t pt-4">
-                  <p className="text-sm text-text-dark/70 mb-2">Early Bird (until May 31)</p>
-                  <p className="text-3xl font-bold text-pink-accent mb-1">R1,800</p>
-                  <p className="text-xs text-text-dark/60">Normal: R2,000 | Late: R2,200</p>
-                </div>
-              </div>
-
-              {/* Day Pass */}
-              <div className="bg-white rounded-xl p-6 border-2 border-purple-accent/30">
-                <div className="text-center mb-4">
-                  <h3 className="font-spartan font-semibold text-2xl mb-2">Day Pass</h3>
-                  <p className="text-sm text-text-dark/70 mb-4">One full day</p>
-                </div>
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-600">✓</span>
-                    <span>Workshops (Sat OR Sun)</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-600">✓</span>
-                    <span>Socials (Fri + your day)</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-600">✓</span>
-                    <span>Community lunch (if Sat)</span>
-                  </div>
-                </div>
-                <div className="border-t pt-4">
-                  <p className="text-sm text-text-dark/70 mb-2">Early Bird (until May 31)</p>
-                  <p className="text-3xl font-bold text-purple-accent mb-1">R900</p>
-                  <p className="text-xs text-text-dark/60">Normal: R1,000 | Late: R1,100</p>
-                </div>
-              </div>
-
-              {/* Party Pass */}
-              <div className="bg-white rounded-xl p-6 border-2 border-yellow-accent/30">
-                <div className="text-center mb-4">
-                  <h3 className="font-spartan font-semibold text-2xl mb-2">Party Pass</h3>
-                  <p className="text-sm text-text-dark/70 mb-4">Just here to dance</p>
-                </div>
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-600">✓</span>
-                    <span>All socials (Fri, Sat, Sun)</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-text-dark/40">
-                    <span className="text-red-500">✗</span>
-                    <span>Workshops</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-text-dark/40">
-                    <span className="text-red-500">✗</span>
-                    <span>Community lunch</span>
-                  </div>
-                </div>
-                <div className="border-t pt-4">
-                  <p className="text-3xl font-bold text-yellow-accent mb-1">R400</p>
-                  <p className="text-xs text-text-dark/60">All weekend</p>
-                </div>
-              </div>
-
-              {/* Spotlight Critique Add-on */}
-              <div className="bg-white rounded-xl p-6 border-2 border-text-dark/20">
-                <div className="text-center mb-4">
-                  <h3 className="font-spartan font-semibold text-2xl mb-2">Spotlight Critique</h3>
-                  <p className="text-sm text-text-dark/70 mb-4">Optional add-on</p>
-                </div>
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-600">✓</span>
-                    <span>30sec dance → feedback</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-600">✓</span>
-                    <span>30sec dance → feedback</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-green-600">✓</span>
-                    <span>Harold & Kristen</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-text-dark/60">
-                    <span>⚠️</span>
-                    <span>Limited to 10 couples</span>
-                  </div>
-                </div>
-                <div className="border-t pt-4">
-                  <p className="text-3xl font-bold text-text-dark mb-1">R100</p>
-                  <p className="text-xs text-text-dark/60">Per entry (5 min total)</p>
-                </div>
-              </div>
-            </div>
-
-            {/* CTA */}
-            <div className="text-center">
-              <Link 
-                href="/#weekender" 
-                className="inline-block bg-pink-accent text-white px-10 py-4 rounded-lg font-semibold text-lg hover:bg-pink-accent/90 hover:shadow-xl transition-all"
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-12">
+              <a
+                href="mailto:hello@wcscapetown.co.za?subject=WCS%20Weekender%20Booking"
+                className="inline-block bg-pink-accent text-white px-6 py-3 rounded-lg font-semibold hover:bg-pink-accent/90 hover:shadow-xl transition-all"
               >
-                Register Your Interest
+                Email to Book
+              </a>
+              <Link
+                href="/contact"
+                className="inline-block bg-white text-text-dark px-6 py-3 rounded-lg font-semibold border-2 border-text-dark/10 hover:border-text-dark/20 hover:shadow-lg transition-all"
+              >
+                Other contact options
               </Link>
-              <p className="text-sm text-text-dark/60 mt-4">
-                Booking opens soon. Add your name to the list to be notified first.
-              </p>
             </div>
+
+            {/* Pass summary */}
+            <div className="sm:hidden text-xs text-text-dark/60 mb-2 text-center">
+              Swipe left/right to compare passes →
+            </div>
+            <div className="relative bg-white rounded-xl border-2 border-text-dark/10 overflow-hidden mb-12">
+              <div className="overflow-x-auto pb-2">
+                <div className="min-w-[760px] grid grid-cols-[180px_1fr_1fr_1fr]">
+                  <div className="p-4 bg-text-dark/5 font-semibold">Includes</div>
+                  <div className="p-4 bg-pink-accent/10 font-semibold text-center">Full Weekend Pass</div>
+                  <div className="p-4 bg-purple-accent/10 font-semibold text-center">Day Pass</div>
+                  <div className="p-4 bg-yellow-accent/10 font-semibold text-center">Party Pass</div>
+                  <div className="p-4 border-t text-sm text-text-dark/70">Friday pre-party</div>
+                  <div className="p-4 border-t text-center">Included</div>
+                  <div className="p-4 border-t text-center">Add-on (R200)</div>
+                  <div className="p-4 border-t text-center">Included</div>
+                  <div className="p-4 border-t text-sm text-text-dark/70">Evening parties</div>
+                  <div className="p-4 border-t text-center">Saturday + Sunday</div>
+                  <div className="p-4 border-t text-center">One night (your day)</div>
+                  <div className="p-4 border-t text-center">Friday + Saturday + Sunday</div>
+                  <div className="p-4 border-t text-sm text-text-dark/70">Workshops</div>
+                  <div className="p-4 border-t text-center">Saturday + Sunday (8 hours)</div>
+                  <div className="p-4 border-t text-center">One day (4 hours)</div>
+                  <div className="p-4 border-t text-center text-text-dark/40">—</div>
+                  <div className="p-4 border-t text-sm text-text-dark/70">Community lunch with pros (Saturday)</div>
+                  <div className="p-4 border-t text-center">Included</div>
+                  <div className="p-4 border-t text-center">Included (Saturday only)</div>
+                  <div className="p-4 border-t text-center text-text-dark/40">—</div>
+                </div>
+              </div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent sm:hidden" />
+            </div>
+
+            {/* Price tiers */}
+            <div className="sm:hidden text-xs text-text-dark/60 mb-2 text-center">
+              Swipe left/right to see all pricing columns →
+            </div>
+            <div className="relative">
+              <div className="overflow-x-auto pb-2">
+                <div className="min-w-[760px] bg-white rounded-xl border-2 border-text-dark/10 overflow-hidden">
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr>
+                        <th className="p-4 bg-text-dark/5 font-semibold text-left">Pricing tier</th>
+                        <th className="p-4 bg-pink-accent/10 font-semibold text-center">Full Weekend Pass</th>
+                        <th className="p-4 bg-purple-accent/10 font-semibold text-center">Day Pass</th>
+                        <th className="p-4 bg-yellow-accent/10 font-semibold text-center">Party Pass</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-t border-text-dark/10">
+                        <td className="p-4">
+                          <p className="font-semibold">Blizzard Bird</p>
+                          <p className="text-xs text-text-dark/60">24 hours • limited to 10</p>
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={1600} isSoldOut={soldOut.blizzardWeekend} />
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={null} isSoldOut={false} />
+                        </td>
+                        <td className="p-4 text-center align-top" rowSpan={4}>
+                          <div className="flex flex-col items-center gap-2">
+                            <PriceCell price={600} isSoldOut={soldOut.partyPass} />
+                            <p className="text-xs text-text-dark/60">Single price</p>
+                          </div>
+                        </td>
+                      </tr>
+                      <tr className="border-t border-text-dark/10">
+                        <td className="p-4">
+                          <p className="font-semibold">Early Bird</p>
+                          <p className="text-xs text-text-dark/60">Limited to 30 full passes and 10 day passes</p>
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={1800} isSoldOut={soldOut.earlyWeekend} />
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={1000} isSoldOut={soldOut.earlyDay} />
+                        </td>
+                      </tr>
+                      <tr className="border-t border-text-dark/10">
+                        <td className="p-4">
+                          <p className="font-semibold">Normal</p>
+                          <p className="text-xs text-text-dark/60">Until sold out</p>
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={2000} isSoldOut={soldOut.normalWeekend} />
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={1100} isSoldOut={soldOut.normalDay} />
+                        </td>
+                      </tr>
+                      <tr className="border-t border-text-dark/10">
+                        <td className="p-4">
+                          <p className="font-semibold">Weekend of (March 20–22)</p>
+                          <p className="text-xs text-text-dark/60">Weekend pass available on March 20 only</p>
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={2200} isSoldOut={soldOut.weekendOfWeekend} />
+                        </td>
+                        <td className="p-4 text-center">
+                          <PriceCell price={1300} isSoldOut={soldOut.weekendOfDay} />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent sm:hidden" />
+            </div>
+
+            <p className="text-sm text-text-dark/60 mt-4 text-center">
+              Prices are in ZAR. Availability is limited — if a tier sells out, the next tier applies.
+            </p>
           </div>
         </section>
 

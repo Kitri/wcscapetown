@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@vercel/kv": "^3.0.0",
     "googleapis": "^170.0.0",
     "next": "16.1.1",
     "react": "19.2.3",
