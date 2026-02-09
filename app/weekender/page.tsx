@@ -197,7 +197,7 @@ export default function Weekender() {
               <div className="bg-cloud-dancer rounded-2xl overflow-hidden border-2 border-text-dark/10 lg:flex">
                 <div className="relative w-full pb-[125%] lg:pb-0 lg:w-[220px] lg:h-[220px] lg:flex-shrink-0">
                   <Image
-                    src="/images/pros/harold_more.jpg"
+                    src="/images/pros/harold.jpg"
                     alt="Harold Baker"
                     fill
                     sizes="(max-width: 1024px) 100vw, 33vw"
@@ -224,7 +224,7 @@ export default function Weekender() {
               <div className="bg-cloud-dancer rounded-2xl overflow-hidden border-2 border-text-dark/10 lg:flex">
                 <div className="relative w-full pb-[125%] lg:pb-0 lg:w-[220px] lg:h-[220px] lg:flex-shrink-0">
                   <Image
-                    src="/images/pros/kristen_again.jpg"
+                    src="/images/pros/kristen.jpg"
                     alt="Kristen Wallace"
                     fill
                     sizes="(max-width: 1024px) 100vw, 33vw"

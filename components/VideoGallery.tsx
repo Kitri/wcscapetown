@@ -52,13 +52,30 @@ function parseYouTubeStartSeconds(url: string): number | null {
 function getEmbedSrc(url: string): { provider: "youtube" | "instagram" | "link"; src: string } {
   const yt = getYouTubeId(url);
   if (yt) {
-    // Keep the page lightweight: only mount the iframe when the modal opens.
+    // Most compatible embed URL for mobile browsers.
+    // (We only render the iframe after a user click, so performance is still good.)
     const start = parseYouTubeStartSeconds(url);
-    const startParam = start ? `&start=${start}` : "";
+
+    const embed = new URL(`https://www.youtube.com/embed/${yt}`);
+
+    // Preserve YouTube's share param if present (YouTube's own embed UI includes it).
+    try {
+      const original = new URL(url);
+      const si = original.searchParams.get("si");
+      if (si) embed.searchParams.set("si", si);
+    } catch {
+      // ignore
+    }
+
+    // NOTE: Avoid forcing autoplay on mobile (can trigger playback restrictions / bad UX).
+    embed.searchParams.set("rel", "0");
+    embed.searchParams.set("modestbranding", "1");
+    embed.searchParams.set("playsinline", "1");
+    if (start) embed.searchParams.set("start", String(start));
 
     return {
       provider: "youtube",
-      src: `https://www.youtube-nocookie.com/embed/${yt}?autoplay=1&rel=0&modestbranding=1&playsinline=1${startParam}`,
+      src: embed.toString(),
     };
   }
 
@@ -128,6 +145,7 @@ export default function VideoGallery({
                   src={activeEmbed.src}
                   title={active.label}
                   loading="lazy"
+                  referrerPolicy="strict-origin-when-cross-origin"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
                 />
