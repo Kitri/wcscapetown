@@ -60,8 +60,16 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
-export default function Weekender() {
+export default function Weekender({
+  searchParams,
+}: {
+  searchParams?: { tab?: string };
+}) {
   const soldOut = WEEKENDER_SOLD_OUT;
+  const tab = (searchParams?.tab ?? "passes").toLowerCase();
+  const isPros = tab === "pros";
+  const isSchedule = tab === "schedule";
+  const isPasses = tab === "passes" || (!isPros && !isSchedule);
 
   return (
     <>
@@ -82,8 +90,8 @@ export default function Weekender() {
 
           <div className="px-[5%] py-10 text-center">
             <p className="text-2xl md:text-4xl font-semibold mb-2">March 20–22, 2026</p>
-            <p className="text-yellow-accent font-semibold text-lg md:text-xl">
-              Bookings open 19 Feb
+            <p className="text-yellow-accent font-semibold text-base sm:text-lg md:text-xl">
+              Bookings open 18 Feb
             </p>
             <p className="text-sm text-white/80 mt-3">
               The first 10 Weekend Pass tickets at the “Now” price are available for 24 hours only.
@@ -98,19 +106,21 @@ export default function Weekender() {
             type="radio"
             name="weekender-tab"
             className="peer/passes sr-only"
-            defaultChecked
+            defaultChecked={isPasses}
           />
           <input
             id="weekender-tab-pros"
             type="radio"
             name="weekender-tab"
             className="peer/pros sr-only"
+            defaultChecked={isPros}
           />
           <input
             id="weekender-tab-schedule"
             type="radio"
             name="weekender-tab"
             className="peer/schedule sr-only"
+            defaultChecked={isSchedule}
           />
 
           {/* Sticky tab bar */}
@@ -256,10 +266,6 @@ export default function Weekender() {
             <h2 className="font-spartan font-semibold text-[32px] md:text-[40px] text-center mb-4">
               Watch the Pros
             </h2>
-            <p className="text-center text-lg text-text-dark/70 mb-12 max-w-[800px] mx-auto">
-              Click any video to watch it larger.
-            </p>
-
             <div className="mb-12">
               <h3 className="font-spartan font-semibold text-2xl mb-6 text-pink-accent">
                 Jack & Jill / Social rounds
@@ -318,49 +324,56 @@ export default function Weekender() {
               />
             </div>
 
-            <div className="mt-12 bg-cloud-dancer rounded-xl p-6 md:p-8 border-2 border-text-dark/10">
-              <h3 className="font-spartan font-semibold text-xl mb-2">
-                How do WCS international competitions and levels work — and what do these video titles mean?
-              </h3>
-              <p className="text-sm text-text-dark/80">
-                The “levels” (divisions) you see in competition titles are usually based on World Swing Dance Council (WSDC)
-                competition points. The full system is complex, but the idea is simple: place well in a division, earn points in
-                that division, and once you&apos;ve earned enough points you can move up. Points reset per division — so someone can
-                have lots of All Star points and only a few Champions points.
-              </p>
-              <p className="text-sm text-text-dark/80 mt-4">
-                Typical progression: <span className="font-semibold">Newcomer → Novice → Intermediate → Advanced → All Star → Champions</span>
-              </p>
-              <p className="text-sm text-text-dark/80 mt-4">
-                Common competition types:
-              </p>
-              <ul className="list-disc pl-5 mt-2 space-y-1 text-sm text-text-dark/80">
-                <li>
-                  <span className="font-semibold">Jack &amp; Jill</span>: random partner, random song — you enter as a lead or follow in your eligible division.
-                </li>
-                <li>
-                  <span className="font-semibold">Strictly</span>: chosen partner, random song — you enter together (division rules vary per event).
-                </li>
-                <li>
-                  <span className="font-semibold">Open</span>: open to multiple divisions (can be Jack &amp; Jill or Strictly).
-                </li>
-                <li>
-                  <span className="font-semibold">Showcase / Routine</span>: choreographed dances (often Classic vs Showcase), with different rules around lifts.
-                </li>
-              </ul>
-              <p className="text-sm text-text-dark/80 mt-4">
-                You can look up any dancer&apos;s points and division eligibility on the WSDC registry:
-                {" "}
-                <a
-                  href="https://www.worldsdc.com/registry-points/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-pink-accent hover:text-yellow-accent underline font-semibold"
-                >
-                  worldsdc.com/registry-points
-                </a>
-              </p>
-            </div>
+            <details className="mt-12 bg-cloud-dancer rounded-xl border-2 border-text-dark/10 overflow-hidden">
+              <summary className="cursor-pointer select-none p-6 md:p-8 font-spartan font-semibold text-xl">
+                Curious about international competition and level structure?
+                <span className="text-sm font-normal text-text-dark/60 block mt-1">Tap to expand</span>
+              </summary>
+              <div className="px-6 md:px-8 pb-6 md:pb-8">
+                <h3 className="font-spartan font-semibold text-lg mb-2">
+                  How do WCS international competitions and levels work — and what do these video titles mean?
+                </h3>
+                <p className="text-sm text-text-dark/80">
+                  The “levels” (divisions) you see in competition titles are usually based on World Swing Dance Council (WSDC)
+                  competition points. The full system is complex, but the idea is simple: place well in a division, earn points in
+                  that division, and once you&apos;ve earned enough points you can move up. Points reset per division — so someone can
+                  have lots of All Star points and only a few Champions points.
+                </p>
+                <p className="text-sm text-text-dark/80 mt-4">
+                  Typical progression:{" "}
+                  <span className="font-semibold">Newcomer → Novice → Intermediate → Advanced → All Star → Champions</span>
+                </p>
+                <p className="text-sm text-text-dark/80 mt-4">Common competition types:</p>
+                <ul className="list-disc pl-5 mt-2 space-y-1 text-sm text-text-dark/80">
+                  <li>
+                    <span className="font-semibold">Jack &amp; Jill</span>: random partner, random song — you enter as a lead or follow
+                    in your eligible division.
+                  </li>
+                  <li>
+                    <span className="font-semibold">Strictly</span>: chosen partner, random song — you enter together (division rules
+                    vary per event).
+                  </li>
+                  <li>
+                    <span className="font-semibold">Open</span>: open to multiple divisions (can be Jack &amp; Jill or Strictly).
+                  </li>
+                  <li>
+                    <span className="font-semibold">Showcase / Routine</span>: choreographed dances (often Classic vs Showcase), with
+                    different rules around lifts.
+                  </li>
+                </ul>
+                <p className="text-sm text-text-dark/80 mt-4">
+                  You can look up any dancer&apos;s points and division eligibility on the WSDC registry:{" "}
+                  <a
+                    href="https://www.worldsdc.com/registry-points/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-pink-accent hover:text-yellow-accent underline font-semibold"
+                  >
+                    worldsdc.com/registry-points
+                  </a>
+                </p>
+              </div>
+            </details>
           </div>
         </section>
             </div>
@@ -374,7 +387,7 @@ export default function Weekender() {
               Pass Options
             </h2>
             <p className="text-center text-lg text-text-dark/70 mb-10 max-w-[850px] mx-auto">
-              Bookings open <span className="font-semibold">Wednesday 19 February 2026</span>. Book and pay on this website.
+              Bookings open <span className="font-semibold">Wednesday 18 February 2026</span>. Book and pay on this website.
             </p>
 
 
@@ -401,7 +414,7 @@ export default function Weekender() {
                     <p className="text-xs text-text-dark/60 mt-1">
                       Literally right now, urgent, grab it immediately
                     </p>
-                    <p className="text-xs text-text-dark/60">First 10 tickets • 24 hours • opens 19 Feb</p>
+                    <p className="text-xs text-text-dark/60">First 10 tickets • 24 hours • opens 18 Feb</p>
 
                     <div className="flex items-center justify-between py-2 border-t border-text-dark/10 mt-2">
                       <span className="font-semibold">Now-now</span>

@@ -143,11 +143,22 @@ export default function Hero() {
           )}
         </div>
 
-        {/* CTA Button */}
-        <div className="flex justify-center">
-          <Link href="/whats-on" className="bg-yellow-accent text-text-dark px-10 py-4 rounded-lg font-medium text-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-yellow-accent/30 w-full md:w-auto text-center">
-            What&apos;s On
-          </Link>
+        {/* CTA Buttons */}
+        <div className="w-full max-w-[520px] mx-auto">
+          <div className="grid grid-cols-2 gap-3">
+            <Link
+              href="/whats-on"
+              className="bg-yellow-accent text-text-dark px-6 py-4 rounded-lg font-medium text-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-yellow-accent/30 text-center"
+            >
+              What&apos;s On
+            </Link>
+            <Link
+              href="/weekender"
+              className="bg-pink-accent text-white px-6 py-4 rounded-lg font-medium text-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-pink-accent/30 text-center"
+            >
+              Weekender
+            </Link>
+          </div>
         </div>
       </div>
     </section>

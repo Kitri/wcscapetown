@@ -29,9 +29,9 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-8">
           <Link href="/" className="text-text-dark hover:text-yellow-accent transition-colors">Home</Link>
           <Link href="/whats-on" className="text-text-dark hover:text-pink-accent transition-colors">What&apos;s On</Link>
+          <Link href="/weekender" className="text-text-dark hover:text-yellow-accent transition-colors">March Weekender</Link>
           <Link href="/about-us" className="text-text-dark hover:text-yellow-accent transition-colors">About Us</Link>
           <Link href="/community-culture" className="text-text-dark hover:text-pink-accent transition-colors">Community Culture</Link>
-          <Link href="/news" className="text-text-dark hover:text-yellow-accent transition-colors">Highlights</Link>
           <Link href="/contact" className="text-text-dark hover:text-pink-accent transition-colors">Contact</Link>
         </nav>
 
@@ -72,6 +72,13 @@ export default function Header() {
               What&apos;s On
             </Link>
             <Link 
+              href="/weekender" 
+              className="text-text-dark hover:text-yellow-accent transition-colors text-lg"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              March Weekender
+            </Link>
+            <Link 
               href="/about-us" 
               className="text-text-dark hover:text-yellow-accent transition-colors text-lg"
               onClick={() => setIsMenuOpen(false)}
@@ -84,13 +91,6 @@ export default function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               Community Culture
-            </Link>
-            <Link 
-              href="/news" 
-              className="text-text-dark hover:text-yellow-accent transition-colors text-lg"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Highlights
             </Link>
             <Link 
               href="/contact" 

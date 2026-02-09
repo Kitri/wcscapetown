@@ -1,66 +1,7 @@
-"use client";
-
-import { useState } from "react";
 import Image from "next/image";
-import { getOrCreateSessionId } from "@/lib/sessionId";
+import Link from "next/link";
 
 export default function WeekenderPoll() {
-  const [selectedInterest, setSelectedInterest] = useState<string | null>(null);
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!selectedInterest || !email) return;
-    
-    setIsSubmitting(true);
-
-    const data = {
-      interest: selectedInterest,
-      email: email,
-      timestamp: new Date().toISOString(),
-      sessionId: getOrCreateSessionId(),
-    };
-
-    try {
-      const response = await fetch("/api/poll-submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        setSubmitted(true);
-      }
-    } catch {
-      // Silently fail - error already logged server-side
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (submitted) {
-    return (
-      <section
-        id="weekender"
-        className="px-[5%] py-[60px] md:py-[60px]"
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(255, 209, 23, 0.15), rgba(255, 209, 23, 0.05))",
-        }}
-      >
-        <div className="max-w-[900px] mx-auto text-center">
-          <h2 className="font-spartan font-semibold text-[24px] md:text-[32px] mb-4">
-            You&apos;re on the list!
-          </h2>
-          <p className="text-lg">
-            We&apos;ll send you details soon.
-          </p>
-        </div>
-      </section>
-    );
-  }
-
   return (
     <section
       id="weekender"
@@ -71,19 +12,15 @@ export default function WeekenderPoll() {
       }}
     >
       <div className="max-w-[900px] mx-auto text-center">
-        {/* Title */}
-        <div className="mb-2">
-          <span className="inline-block bg-pink-accent text-white px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider">
-            Announcement
-          </span>
-        </div>
-        
         <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] mb-3">
           WCS Weekender with International Pros!
         </h2>
-        
-        <p className="text-lg md:text-xl font-medium mb-6">
+
+        <p className="text-lg md:text-xl font-medium mb-3">
           March 20-22, 2026 • Cape Town
+        </p>
+        <p className="text-sm md:text-base text-text-dark/70 mb-6">
+          Bookings open <span className="font-semibold">Wednesday 18 February 2026</span> — flash sale for the first 24 hours / first 10 tickets.
         </p>
         
         {/* Instructor Grid */}
@@ -137,94 +74,24 @@ export default function WeekenderPoll() {
           </a>
         </div>
         
-        <p className="text-base md:text-lg text-text-dark/80 mb-6 max-w-[600px] mx-auto">
+        <p className="text-base md:text-lg text-text-dark/80 mb-4 max-w-[600px] mx-auto">
           Weekend of learning • Evening socials
         </p>
 
-        {/* Interest Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-[600px] mx-auto mb-6">
-          {[
-            { label: "I'm in! 🚀", value: "excited-yes", gradient: "from-yellow-accent to-pink-accent" },
-            { label: "Depends on cost", value: "cost-dependent", gradient: "from-yellow-accent/70 to-yellow-accent/40" },
-          ].map((option) => (
-            <button
-              key={option.value}
-              onClick={() => setSelectedInterest(prev => prev === option.value ? null : option.value)}
-              disabled={isSubmitting}
-              className={`
-                relative border-2 rounded-lg p-4 font-medium text-base transition-all duration-200
-                ${
-                  selectedInterest === option.value
-                    ? `bg-gradient-to-r ${option.gradient} border-yellow-accent text-text-dark scale-105 shadow-lg`
-                    : "bg-white border-text-dark/20 hover:bg-yellow-accent/10 hover:border-yellow-accent"
-                }
-                disabled:opacity-50 disabled:cursor-not-allowed
-              `}
+        <div className="mt-4">
+          <div className="mt-6">
+            <Link
+              href="/weekender"
+              className="inline-block bg-pink-accent text-white px-10 py-4 rounded-lg font-medium text-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-pink-accent/30"
             >
-              {/* Checkbox Circle */}
-              <div className={`
-                absolute top-2 right-2 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
-                ${selectedInterest === option.value ? "bg-yellow-accent border-yellow-accent" : "border-gray-300"}
-              `}>
-                {selectedInterest === option.value && (
-                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                  </svg>
-                )}
-              </div>
-              
-              <span>{option.label}</span>
-            </button>
-          ))}
-        </div>
+              View Weekender page
+            </Link>
+          </div>
 
-        {/* Email Input */}
-        <div className="mb-6 max-w-md mx-auto">
-          <label htmlFor="weekender-email" className="block text-sm font-medium mb-2">
-            Add your name to the list
-          </label>
-          <input
-            id="weekender-email"
-            name="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="your.email@example.com"
-            required
-            className="w-full p-3 rounded-lg border-2 border-text-dark/20 focus:border-yellow-accent focus:outline-none bg-white"
-          />
-          <p className="text-xs text-text-dark/60 mt-1">
-            We&apos;ll send you details soon
+          <p className="text-xs text-text-dark/60 mt-6 max-w-[600px] mx-auto">
+            Details may change slightly — the Weekender page is always the latest info.
           </p>
         </div>
-
-        {/* Submit Button */}
-        {selectedInterest && (
-          <div className="mt-6">
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting || !email}
-              className="bg-pink-accent text-white px-10 py-4 rounded-lg font-medium text-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-pink-accent/30 disabled:opacity-50 active:scale-95"
-            >
-              {isSubmitting ? (
-                <span className="flex items-center justify-center gap-2">
-                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Submitting...
-                </span>
-              ) : (
-                "Add Me to the List"
-              )}
-            </button>
-          </div>
-        )}
-
-        {/* Fine Print */}
-        <p className="text-xs text-text-dark/60 mt-6 max-w-[600px] mx-auto">
-          Watch this space! Details coming soon!
-        </p>
       </div>
     </section>
   );
