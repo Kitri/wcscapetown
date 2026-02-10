@@ -65,7 +65,7 @@ export default function WhatsOn() {
             <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Upcoming Events</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* WCS Weekender - Featured with gradient background */}
-              <Link href="/#weekender" className="group relative overflow-hidden rounded-xl p-6 text-center transition-all hover:shadow-xl bg-gradient-to-br from-pink-accent/10 via-pink-accent/5 to-transparent border-2 border-pink-accent/50 hover:border-pink-accent">
+              <Link href="/weekender" className="group relative overflow-hidden rounded-xl p-6 text-center transition-all hover:shadow-xl bg-gradient-to-br from-pink-accent/10 via-pink-accent/5 to-transparent border-2 border-pink-accent/50 hover:border-pink-accent">
                 <div className="absolute top-2 right-2 bg-pink-accent text-white px-2 py-1 rounded text-xs font-semibold">
                   🌟 FEATURED
                 </div>
