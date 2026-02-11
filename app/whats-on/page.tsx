@@ -63,7 +63,7 @@ export default function WhatsOn() {
             </div>
 
             <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Upcoming Events</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {/* WCS Weekender - Featured with gradient background */}
               <Link href="/weekender" className="group relative overflow-hidden rounded-xl p-6 text-center transition-all hover:shadow-xl bg-gradient-to-br from-pink-accent/10 via-pink-accent/5 to-transparent border-2 border-pink-accent/50 hover:border-pink-accent">
                 <div className="absolute top-2 right-2 bg-pink-accent text-white px-2 py-1 rounded text-xs font-semibold">
@@ -74,7 +74,7 @@ export default function WhatsOn() {
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">WCS Weekender</h3>
                 <p className="text-sm text-text-dark/70 mb-1">International Pros</p>
-                <p className="text-xs italic mt-2 text-pink-accent font-semibold">Learn more on home page</p>
+                <p className="text-xs italic mt-2 text-pink-accent font-semibold">Learn more on weekender page</p>
               </Link>
 
               {/* Monthly Social */}
@@ -87,14 +87,26 @@ export default function WhatsOn() {
                 <p className="text-xs italic mt-2 text-text-dark/60">Date TBA</p>
               </a>
 
-              {/* Beginner Bootcamp */}
-              <a href="#beginner-bootcamp" className="group border-2 border-pink-accent/30 hover:border-pink-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
-                <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
-                  FEBRUARY
+              {/* Bootcamp (Morning) */}
+              <a href="#bootcamps" className="group border-2 border-purple-accent/30 hover:border-purple-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
+                <div className="inline-block bg-purple-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
+                  MAR 7 (TENTATIVE)
                 </div>
-                <h3 className="font-spartan font-semibold text-lg mb-2">Beginner Bootcamp</h3>
-                <p className="text-sm text-text-dark/70 mb-1">3-hour WCS fundamentals</p>
-                <p className="text-xs italic mt-2 text-text-dark/60">Date & Venue TBA</p>
+                <h3 className="font-spartan font-semibold text-lg mb-2">Bootcamp: Absolute Beginners</h3>
+                <p className="text-sm text-text-dark/70 mb-1">Morning • 3-hour WCS fundamentals</p>
+                <p className="text-xs italic mt-2 text-text-dark/60">Tentative 7 March, Observatory</p>
+                <p className="text-xs mt-3 text-purple-accent font-semibold">Get ready for the Weekender</p>
+              </a>
+
+              {/* Bootcamp (Afternoon) */}
+              <a href="#bootcamps" className="group border-2 border-yellow-accent/30 hover:border-yellow-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
+                <div className="inline-block bg-yellow-accent text-text-dark px-4 py-2 rounded-full font-semibold text-xs mb-3">
+                  MAR 7 (TENTATIVE)
+                </div>
+                <h3 className="font-spartan font-semibold text-lg mb-2">Bootcamp: Dancers from Other Styles</h3>
+                <p className="text-sm text-text-dark/70 mb-1">Afternoon • 3-hour WCS crash course</p>
+                <p className="text-xs italic mt-2 text-text-dark/60">Tentative 7 March, Observatory</p>
+                <p className="text-xs mt-3 text-yellow-accent font-semibold">Get ready for the Weekender</p>
               </a>
             </div>
           </div>
@@ -163,7 +175,7 @@ export default function WhatsOn() {
                     <div className="text-sm md:text-base space-y-1">
                       <p>R100 per person (class & social)</p>
                       <p className="text-purple-accent font-semibold">R150 for Monday + Tuesday (both classes & socials)</p>
-                      <p className="text-text-dark/70 italic">R300 for 4 classes (Mondays only)</p>
+                      <p className="text-text-dark/70 italic">R300 for the month (Mondays only) </p>
                     </div>
                   </div>
                 </div>
@@ -402,63 +414,83 @@ export default function WhatsOn() {
           </div>
         </section>
 
-        {/* Beginner Bootcamp - Full Details */}
-        <section 
-          id="beginner-bootcamp"
-          className="px-[5%] py-[50px] bg-cloud-dancer"
-        >
+        {/* Bootcamps - Full Details */}
+        <section id="bootcamps" className="px-[5%] py-[50px] bg-cloud-dancer">
+          {/* Back-compat anchor (old links) */}
+          <div id="beginner-bootcamp" className="sr-only" />
+
           <div className="max-w-[900px] mx-auto">
-            <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] text-center mb-6">
-              Beginner Bootcamp
+            <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] text-center mb-3">
+              Bootcamps (Get ready for the Weekender)
             </h2>
-            
-            <p className="text-lg md:text-xl text-center mb-8 max-w-[600px] mx-auto">
-              3 hours of West Coast Swing fundamentals. Everything you need to start social dancing with confidence.
+            <p className="text-lg md:text-xl text-center mb-8 max-w-[720px] mx-auto text-text-dark/80">
+              Two 3-hour bootcamps in one day — a morning session for absolute beginners, and an afternoon crash-course for dancers
+              from other styles.
             </p>
 
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Left Column - What You'll Learn */}
-              <div>
-                <h3 className="font-spartan font-semibold text-xl mb-4">What You&apos;ll Learn</h3>
-                <div className="space-y-3">
-                  <div className="bg-white/60 rounded-lg p-4">
-                    <p className="font-semibold">Core Basics</p>
-                    <p className="text-sm text-text-dark/70">Sugar push, side pass, underarm turn & more</p>
+            <div className="grid md:grid-cols-2 gap-6 mb-10">
+              {/* Morning Bootcamp */}
+              <div className="bg-white/60 rounded-xl p-6 border-2 border-purple-accent/20">
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <div>
+                    <h3 className="font-spartan font-semibold text-xl">Morning Bootcamp: Absolute Beginners</h3>
+                    <p className="text-sm text-text-dark/70 mt-1">Little to no prior dance experience</p>
                   </div>
-                  <div className="bg-white/60 rounded-lg p-4">
-                    <p className="font-semibold">Connection & Technique</p>
-                    <p className="text-sm text-text-dark/70">Frame, elasticity, and partner connection</p>
-                  </div>
-                  <div className="bg-white/60 rounded-lg p-4">
-                    <p className="font-semibold">Social Dancing</p>
-                    <p className="text-sm text-text-dark/70">Floor craft and dance floor etiquette</p>
-                  </div>
+                  <span className="shrink-0 inline-block bg-purple-accent text-white px-3 py-1 rounded-full font-semibold text-xs">
+                    3 hours
+                  </span>
                 </div>
+                <ul className="space-y-2 text-sm text-text-dark/80">
+                  <li>✓ Learn the core WCS patterns (enough to start social dancing)</li>
+                  <li>✓ Connection basics: frame, elasticity, and timing</li>
+                  <li>✓ Simple technique fixes that make everything feel easier</li>
+                  <li>✓ Get confident for the Weekender</li>
+                </ul>
               </div>
 
-              {/* Right Column - Details */}
-              <div>
-                <h3 className="font-spartan font-semibold text-xl mb-4">Details</h3>
-                <div className="space-y-4 text-base md:text-lg">
+              {/* Afternoon Bootcamp */}
+              <div className="bg-white/60 rounded-xl p-6 border-2 border-yellow-accent/30">
+                <div className="flex items-start justify-between gap-4 mb-3">
                   <div>
-                    <p className="font-semibold mb-1">📅 When</p>
-                    <p>Weekend in February 2026</p>
-                    <p className="text-sm text-text-dark/70 italic">Exact date to be announced</p>
+                    <h3 className="font-spartan font-semibold text-xl">Afternoon Bootcamp: Dancers from Other Styles</h3>
+                    <p className="text-sm text-text-dark/70 mt-1">For experienced dancers new to West Coast Swing</p>
                   </div>
-                  <div>
-                    <p className="font-semibold mb-1">⏱️ Duration</p>
-                    <p>3 hours</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-1">📍 Where</p>
-                    <p className="text-sm text-text-dark/70 italic">Venue to be announced</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-1">💰 Cost</p>
-                    <p>TBA</p>
-                  </div>
+                  <span className="shrink-0 inline-block bg-yellow-accent text-text-dark px-3 py-1 rounded-full font-semibold text-xs">
+                    3 hours
+                  </span>
+                </div>
+                <ul className="space-y-2 text-sm text-text-dark/80">
+                  <li>✓ Translate your existing dance skills into WCS fundamentals</li>
+                  <li>✓ Slot, leverage/compression, and “WCS feel” (without starting from zero)</li>
+                  <li>✓ Essential patterns + variations to dance comfortably at socials</li>
+                  <li>✓ Get ready for the Weekender</li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl p-6 md:p-8 border-2 border-text-dark/10">
+              <h3 className="font-spartan font-semibold text-xl mb-4">Details</h3>
+              <div className="grid sm:grid-cols-2 gap-6 text-base md:text-lg">
+                <div>
+                  <p className="font-semibold mb-1">📅 When</p>
+                  <p>Tentative <span className="font-semibold">Saturday 7 March 2026</span></p>
+                </div>
+                <div>
+                  <p className="font-semibold mb-1">📍 Where</p>
+                  <p>Observatory, Cape Town <span className="text-sm text-text-dark/60">(venue TBC)</span></p>
+                </div>
+                <div>
+                  <p className="font-semibold mb-1">⏱️ Duration</p>
+                  <p>2 × 3 hours (morning + afternoon)</p>
+                </div>
+                <div>
+                  <p className="font-semibold mb-1">💰 Cost</p>
+                  <p>TBA</p>
                 </div>
               </div>
+              <p className="text-sm text-text-dark/70 mt-6 italic">
+                We&apos;ll share exact times and booking details soon.
+              </p>
             </div>
           </div>
         </section>

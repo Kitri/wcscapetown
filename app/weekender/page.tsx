@@ -91,10 +91,10 @@ export default function Weekender({
           <div className="px-[5%] py-10 text-center">
             <p className="text-2xl md:text-4xl font-semibold mb-2">March 20–22, 2026</p>
             <p className="text-yellow-accent font-semibold text-base sm:text-lg md:text-xl">
-              Bookings open 18 Feb
+              Bookings open 18 Feb — on this page
             </p>
             <p className="text-sm text-white/80 mt-3">
-              The first 10 Weekend Pass tickets at the “Now” price are available for 24 hours only.
+              Special price for the first 24 hours or first 10 tickets on the 18th!
             </p>
           </div>
 
