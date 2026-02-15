@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { League_Spartan, Inter } from "next/font/google";
 import "./globals.css";
+import { Analytics } from "@vercel/analytics/next"
 
 const leagueSpartan = League_Spartan({
   variable: "--font-league-spartan",
