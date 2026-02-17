@@ -80,7 +80,7 @@ export default function WhatsOn() {
               {/* Monthly Social */}
               <a href="#monthly-social" className="group border-2 border-pink-accent/30 hover:border-pink-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
-                  FEBRUARY
+                  FEBRUARY 28
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">Monthly Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
@@ -101,7 +101,7 @@ export default function WhatsOn() {
               {/* Bootcamp (Afternoon) */}
               <a href="#bootcamps" className="group border-2 border-yellow-accent/30 hover:border-yellow-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-yellow-accent text-text-dark px-4 py-2 rounded-full font-semibold text-xs mb-3">
-                  MAR 7 (TENTATIVE)
+                  MAR 7
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">Bootcamp: Dancers from Other Styles</h3>
                 <p className="text-sm text-text-dark/70 mb-1">14:30 - 17:30 • 3-hour WCS crash course</p>
