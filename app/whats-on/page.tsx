@@ -84,17 +84,17 @@ export default function WhatsOn() {
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">Monthly Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs italic mt-2 text-text-dark/60">Date TBA</p>
+                <p className="text-xs italic mt-2 text-text-dark/60">28 February 2026</p>
               </a>
 
               {/* Bootcamp (Morning) */}
               <a href="#bootcamps" className="group border-2 border-purple-accent/30 hover:border-purple-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-purple-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
-                  MAR 7 (TENTATIVE)
+                  MAR 7 
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">Bootcamp: Absolute Beginners</h3>
-                <p className="text-sm text-text-dark/70 mb-1">Morning • 3-hour WCS fundamentals</p>
-                <p className="text-xs italic mt-2 text-text-dark/60">Tentative 7 March, Observatory</p>
+                <p className="text-sm text-text-dark/70 mb-1">11:00 - 14:00 • 3-hour WCS fundamentals</p>
+                <p className="text-xs italic mt-2 text-text-dark/60">7 March, Observatory</p>
                 <p className="text-xs mt-3 text-purple-accent font-semibold">Get ready for the Weekender</p>
               </a>
 
@@ -104,8 +104,8 @@ export default function WhatsOn() {
                   MAR 7 (TENTATIVE)
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">Bootcamp: Dancers from Other Styles</h3>
-                <p className="text-sm text-text-dark/70 mb-1">Afternoon • 3-hour WCS crash course</p>
-                <p className="text-xs italic mt-2 text-text-dark/60">Tentative 7 March, Observatory</p>
+                <p className="text-sm text-text-dark/70 mb-1">14:30 - 17:30 • 3-hour WCS crash course</p>
+                <p className="text-xs italic mt-2 text-text-dark/60">7 March, Observatory</p>
                 <p className="text-xs mt-3 text-yellow-accent font-semibold">Get ready for the Weekender</p>
               </a>
             </div>
@@ -374,12 +374,12 @@ export default function WhatsOn() {
                 <div className="space-y-4 text-base md:text-lg">
                   <div>
                     <p className="font-semibold mb-1">📅 When</p>
-                    <p>February 2026</p>
-                    <p className="text-sm text-text-dark/70 italic">Exact date to be announced</p>
+                    <p>28 February 2026</p>    
                   </div>
                   <div>
                     <p className="font-semibold mb-1">🕗 Time</p>
-                    <p>TBA</p>
+                     <p><b>Taster Class:</b>20:00</p>
+                    <p><b>Social:</b>20:30</p>
                   </div>
                   <div>
                     <p className="font-semibold mb-1">💰 Cost</p>
@@ -477,20 +477,19 @@ export default function WhatsOn() {
                 </div>
                 <div>
                   <p className="font-semibold mb-1">📍 Where</p>
-                  <p>Observatory, Cape Town <span className="text-sm text-text-dark/60">(venue TBC)</span></p>
+                  <p>Observatory Community Centre, Cape Town </p>
                 </div>
                 <div>
-                  <p className="font-semibold mb-1">⏱️ Duration</p>
-                  <p>2 × 3 hours (morning + afternoon)</p>
+                  <p className="font-semibold mb-1">⏱️ Times</p>
+                  <p><b>Beginner Bootcamp </b> 11:00 - 14:00 </p>
+                  <p><b>Dancers from Other Styles:</b> 14:30 - 17:30 </p>
                 </div>
                 <div>
                   <p className="font-semibold mb-1">💰 Cost</p>
                   <p>TBA</p>
                 </div>
               </div>
-              <p className="text-sm text-text-dark/70 mt-6 italic">
-                We&apos;ll share exact times and booking details soon.
-              </p>
+          
             </div>
           </div>
         </section>
