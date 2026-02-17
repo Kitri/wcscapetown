@@ -48,6 +48,25 @@ export function isZaFirstMonday(date: Date = getZaNow()): boolean {
   return isZaMonday(date) && getZaDayOfMonth(date) <= 7;
 }
 
+export function isZaTuesday(date: Date = getZaNow()): boolean {
+  const weekday = new Intl.DateTimeFormat("en-US", {
+    timeZone: ZA_TIME_ZONE,
+    weekday: "long",
+  }).format(date);
+  return weekday === "Tuesday";
+}
+
+export function isZaFirstOrSecondWeek(date: Date = getZaNow()): boolean {
+  return getZaDayOfMonth(date) <= 14;
+}
+
+export function getZaWeekday(date: Date = getZaNow()): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: ZA_TIME_ZONE,
+    weekday: "long",
+  }).format(date);
+}
+
 export function parseZaDateISO(dateISO: string): Date | null {
   const v = (dateISO ?? "").trim();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return null;

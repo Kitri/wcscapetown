@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { getSheetValues } from "@/lib/googleSheets";
-import { isZaFirstMonday, formatZaDateISO, parseZaDateISO } from "@/lib/zaDate";
+import {
+  isZaFirstMonday,
+  isZaTuesday,
+  isZaFirstOrSecondWeek,
+  formatZaDateISO,
+  parseZaDateISO,
+} from "@/lib/zaDate";
 import { CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
 
@@ -11,6 +17,7 @@ const ALLOWED_TYPE_CANONICAL: Record<string, string> = {
   monthly: "Monthly",
   "pensioner monthly": "Pensioner monthly",
   "student monthly": "Student monthly",
+  "social only": "Social only",
 };
 
 function normalizeType(raw: string): string {
@@ -54,9 +61,16 @@ export async function GET(request: Request) {
       costs[canonical] = parsePrice(priceRaw ?? "");
     }
 
+    const isTuesday = effectiveDate ? isZaTuesday(effectiveDate) : isZaTuesday();
+    const showMonthly = effectiveDate
+      ? isZaFirstOrSecondWeek(effectiveDate)
+      : isZaFirstOrSecondWeek();
+
     return NextResponse.json({
       today: dateISOParam || formatZaDateISO(effectiveDate),
       isFirstMonday: isZaFirstMonday(effectiveDate),
+      showMonthly,
+      isTuesday,
       costs,
     });
   } catch (error) {

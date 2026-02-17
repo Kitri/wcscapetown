@@ -27,6 +27,8 @@ type FreeEntryResponse =
 type CostsResponse = {
   today: string;
   isFirstMonday: boolean;
+  showMonthly: boolean;
+  isTuesday: boolean;
   costs: Record<string, number>;
 };
 
@@ -43,12 +45,14 @@ type NewMemberPayload = {
   visitor?: boolean;
 };
 
-const BASE_TYPES = ["Standard entry", "Pensioner", "Student"] as const;
+const BASE_TYPES = ["Standard entry", "Pensioner", "Student", "Social only"] as const;
 const MONTHLY_TYPES = [
   "Monthly",
   "Pensioner monthly",
   "Student monthly",
 ] as const;
+
+const LEVEL_2_TUESDAY_PRICE = 50;
 
 const ZA_TIME_ZONE = "Africa/Johannesburg";
 
@@ -742,6 +746,7 @@ export default function CheckInClient({
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [overrideComment, setOverrideComment] = useState("");
   const [overrideAmount, setOverrideAmount] = useState("");
+  const [overridePaidVia, setOverridePaidVia] = useState<"Cash" | "Yoco" | null>(null);
   const [overrideError, setOverrideError] = useState<string | null>(null);
   const [overriding, setOverriding] = useState(false);
 
@@ -755,17 +760,33 @@ export default function CheckInClient({
 
   const searchAbortRef = useRef<AbortController | null>(null);
 
+  // Check if member qualifies for Level 2 Tuesday discount
+  const isLevel2TuesdayDiscount = useMemo(() => {
+    if (!costs?.isTuesday) return false;
+    if (!selected) return false;
+    const level = (selected.level ?? "").toLowerCase();
+    return level.includes("2") || level === "level 2";
+  }, [costs?.isTuesday, selected]);
+
   const typeOptions = useMemo(() => {
+    // Level 2 Tuesday discount: only show Standard entry and Social only
+    if (isLevel2TuesdayDiscount) {
+      return ["Standard entry", "Social only"] as const;
+    }
     const base = [...BASE_TYPES];
-    const monthly = costs?.isFirstMonday ? [...MONTHLY_TYPES] : [];
+    const monthly = costs?.showMonthly ? [...MONTHLY_TYPES] : [];
     return [...base, ...monthly];
-  }, [costs?.isFirstMonday]);
+  }, [costs?.showMonthly, isLevel2TuesdayDiscount]);
 
   const payableAmount = useMemo(() => {
     if (!selectedType) return 0;
+    // Level 2 Tuesday discount: R50 for all options
+    if (isLevel2TuesdayDiscount) {
+      return LEVEL_2_TUESDAY_PRICE;
+    }
     const amount = costs?.costs?.[selectedType];
     return typeof amount === "number" ? amount : 0;
-  }, [costs, selectedType]);
+  }, [costs, selectedType, isLevel2TuesdayDiscount]);
 
   const effectiveFreeEntry = useMemo(() => {
     if (!freeEntry || ignoreFreeEntry) return null;
@@ -917,7 +938,7 @@ export default function CheckInClient({
     try {
       const [freeEntryRes, checkedRes] = await Promise.all([
         fetchJson<FreeEntryResponse>(
-          `/api/check-in/free-entry?member_id=${member.member_id}&date=${encodeURIComponent(selectedDateISO)}`
+          `/api/check-in/free-entry?member_id=${member.member_id}&date=${encodeURIComponent(selectedDateISO)}&event=${encodeURIComponent(selectedEvent)}`
         ).catch(() => ({ applies: false, today: costs?.today ?? "" } as const)),
         fetchJson<{ alreadyCheckedIn: boolean }>(
           `/api/check-in/already-checked-in?member_id=${member.member_id}&date=${encodeURIComponent(selectedDateISO)}&event=${encodeURIComponent(selectedEvent)}`
@@ -950,11 +971,12 @@ export default function CheckInClient({
     setCheckedInError(null);
     setCheckedInItems([]);
 
-    setOverrideOpen(false);
-    setOverrideComment("");
-    setOverrideAmount("");
-    setOverrideError(null);
-    setOverriding(false);
+      setOverrideOpen(false);
+      setOverrideComment("");
+      setOverrideAmount("");
+      setOverridePaidVia(null);
+      setOverrideError(null);
+      setOverriding(false);
 
     setUndoOpen(false);
     setUndoTarget(null);
@@ -1083,6 +1105,12 @@ export default function CheckInClient({
       return;
     }
 
+    // Require payment method if amount > 0
+    if (amount > 0 && !overridePaidVia) {
+      setOverrideError("Please select Cash or Yoco for the payment method.");
+      return;
+    }
+
     setOverriding(true);
     try {
       await fetchJson<{ ok: true }>("/api/check-in/attendance", {
@@ -1091,7 +1119,7 @@ export default function CheckInClient({
         body: JSON.stringify({
           member_id: selected.member_id,
           type: "Override",
-          paid_via: "Override",
+          paid_via: overridePaidVia ?? "",
           paid_amount: amount,
           comment,
           date: selectedDateISO,
@@ -1103,6 +1131,7 @@ export default function CheckInClient({
       setOverrideOpen(false);
       setOverrideComment("");
       setOverrideAmount("");
+      setOverridePaidVia(null);
       window.setTimeout(() => resetToSearch(), 900);
     } catch (e) {
       setOverrideError(e instanceof Error ? e.message : "Override failed");
@@ -1657,24 +1686,39 @@ export default function CheckInClient({
                   </div>
                 )}
 
+                {isLevel2TuesdayDiscount && (
+                  <div className="mb-4 rounded-xl p-4 border bg-green-500/10 border-green-500/40">
+                    <div className="font-semibold text-green-700">Level 2 Tuesday Discount</div>
+                    <div className="text-sm text-text-dark/80">
+                      Level 2 members pay only R{LEVEL_2_TUESDAY_PRICE} on Tuesdays (helping grow our Level 1s)
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                  {typeOptions.map((t) => (
-                    <PillButton
-                      key={t}
-                      selected={selectedType === t}
-                      onClick={() => {
-                        setSelectedType(t);
-                      }}
-                      disabled={!costs}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div>{t}</div>
-                        <div className="font-semibold text-text-dark/70">
-                          {costs ? formatZar(costs.costs?.[t] ?? 0) : ""}
+                  {typeOptions.map((t) => {
+                    // For Level 2 Tuesday, show fixed R50 price
+                    const displayPrice = isLevel2TuesdayDiscount
+                      ? LEVEL_2_TUESDAY_PRICE
+                      : (costs?.costs?.[t] ?? 0);
+                    return (
+                      <PillButton
+                        key={t}
+                        selected={selectedType === t}
+                        onClick={() => {
+                          setSelectedType(t);
+                        }}
+                        disabled={!costs}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>{t}</div>
+                          <div className="font-semibold text-text-dark/70">
+                            {costs ? formatZar(displayPrice) : ""}
+                          </div>
                         </div>
-                      </div>
-                    </PillButton>
-                  ))}
+                      </PillButton>
+                    );
+                  })}
                 </div>
 
                 <div className="bg-white rounded-xl border border-text-dark/10 p-4 mb-4">
@@ -1806,6 +1850,28 @@ export default function CheckInClient({
                           placeholder="0"
                         />
                       </label>
+
+                      <div className="mb-4">
+                        <div className="font-semibold mb-2">Payment method (required if amount &gt; 0)</div>
+                        <div className="flex gap-3 flex-wrap">
+                          <PillButton
+                            selected={overridePaidVia === "Cash"}
+                            onClick={() =>
+                              setOverridePaidVia((v) => (v === "Cash" ? null : "Cash"))
+                            }
+                          >
+                            Cash
+                          </PillButton>
+                          <PillButton
+                            selected={overridePaidVia === "Yoco"}
+                            onClick={() =>
+                              setOverridePaidVia((v) => (v === "Yoco" ? null : "Yoco"))
+                            }
+                          >
+                            Yoco
+                          </PillButton>
+                        </div>
+                      </div>
 
                       <label className="space-y-2 block mb-3">
                         <div className="font-semibold">Comment (required)</div>

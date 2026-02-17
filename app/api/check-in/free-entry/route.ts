@@ -17,6 +17,39 @@ type FreeEntryMatch = {
   applicable_date: string;
 };
 
+function parseBoolean(raw: string): boolean {
+  const v = (raw ?? "").trim().toLowerCase();
+  return v === "true" || v === "yes" || v === "1";
+}
+
+function matchesEvent(row: string[], event: string): boolean {
+  // Columns: A=member_id, B=name, C=entry_type, D=applicable_date, E=details, F=reason,
+  //          G=Monday Plumstead, H=Tuesday Pinelands, I=Social
+  const mondayPlumstead = parseBoolean(row[6] ?? "");
+  const tuesdayPinelands = parseBoolean(row[7] ?? "");
+  const social = parseBoolean(row[8] ?? "");
+
+  // If none are set, assume it applies to all events (backward compatibility)
+  if (!mondayPlumstead && !tuesdayPinelands && !social) {
+    return true;
+  }
+
+  const eventLower = event.toLowerCase();
+  if (eventLower.includes("monday") && eventLower.includes("plumstead")) {
+    return mondayPlumstead;
+  }
+  if (eventLower.includes("tuesday") && eventLower.includes("pinelands")) {
+    return tuesdayPinelands;
+  }
+  // For "Social" events or any event with "social" in the name
+  if (eventLower.includes("social")) {
+    return social;
+  }
+  // For other events (Thursday, Saturday, etc.), check if any matching column is set
+  // Default: if no specific column matches, don't grant free entry
+  return false;
+}
+
 function parseMemberId(raw: string): number {
   const digits = raw.replace(/[^0-9]/g, "");
   if (!digits) return NaN;
@@ -78,15 +111,18 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Invalid date" }, { status: 400 });
     }
 
+    const eventParam = (searchParams.get("event") ?? "").trim();
+
     const todayISO = dateISOParam || formatZaDateISO(date ?? undefined);
     const ctx = {
       monthYear: date ? formatZaMonthYear(date) : formatZaMonthYear(),
       isMonday: date ? isZaMonday(date) : isZaMonday(),
     };
 
+    // Read columns A:I to include the new event filter columns
     const rows = await getSheetValues(
       CHECKIN_SPREADSHEET_ID,
-      "'Free Entry'!A:F"
+      "'Free Entry'!A:I"
     );
 
     let best: (FreeEntryMatch & { priority: number }) | null = null;
@@ -98,6 +134,9 @@ export async function GET(request: Request) {
       const [idRaw, , entry_type, applicable_date, details, reason] = row;
       const id = parseMemberId(idRaw ?? "");
       if (!Number.isFinite(id) || id !== member_id) continue;
+
+      // Check event filter if an event is specified
+      if (eventParam && !matchesEvent(row, eventParam)) continue;
 
       const priority = matchesApplicableDate(applicable_date ?? "", todayISO, ctx);
       if (!priority) continue;
