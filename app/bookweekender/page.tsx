@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Header from "@/components/Header";
 import { getOrCreateSessionId } from '@/lib/sessionId';
 
-type Step = 'start' | 'verify-name' | 'select-type' | 'single-form' | 'couple-form' | 'processing';
+type Step = 'start' | 'verify-name' | 'select-type' | 'single-form' | 'couple-form' | 'processing' | 'waitlist-success';
 type Role = 'L' | 'F';
 type Level = 1 | 2;
 type PassType = 'weekend' | 'day' | 'party';
@@ -116,6 +116,17 @@ export default function BookWeekender() {
   const [daySelection, setDaySelection] = useState<DaySelection>('saturday');
   const [addFridayParty, setAddFridayParty] = useState(false);
   
+  // Waitlist state
+  const [isOnWaitlist, setIsOnWaitlist] = useState(false);
+  const [waitlistMessage, setWaitlistMessage] = useState('');
+  const [waitlistReference, setWaitlistReference] = useState('');
+  
+  // Pre-fetched waitlist status for instant UI (keyed by role)
+  const [waitlistStatus, setWaitlistStatus] = useState<{
+    L: { shouldWaitlist: boolean; message: string } | null;
+    F: { shouldWaitlist: boolean; message: string } | null;
+  }>({ L: null, F: null });
+  
   useEffect(() => {
     setSessionId(getOrCreateSessionId());
     // Check if registration is open
@@ -135,15 +146,49 @@ export default function BookWeekender() {
     setError('');
 
     try {
-      const response = await fetch('/api/weekender/start-registration', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId })
-      });
+      // Start registration check and pre-fetch waitlist status in parallel for weekend passes
+      const promises: Promise<Response>[] = [
+        fetch('/api/weekender/start-registration', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId })
+        })
+      ];
+      
+      // Pre-fetch waitlist status for Level 2 roles (only for weekend passes)
+      if (selectedPassType === 'weekend') {
+        promises.push(
+          fetch('/api/weekender/check-role-balance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: 'L', level: 2, passType: 'weekend' })
+          }),
+          fetch('/api/weekender/check-role-balance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: 'F', level: 2, passType: 'weekend' })
+          })
+        );
+      }
+      
+      const responses = await Promise.all(promises);
+      const [regResponse, leadResponse, followResponse] = responses;
+      
+      // Process waitlist status responses
+      if (selectedPassType === 'weekend' && leadResponse && followResponse) {
+        const [leadData, followData] = await Promise.all([
+          leadResponse.json(),
+          followResponse.json()
+        ]);
+        setWaitlistStatus({
+          L: { shouldWaitlist: leadData.shouldWaitlist, message: leadData.message },
+          F: { shouldWaitlist: followData.shouldWaitlist, message: followData.message }
+        });
+      }
 
-      const data = await response.json();
+      const data = await regResponse.json();
 
-      if (!response.ok) {
+      if (!regResponse.ok) {
         if (data.error === 'already_registered') {
           // Show name verification step instead of just an error
           setStep('verify-name');
@@ -166,6 +211,14 @@ export default function BookWeekender() {
 
   // "Now" tier is sold out
   const handleSelectSingle = () => {
+    // Immediately apply pre-fetched waitlist status for current role/level
+    if (passType === 'weekend' && level === 2 && waitlistStatus[role]) {
+      setIsOnWaitlist(waitlistStatus[role]!.shouldWaitlist);
+      setWaitlistMessage(waitlistStatus[role]!.message);
+    } else {
+      setIsOnWaitlist(false);
+      setWaitlistMessage('');
+    }
     setStep('single-form');
   };
 
@@ -213,6 +266,19 @@ export default function BookWeekender() {
     }
   };
 
+  // Update waitlist status from pre-fetched data when role/level changes
+  useEffect(() => {
+    if (step === 'single-form' && passType === 'weekend') {
+      if (level === 2 && waitlistStatus[role]) {
+        setIsOnWaitlist(waitlistStatus[role]!.shouldWaitlist);
+        setWaitlistMessage(waitlistStatus[role]!.message);
+      } else {
+        setIsOnWaitlist(false);
+        setWaitlistMessage('');
+      }
+    }
+  }, [role, level, step, passType, waitlistStatus]);
+
   const handleSubmitSingle = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -235,6 +301,7 @@ export default function BookWeekender() {
           passType,
           daySelection: passType === 'day' ? daySelection : undefined,
           addFridayParty: passType === 'day' ? addFridayParty : undefined,
+          isWaitlist: isOnWaitlist,
           registration: {
             type: 'single',
             name: name.trim(),
@@ -255,6 +322,14 @@ export default function BookWeekender() {
         } else {
           throw new Error(data.error || 'Failed to submit registration');
         }
+        setLoading(false);
+        return;
+      }
+
+      // If waitlist registration, show success page instead of payment
+      if (isOnWaitlist) {
+        setWaitlistReference(data.reference);
+        setStep('waitlist-success');
         setLoading(false);
         return;
       }
@@ -695,6 +770,17 @@ export default function BookWeekender() {
                   </div>
                 </div>
 
+                {/* Waitlist message */}
+                {isOnWaitlist && (
+                  <div className="mt-6 p-4 bg-purple-accent/10 border-2 border-purple-accent/30 rounded-lg">
+                    <p className="text-sm text-text-dark font-semibold mb-2">⏳ Waitlist Notice</p>
+                    <p className="text-sm text-text-dark/80">{waitlistMessage}</p>
+                    <p className="text-sm text-text-dark/70 mt-2">
+                      You can still register below and we&apos;ll add you to the waitlist. No payment required until a spot opens.
+                    </p>
+                  </div>
+                )}
+
                 <div className="mt-8 pt-6 border-t border-text-dark/10">
                   {passType === 'day' && (
                     <div className="text-sm text-text-dark/70 mb-3">
@@ -706,14 +792,21 @@ export default function BookWeekender() {
                     <span className="font-semibold">{PASS_PRICES[passType].name}{passType === 'day' && addFridayParty ? ' + Friday' : ''}</span>
                     <span className="text-2xl font-bold">R{(PASS_PRICES[passType].single + (passType === 'day' && addFridayParty ? FRIDAY_ADDON_PRICE : 0)).toLocaleString()}</span>
                   </div>
+                  {isOnWaitlist && (
+                    <p className="text-sm text-purple-accent font-semibold">Payment will be requested when a spot opens</p>
+                  )}
                 </div>
                   
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full px-8 py-4 rounded-lg font-semibold text-lg bg-yellow-accent text-text-dark hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className={`w-full px-8 py-4 rounded-lg font-semibold text-lg hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isOnWaitlist 
+                      ? 'bg-purple-accent text-white' 
+                      : 'bg-yellow-accent text-text-dark'
+                  }`}
                 >
-                  {loading ? 'Processing...' : 'Continue to Payment'}
+                  {loading ? 'Processing...' : isOnWaitlist ? 'Join Waitlist' : 'Continue to Payment'}
                 </button>
 
                 <button
@@ -889,8 +982,37 @@ export default function BookWeekender() {
             {step === 'processing' && (
               <div className="bg-white rounded-xl p-8 shadow-lg text-center">
                 <div className="animate-spin h-12 w-12 border-4 border-yellow-accent border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p className="text-lg font-semibold">Setting up your payment...</p>
-                <p className="text-sm text-text-dark/60 mt-2">You will be redirected to the payment page shortly.</p>
+                <p className="text-lg font-semibold">{isOnWaitlist ? 'Adding you to the waitlist...' : 'Setting up your payment...'}</p>
+                <p className="text-sm text-text-dark/60 mt-2">{isOnWaitlist ? 'Please wait a moment.' : 'You will be redirected to the payment page shortly.'}</p>
+              </div>
+            )}
+
+            {/* Step: Waitlist Success */}
+            {step === 'waitlist-success' && (
+              <div className="bg-white rounded-xl p-8 shadow-lg text-center">
+                <div className="text-6xl mb-4">⏳</div>
+                <h2 className="font-spartan font-semibold text-2xl mb-4">You&apos;re on the Waitlist!</h2>
+                <p className="text-text-dark/80 mb-4">
+                  Thanks for registering, <span className="font-semibold">{name} {surname}</span>.
+                </p>
+                <p className="text-text-dark/70 mb-6">
+                  We&apos;ve added you to the Level 2 {role === 'F' ? 'Follower' : 'Lead'} waitlist. 
+                  As soon as enough {role === 'F' ? 'leads' : 'followers'} sign up to balance the numbers, 
+                  we&apos;ll send you an email with a payment link.
+                </p>
+                <div className="bg-cloud-dancer rounded-lg p-4 mb-6">
+                  <p className="text-sm text-text-dark/60">Reference number</p>
+                  <p className="font-mono font-semibold text-lg">{waitlistReference}</p>
+                </div>
+                <a
+                  href="/weekender"
+                  className="inline-block bg-yellow-accent text-text-dark px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all"
+                >
+                  Return to Weekender
+                </a>
+                <p className="text-sm text-text-dark/60 mt-6">
+                  Questions? Email <a href="mailto:weekender@wcscapetown.co.za" className="text-pink-accent hover:text-yellow-accent underline">weekender@wcscapetown.co.za</a>
+                </p>
               </div>
             )}
           </div>

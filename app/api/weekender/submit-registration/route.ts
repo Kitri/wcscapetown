@@ -13,12 +13,16 @@ import { logApiResponse, logError, logInfo, getNextOrderNumber } from '@/lib/blo
 
 // Pass type pricing in cents
 type PassType = 'weekend' | 'day' | 'party';
+type PriceTier = 'now' | 'now-now' | 'just-now' | 'ai-tog' | 'promo';
 
 const PASS_PRICES: Record<PassType, { single: number; couple: number; name: string }> = {
   'weekend': { single: 180000, couple: 360000, name: 'Weekend Pass' },  // R1800/R3600
   'day': { single: 100000, couple: 200000, name: 'Day Pass' },          // R1000/R2000
   'party': { single: 80000, couple: 160000, name: 'Party Pass' },       // R800/R1600
 };
+
+// Special promo pricing (R1600 per person for weekend pass)
+const PROMO_PRICE_CENTS = 160000; // R1600
 
 const FRIDAY_ADDON_CENTS = 20000; // R200
 
@@ -54,7 +58,7 @@ export async function POST(request: NextRequest) {
     const { sessionId, registration, priceTier, passType = 'weekend', daySelection, addFridayParty, isWaitlist } = body as {
       sessionId: string;
       registration: RegistrationData;
-      priceTier: 'now' | 'now-now' | 'just-now' | 'ai-tog';
+      priceTier: PriceTier;
       passType?: PassType;
       daySelection?: 'saturday' | 'sunday';
       addFridayParty?: boolean;
@@ -84,7 +88,14 @@ export async function POST(request: NextRequest) {
     const passInfo = PASS_PRICES[passType] || PASS_PRICES['weekend'];
     // Add Friday addon price for Day Pass if selected
     const fridayAddon = (passType === 'day' && addFridayParty) ? (isSingle ? FRIDAY_ADDON_CENTS : FRIDAY_ADDON_CENTS * 2) : 0;
-    const amountCents = (isSingle ? passInfo.single : passInfo.couple) + fridayAddon;
+    
+    // Use promo pricing if applicable (R1600 per person for weekend pass)
+    let amountCents: number;
+    if (priceTier === 'promo' && passType === 'weekend') {
+      amountCents = isSingle ? PROMO_PRICE_CENTS : PROMO_PRICE_CENTS * 2;
+    } else {
+      amountCents = (isSingle ? passInfo.single : passInfo.couple) + fridayAddon;
+    }
 
     // Generate order ID first (needed for db and Redis)
     const orderId = await getNextOrderNumber();

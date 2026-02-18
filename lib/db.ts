@@ -27,7 +27,7 @@ export interface Registration {
   booking_session_id: string;
   order_id: string;
   pass_type: 'weekend' | 'day' | 'day_saturday' | 'day_sunday' | 'party';
-  pricing_tier: 'now' | 'now-now' | 'just-now' | 'ai-tog';
+  pricing_tier: 'now' | 'now-now' | 'just-now' | 'ai-tog' | 'promo';
   amount_cents: number;
   payment_status: 'pending' | 'complete' | 'failed' | 'expired' | 'waitlist';
   registration_status: 'pending' | 'complete' | 'expired' | 'waitlist';
@@ -488,4 +488,106 @@ export async function getRegistrationIdByMemberId(memberId: number): Promise<num
   
   if (result.length === 0) return null;
   return result[0].id;
+}
+
+// Get Level 2 weekend pass role counts (for role balancing)
+// Only counts completed registrations
+export async function getLevel2WeekendRoleCounts(): Promise<{ leads: number; followers: number }> {
+  const sql = getDb();
+  
+  const result = await sql`
+    SELECT 
+      role,
+      COUNT(*) as count
+    FROM registrations
+    WHERE level = 2
+    AND pass_type = 'weekend'
+    AND registration_status = 'complete'
+    GROUP BY role
+  `;
+  
+  let leads = 0;
+  let followers = 0;
+  
+  for (const row of result) {
+    if (row.role === 'Lead') leads = Number(row.count);
+    if (row.role === 'Follow') followers = Number(row.count);
+  }
+  
+  return { leads, followers };
+}
+
+// Count waitlisted registrations for a specific role and level
+export async function getWaitlistCount(role: 'L' | 'F', level: number): Promise<number> {
+  const sql = getDb();
+  
+  const result = await sql`
+    SELECT COUNT(*) as count
+    FROM registrations
+    WHERE role = ${role === 'L' ? 'Lead' : 'Follow'}
+    AND level = ${level}
+    AND pass_type = 'weekend'
+    AND registration_status = 'waitlist'
+  `;
+  
+  return Number(result[0].count);
+}
+
+// Check if a role needs to go on waitlist for Level 2 weekend pass
+// Rules:
+// 1. If there are people on the waitlist for this role, new registrations also go to waitlist
+// 2. leads/followers ratio should be >= 0.8 (80/20 in either direction)
+export async function shouldWaitlistRole(
+  role: 'L' | 'F',
+  level: number
+): Promise<{ shouldWaitlist: boolean; leads: number; followers: number; waitlistCount: number; message: string }> {
+  // Only apply to Level 2
+  if (level !== 2) {
+    return { shouldWaitlist: false, leads: 0, followers: 0, waitlistCount: 0, message: '' };
+  }
+  
+  const { leads, followers } = await getLevel2WeekendRoleCounts();
+  const waitlistCount = await getWaitlistCount(role, level);
+  
+  // First check: if there are people on the waitlist for this role, new registrations also go to waitlist
+  if (waitlistCount > 0) {
+    return {
+      shouldWaitlist: true,
+      leads,
+      followers,
+      waitlistCount,
+      message: `For role balancing purposes, Level 2 ${role === 'F' ? 'followers' : 'leads'} are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+    };
+  }
+  
+  // Second check: if adding this role would imbalance, go to waitlist
+  if (role === 'F') {
+    const newFollowers = followers + 1;
+    const ratio = leads / newFollowers;
+    if (ratio < 0.8) {
+      return {
+        shouldWaitlist: true,
+        leads,
+        followers,
+        waitlistCount,
+        message: `For role balancing purposes, Level 2 followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+      };
+    }
+  }
+  
+  if (role === 'L') {
+    const newLeads = leads + 1;
+    const ratio = followers / newLeads;
+    if (ratio < 0.8) {
+      return {
+        shouldWaitlist: true,
+        leads,
+        followers,
+        waitlistCount,
+        message: `For role balancing purposes, Level 2 leads are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+      };
+    }
+  }
+  
+  return { shouldWaitlist: false, leads, followers, waitlistCount, message: '' };
 }
