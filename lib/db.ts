@@ -409,6 +409,27 @@ export async function isNowTierSoldOut(): Promise<{ soldOut: boolean; completedC
   };
 }
 
+// Party pass limit
+const PARTY_PASS_LIMIT = 10;
+
+// Check if party passes are sold out
+export async function isPartyPassSoldOut(): Promise<{ soldOut: boolean; completedCount: number; limit: number }> {
+  const sql = getDb();
+  
+  const result = await sql`
+    SELECT COUNT(*) as count FROM registrations 
+    WHERE registration_status = 'complete'
+    AND pass_type = 'party'
+  `;
+  
+  const completedCount = Number(result[0].count);
+  return {
+    soldOut: completedCount >= PARTY_PASS_LIMIT,
+    completedCount,
+    limit: PARTY_PASS_LIMIT,
+  };
+}
+
 // Create or update day pass details entry (upsert by registration_id)
 export async function createDayPassDetails(
   registrationId: number,
@@ -490,9 +511,9 @@ export async function getRegistrationIdByMemberId(memberId: number): Promise<num
   return result[0].id;
 }
 
-// Get Level 2 weekend pass role counts (for role balancing)
+// Get weekend pass role counts for a specific level (for role balancing)
 // Only counts completed registrations
-export async function getLevel2WeekendRoleCounts(): Promise<{ leads: number; followers: number }> {
+export async function getWeekendRoleCounts(level: number): Promise<{ leads: number; followers: number }> {
   const sql = getDb();
   
   const result = await sql`
@@ -500,7 +521,7 @@ export async function getLevel2WeekendRoleCounts(): Promise<{ leads: number; fol
       role,
       COUNT(*) as count
     FROM registrations
-    WHERE level = 2
+    WHERE level = ${level}
     AND pass_type = 'weekend'
     AND registration_status = 'complete'
     GROUP BY role
@@ -510,8 +531,8 @@ export async function getLevel2WeekendRoleCounts(): Promise<{ leads: number; fol
   let followers = 0;
   
   for (const row of result) {
-    if (row.role === 'Lead') leads = Number(row.count);
-    if (row.role === 'Follow') followers = Number(row.count);
+    if (row.role === 'L') leads = Number(row.count);
+    if (row.role === 'F') followers = Number(row.count);
   }
   
   return { leads, followers };
@@ -524,7 +545,7 @@ export async function getWaitlistCount(role: 'L' | 'F', level: number): Promise<
   const result = await sql`
     SELECT COUNT(*) as count
     FROM registrations
-    WHERE role = ${role === 'L' ? 'Lead' : 'Follow'}
+    WHERE role = ${role}
     AND level = ${level}
     AND pass_type = 'weekend'
     AND registration_status = 'waitlist'
@@ -533,21 +554,21 @@ export async function getWaitlistCount(role: 'L' | 'F', level: number): Promise<
   return Number(result[0].count);
 }
 
-// Check if a role needs to go on waitlist for Level 2 weekend pass
+// Check if a role needs to go on waitlist for weekend pass
 // Rules:
-// 1. If there are people on the waitlist for this role, new registrations also go to waitlist
-// 2. leads/followers ratio should be >= 0.8 (80/20 in either direction)
+// Level 1: Two conditions:
+//   - Before 10 total: cap at 7 for either role (to prevent 90%+ imbalance)
+//   - From 10 total: 80/20 ratio applies
+// Level 2: 80/20 ratio (active immediately)
+// Both levels: If there are people on the waitlist for this role, new registrations also go to waitlist
 export async function shouldWaitlistRole(
   role: 'L' | 'F',
   level: number
 ): Promise<{ shouldWaitlist: boolean; leads: number; followers: number; waitlistCount: number; message: string }> {
-  // Only apply to Level 2
-  if (level !== 2) {
-    return { shouldWaitlist: false, leads: 0, followers: 0, waitlistCount: 0, message: '' };
-  }
-  
-  const { leads, followers } = await getLevel2WeekendRoleCounts();
+  const { leads, followers } = await getWeekendRoleCounts(level);
   const waitlistCount = await getWaitlistCount(role, level);
+  const total = leads + followers;
+  const levelLabel = `Level ${level}`;
   
   // First check: if there are people on the waitlist for this role, new registrations also go to waitlist
   if (waitlistCount > 0) {
@@ -556,36 +577,95 @@ export async function shouldWaitlistRole(
       leads,
       followers,
       waitlistCount,
-      message: `For role balancing purposes, Level 2 ${role === 'F' ? 'followers' : 'leads'} are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+      message: `For role balancing purposes, ${levelLabel} ${role === 'F' ? 'followers' : 'leads'} are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
     };
   }
   
-  // Second check: if adding this role would imbalance, go to waitlist
-  if (role === 'F') {
-    const newFollowers = followers + 1;
-    const ratio = leads / newFollowers;
-    if (ratio < 0.8) {
-      return {
-        shouldWaitlist: true,
-        leads,
-        followers,
-        waitlistCount,
-        message: `For role balancing purposes, Level 2 followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
-      };
+  // Level 1: Two conditions for waitlist
+  if (level === 1) {
+    // Condition 1: Before 10 total, cap either role at 7 to prevent extreme imbalance
+    if (total < 10) {
+      if (role === 'F' && followers >= 7) {
+        return {
+          shouldWaitlist: true,
+          leads,
+          followers,
+          waitlistCount,
+          message: `For role balancing purposes, ${levelLabel} followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+        };
+      }
+      if (role === 'L' && leads >= 7) {
+        return {
+          shouldWaitlist: true,
+          leads,
+          followers,
+          waitlistCount,
+          message: `For role balancing purposes, ${levelLabel} leads are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+        };
+      }
+      return { shouldWaitlist: false, leads, followers, waitlistCount, message: '' };
     }
+    
+    // Condition 2: From 10 total, apply 80/20 ratio
+    if (role === 'F') {
+      const newFollowers = followers + 1;
+      const ratio = leads / newFollowers;
+      if (ratio < 0.8) {
+        return {
+          shouldWaitlist: true,
+          leads,
+          followers,
+          waitlistCount,
+          message: `For role balancing purposes, ${levelLabel} followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+        };
+      }
+    }
+    
+    if (role === 'L') {
+      const newLeads = leads + 1;
+      const ratio = followers / newLeads;
+      if (ratio < 0.8) {
+        return {
+          shouldWaitlist: true,
+          leads,
+          followers,
+          waitlistCount,
+          message: `For role balancing purposes, ${levelLabel} leads are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+        };
+      }
+    }
+    
+    return { shouldWaitlist: false, leads, followers, waitlistCount, message: '' };
   }
   
-  if (role === 'L') {
-    const newLeads = leads + 1;
-    const ratio = followers / newLeads;
-    if (ratio < 0.8) {
-      return {
-        shouldWaitlist: true,
-        leads,
-        followers,
-        waitlistCount,
-        message: `For role balancing purposes, Level 2 leads are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
-      };
+  // Level 2: Ratio 80/20 (leads/followers >= 0.8 in either direction)
+  if (level === 2) {
+    if (role === 'F') {
+      const newFollowers = followers + 1;
+      const ratio = leads / newFollowers;
+      if (ratio < 0.8) {
+        return {
+          shouldWaitlist: true,
+          leads,
+          followers,
+          waitlistCount,
+          message: `For role balancing purposes, ${levelLabel} followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+        };
+      }
+    }
+    
+    if (role === 'L') {
+      const newLeads = leads + 1;
+      const ratio = followers / newLeads;
+      if (ratio < 0.8) {
+        return {
+          shouldWaitlist: true,
+          leads,
+          followers,
+          waitlistCount,
+          message: `For role balancing purposes, ${levelLabel} leads are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+        };
+      }
     }
   }
   
