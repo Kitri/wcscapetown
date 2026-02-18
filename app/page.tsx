@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
+import WeekenderBanner from "@/components/WeekenderBanner";
 import WeekenderPoll from "@/components/WeekenderPoll";
 import WhatIsWCS from "@/components/WhatIsWCS";
 import WhoAreWe from "@/components/WhoAreWe";
@@ -13,6 +14,7 @@ export default function Home() {
       <Header />
       <main>
         <Hero />
+        <WeekenderBanner />
         <WeekenderPoll />
         <WhatIsWCS />
         <WhoAreWe />

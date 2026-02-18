@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logWeekenderEvent, setOrderMemberIds, addToTicketQueue } from '@/lib/redis';
+import { logWeekenderEvent, setOrderMemberIds } from '@/lib/redis';
 import { 
   createRegistration, 
   findOrCreateMember, 
@@ -221,14 +221,8 @@ export async function POST(request: NextRequest) {
       allMemberIds = [leaderId, followerId];
     }
 
-    // Store member_ids in Redis keyed by orderId (unique per registration attempt)
+    // Store member_ids in Redis keyed by orderId (for payment callback lookup)
     await setOrderMemberIds(orderId, allMemberIds);
-    
-    // Add to ticket queue (for "now" tier limit tracking) - only for non-waitlist
-    const spotCount = isSingle ? 1 : 2;
-    if (!isWaitlist) {
-      await addToTicketQueue(orderId, spotCount);
-    }
 
     // For waitlist registrations, return early without creating Yoco checkout
     if (isWaitlist) {

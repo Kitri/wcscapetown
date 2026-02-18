@@ -90,15 +90,17 @@ export default function Weekender({
           </div>
 
           <div className="px-[5%] py-10 text-center">
-            <p className="text-2xl md:text-4xl font-semibold mb-2">March 20–22, 2026</p>
+            <p className="text-2xl md:text-4xl font-semibold mb-4">March 20–22, 2026</p>
+            
             <Link
               href="/bookweekender"
-              className="inline-block text-yellow-accent font-semibold text-base sm:text-lg md:text-xl hover:underline"
+              className="inline-block bg-yellow-accent text-text-dark px-8 py-4 rounded-lg font-bold text-lg md:text-xl hover:-translate-y-1 hover:shadow-lg hover:shadow-yellow-accent/30 transition-all animate-pulse"
             >
-              Bookings open 18 Feb — book here
+              🌟 Book Your Pass Now 🌟
             </Link>
-            <p className="text-sm text-white/80 mt-3">
-              Special price for the first 24 hours or first 10 tickets on the 18th!
+            
+            <p className="text-sm text-white/80 mt-4">
+              Registration is open! First 10 tickets get the special &quot;Now&quot; price.
             </p>
           </div>
 

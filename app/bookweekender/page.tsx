@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Header from "@/components/Header";
 import { getOrCreateSessionId } from '@/lib/sessionId';
 
-type Step = 'start' | 'verify-name' | 'select-type' | 'single-form' | 'couple-form' | 'processing' | 'sold-out' | 'waitlist';
+type Step = 'start' | 'verify-name' | 'select-type' | 'single-form' | 'couple-form' | 'processing';
 type Role = 'L' | 'F';
 type Level = 1 | 2;
 type PricingTier = 'now' | 'now-now' | 'just-now' | 'ai-tog';
@@ -46,34 +46,18 @@ export default function BookWeekender() {
   const [verifyName, setVerifyName] = useState('');
   const [verifySurname, setVerifySurname] = useState('');
   
-  // Pricing tier based on availability
-  const [pricingTier, setPricingTier] = useState<PricingTier>('now');
-  const [availabilityMessage, setAvailabilityMessage] = useState('');
-  const [waitlistPosition, setWaitlistPosition] = useState<number | null>(null);
+  // Pricing tier - "Now" tier is sold out, everyone gets "Now-Now"
+  const [pricingTier, setPricingTier] = useState<PricingTier>('now-now');
   
-  // Waitlist mode
-  const [isWaitlist, setIsWaitlist] = useState(false);
-  const [pendingRegistrationType, setPendingRegistrationType] = useState<'single' | 'couple'>('single');
   
-  // Tier sold out status (from database)
-  const [nowTierSoldOut, setNowTierSoldOut] = useState(false);
+  // Now tier is sold out
+  const nowTierSoldOut = true;
   
   useEffect(() => {
     setSessionId(getOrCreateSessionId());
     // Check if registration is open
     const now = new Date();
     setRegistrationOpen(now >= REGISTRATION_OPENS);
-    
-    // Check tier status from database
-    fetch('/api/weekender/tier-status')
-      .then(res => res.json())
-      .then(data => {
-        if (data.nowTierSoldOut) {
-          setNowTierSoldOut(true);
-          setPricingTier('now-now');
-        }
-      })
-      .catch(console.error);
   }, []);
 
   const handleStartRegistration = async () => {
@@ -114,77 +98,13 @@ export default function BookWeekender() {
     }
   };
 
-  const checkAvailability = async (spotCount: number): Promise<{ canProceed: boolean; tier: PricingTier }> => {
-    try {
-      const response = await fetch('/api/weekender/check-availability', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spotCount })
-      });
-      
-      const data = await response.json();
-      
-      if (data.tier === 'now') {
-        setPricingTier('now');
-        setAvailabilityMessage('');
-        return { canProceed: true, tier: 'now' };
-      } else if (data.tier === 'now-now') {
-        setPricingTier('now-now');
-        setAvailabilityMessage(data.message);
-        return { canProceed: true, tier: 'now-now' };
-      } else if (data.tier === 'waitlist') {
-        setAvailabilityMessage(data.message);
-        setWaitlistPosition(data.waitlistPosition || null);
-        return { canProceed: false, tier: 'now' };
-      }
-      
-      return { canProceed: true, tier: 'now' };
-    } catch (err) {
-      console.error('Error checking availability:', err);
-      // Default to allowing registration on error
-      return { canProceed: true, tier: 'now' };
-    }
+  // "Now" tier is sold out - go straight to form with "Now-Now" pricing
+  const handleSelectSingle = () => {
+    setStep('single-form');
   };
 
-  const handleSelectSingle = async () => {
-    setLoading(true);
-    setIsWaitlist(false);
-    setPendingRegistrationType('single');
-    const { canProceed, tier } = await checkAvailability(1);
-    setLoading(false);
-    
-    if (canProceed) {
-      setPricingTier(tier);
-      setStep('single-form');
-    } else {
-      setStep('waitlist');
-    }
-  };
-
-  const handleSelectCouple = async () => {
-    setLoading(true);
-    setIsWaitlist(false);
-    setPendingRegistrationType('couple');
-    const { canProceed, tier } = await checkAvailability(2);
-    setLoading(false);
-    
-    if (canProceed) {
-      setPricingTier(tier);
-      setStep('couple-form');
-    } else {
-      setStep('waitlist');
-    }
-  };
-
-  const handleJoinWaitlist = () => {
-    setIsWaitlist(true);
-    setPricingTier('now'); // Waitlist is for "now" tier
-    setStep(pendingRegistrationType === 'single' ? 'single-form' : 'couple-form');
-  };
-
-  const handleAcceptNowNow = (type: 'single' | 'couple') => {
-    setPricingTier('now-now');
-    setStep(type === 'single' ? 'single-form' : 'couple-form');
+  const handleSelectCouple = () => {
+    setStep('couple-form');
   };
 
   const handleVerifyName = async (e: React.FormEvent) => {
@@ -246,7 +166,6 @@ export default function BookWeekender() {
         body: JSON.stringify({
           sessionId,
           priceTier: pricingTier,
-          isWaitlist,
           registration: {
             type: 'single',
             name: name.trim(),
@@ -271,13 +190,8 @@ export default function BookWeekender() {
         return;
       }
 
-      if (isWaitlist) {
-        // Waitlist - redirect to success page without payment
-        window.location.href = `/bookweekender/success?ref=${data.reference}&waitlist=true`;
-      } else {
-        // Regular - redirect to Yoco payment
-        window.location.href = data.checkoutUrl;
-      }
+      // Redirect to Yoco payment
+      window.location.href = data.checkoutUrl;
     } catch (err) {
       setStep('single-form');
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -304,7 +218,6 @@ export default function BookWeekender() {
         body: JSON.stringify({
           sessionId,
           priceTier: pricingTier,
-          isWaitlist,
           registration: {
             type: 'couple',
             email: coupleEmail.trim(),
@@ -335,13 +248,8 @@ export default function BookWeekender() {
         return;
       }
 
-      if (isWaitlist) {
-        // Waitlist - redirect to success page without payment
-        window.location.href = `/bookweekender/success?ref=${data.reference}&waitlist=true`;
-      } else {
-        // Regular - redirect to Yoco payment
-        window.location.href = data.checkoutUrl;
-      }
+      // Redirect to Yoco payment
+      window.location.href = data.checkoutUrl;
     } catch (err) {
       setStep('couple-form');
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
@@ -497,62 +405,8 @@ export default function BookWeekender() {
                   </button>
                 </div>
 
-                {loading && (
-                  <p className="text-center text-text-dark/60 mt-4">Checking availability...</p>
-                )}
-
                 <button
                   onClick={() => setStep('start')}
-                  className="w-full mt-6 text-text-dark/60 hover:text-text-dark text-sm"
-                >
-                  ← Back
-                </button>
-              </div>
-            )}
-
-            {/* Step: Waitlist */}
-            {step === 'waitlist' && (
-              <div className="bg-white rounded-xl p-8 shadow-lg">
-                <h2 className="font-spartan font-semibold text-2xl mb-4 text-center">"Now" Tickets Reserved</h2>
-                
-                <div className="bg-yellow-accent/20 rounded-lg p-4 mb-6">
-                  <p className="text-text-dark/80">{availabilityMessage}</p>
-                  {waitlistPosition && (
-                    <p className="mt-2 font-semibold">Your waitlist position: #{waitlistPosition}</p>
-                  )}
-                </div>
-                
-                <p className="text-text-dark/70 mb-6 text-center">
-                  You can join the waitlist and we&apos;ll contact you if a spot opens up, or register now at the "Now Now" price.
-                </p>
-                
-                <div className="space-y-4">
-                  <button
-                    onClick={handleJoinWaitlist}
-                    className="w-full bg-yellow-accent text-text-dark px-6 py-4 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all"
-                  >
-                    Join Waitlist for "Now" Price
-                  </button>
-                  
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-text-dark/20"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                      <span className="px-2 bg-white text-text-dark/60">or pay now at the next tier</span>
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => handleAcceptNowNow(pendingRegistrationType)}
-                    className="w-full bg-cloud-dancer border-2 border-text-dark/20 text-text-dark px-6 py-4 rounded-lg font-semibold hover:border-yellow-accent transition-colors"
-                  >
-                    Register at "Now Now" price — R{PRICES['now-now'][pendingRegistrationType === 'single' ? 'single' : 'couple'].toLocaleString()}
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => setStep('select-type')}
                   className="w-full mt-6 text-text-dark/60 hover:text-text-dark text-sm"
                 >
                   ← Back
@@ -563,15 +417,7 @@ export default function BookWeekender() {
             {/* Step: Single Form */}
             {step === 'single-form' && (
               <form onSubmit={handleSubmitSingle} className="bg-white rounded-xl p-8 shadow-lg">
-                <h2 className="font-spartan font-semibold text-2xl mb-6">
-                  {isWaitlist ? 'Waitlist Registration' : 'Your Details'}
-                </h2>
-                
-                {isWaitlist && (
-                  <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-6">
-                    <p className="text-sm">You&apos;re joining the waitlist for the &quot;Now&quot; price (R{PRICES['now'].single.toLocaleString()}). We&apos;ll contact you if a spot opens up.</p>
-                  </div>
-                )}
+                <h2 className="font-spartan font-semibold text-2xl mb-6">Your Details</h2>
                 
                 <div className="space-y-4">
                   <div>
@@ -661,31 +507,27 @@ export default function BookWeekender() {
                   </div>
                 </div>
 
-                {!isWaitlist && (
-                  <div className="mt-8 pt-6 border-t border-text-dark/10">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-semibold">Total</span>
-                      <span className="text-2xl font-bold">R{PRICES[pricingTier].single.toLocaleString()}</span>
-                    </div>
-                    <p className="text-sm text-text-dark/60 mb-4">
-                      &quot;{PRICES[pricingTier].display}&quot; pricing tier
-                    </p>
+                <div className="mt-8 pt-6 border-t border-text-dark/10">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-semibold">Total</span>
+                    <span className="text-2xl font-bold">R{PRICES[pricingTier].single.toLocaleString()}</span>
                   </div>
-                )}
+                  <p className="text-sm text-text-dark/60 mb-4">
+                    &quot;{PRICES[pricingTier].display}&quot; pricing tier
+                  </p>
+                </div>
                   
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`w-full px-8 py-4 rounded-lg font-semibold text-lg hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isWaitlist ? 'mt-6 bg-blue-500 text-white' : 'bg-yellow-accent text-text-dark'
-                  }`}
+                  className="w-full px-8 py-4 rounded-lg font-semibold text-lg bg-yellow-accent text-text-dark hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Processing...' : isWaitlist ? 'Add to Waitlist' : 'Continue to Payment'}
+                  {loading ? 'Processing...' : 'Continue to Payment'}
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => isWaitlist ? setStep('waitlist') : setStep('select-type')}
+                  onClick={() => setStep('select-type')}
                   className="w-full mt-4 text-text-dark/60 hover:text-text-dark text-sm"
                 >
                   ← Back
@@ -696,15 +538,7 @@ export default function BookWeekender() {
             {/* Step: Couple Form */}
             {step === 'couple-form' && (
               <form onSubmit={handleSubmitCouple} className="bg-white rounded-xl p-8 shadow-lg">
-                <h2 className="font-spartan font-semibold text-2xl mb-6">
-                  {isWaitlist ? 'Waitlist Registration (Couple)' : 'Couple Registration'}
-                </h2>
-                
-                {isWaitlist && (
-                  <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-lg mb-6">
-                    <p className="text-sm">You&apos;re joining the waitlist for the &quot;Now&quot; price (R{PRICES['now'].couple.toLocaleString()} for both). We&apos;ll contact you if spots open up.</p>
-                  </div>
-                )}
+                <h2 className="font-spartan font-semibold text-2xl mb-6">Couple Registration</h2>
                 
                 {/* Leader Section */}
                 <div className="mb-6">
@@ -826,31 +660,27 @@ export default function BookWeekender() {
                   />
                 </div>
 
-                {!isWaitlist && (
-                  <div className="mt-8 pt-6 border-t border-text-dark/10">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-semibold">Total (2 people)</span>
-                      <span className="text-2xl font-bold">R{PRICES[pricingTier].couple.toLocaleString()}</span>
-                    </div>
-                    <p className="text-sm text-text-dark/60 mb-4">
-                      &quot;{PRICES[pricingTier].display}&quot; pricing tier
-                    </p>
+                <div className="mt-8 pt-6 border-t border-text-dark/10">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-semibold">Total (2 people)</span>
+                    <span className="text-2xl font-bold">R{PRICES[pricingTier].couple.toLocaleString()}</span>
                   </div>
-                )}
+                  <p className="text-sm text-text-dark/60 mb-4">
+                    &quot;{PRICES[pricingTier].display}&quot; pricing tier
+                  </p>
+                </div>
                   
                 <button
                   type="submit"
                   disabled={loading}
-                  className={`w-full px-8 py-4 rounded-lg font-semibold text-lg hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                    isWaitlist ? 'mt-6 bg-blue-500 text-white' : 'bg-yellow-accent text-text-dark'
-                  }`}
+                  className="w-full px-8 py-4 rounded-lg font-semibold text-lg bg-yellow-accent text-text-dark hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Processing...' : isWaitlist ? 'Add to Waitlist' : 'Continue to Payment'}
+                  {loading ? 'Processing...' : 'Continue to Payment'}
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => isWaitlist ? setStep('waitlist') : setStep('select-type')}
+                  onClick={() => setStep('select-type')}
                   className="w-full mt-4 text-text-dark/60 hover:text-text-dark text-sm"
                 >
                   ← Back
@@ -861,15 +691,9 @@ export default function BookWeekender() {
             {/* Step: Processing */}
             {step === 'processing' && (
               <div className="bg-white rounded-xl p-8 shadow-lg text-center">
-                <div className={`animate-spin h-12 w-12 border-4 border-t-transparent rounded-full mx-auto mb-4 ${
-                  isWaitlist ? 'border-blue-500' : 'border-yellow-accent'
-                }`}></div>
-                <p className="text-lg font-semibold">
-                  {isWaitlist ? 'Adding you to the waitlist...' : 'Setting up your payment...'}
-                </p>
-                <p className="text-sm text-text-dark/60 mt-2">
-                  {isWaitlist ? 'Just a moment...' : 'You will be redirected to the payment page shortly.'}
-                </p>
+                <div className="animate-spin h-12 w-12 border-4 border-yellow-accent border-t-transparent rounded-full mx-auto mb-4"></div>
+                <p className="text-lg font-semibold">Setting up your payment...</p>
+                <p className="text-sm text-text-dark/60 mt-2">You will be redirected to the payment page shortly.</p>
               </div>
             )}
           </div>
