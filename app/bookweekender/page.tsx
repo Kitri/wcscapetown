@@ -39,33 +39,6 @@ export default function BookWeekender() {
   const [verifyName, setVerifyName] = useState('');
   const [verifySurname, setVerifySurname] = useState('');
   
-  // Countdown timer for payment (5 minutes)
-  const [paymentStartTime, setPaymentStartTime] = useState<number | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<number>(5 * 60); // 5 minutes in seconds
-
-  // Countdown timer effect
-  useEffect(() => {
-    if (!paymentStartTime) return;
-    
-    const interval = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - paymentStartTime) / 1000);
-      const remaining = Math.max(0, 5 * 60 - elapsed);
-      setTimeRemaining(remaining);
-      
-      if (remaining === 0) {
-        clearInterval(interval);
-      }
-    }, 1000);
-    
-    return () => clearInterval(interval);
-  }, [paymentStartTime]);
-  
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   useEffect(() => {
     setSessionId(getOrCreateSessionId());
     // Check if registration is open
@@ -162,7 +135,6 @@ export default function BookWeekender() {
     setLoading(true);
     setError('');
     setStep('processing');
-    setPaymentStartTime(Date.now());
 
     try {
       const response = await fetch('/api/weekender/submit-registration', {
@@ -215,7 +187,6 @@ export default function BookWeekender() {
     setLoading(true);
     setError('');
     setStep('processing');
-    setPaymentStartTime(Date.now());
 
     try {
       const response = await fetch('/api/weekender/submit-registration', {
@@ -676,17 +647,6 @@ export default function BookWeekender() {
                 <div className="animate-spin h-12 w-12 border-4 border-yellow-accent border-t-transparent rounded-full mx-auto mb-4"></div>
                 <p className="text-lg font-semibold">Setting up your payment...</p>
                 <p className="text-sm text-text-dark/60 mt-2">You will be redirected to the payment page shortly.</p>
-                
-                {/* Countdown Timer */}
-                <div className="mt-6 p-4 bg-yellow-accent/20 rounded-lg">
-                  <p className="text-sm text-text-dark/70 mb-1">Time to complete payment:</p>
-                  <p className={`text-3xl font-bold ${timeRemaining < 60 ? 'text-red-500' : 'text-text-dark'}`}>
-                    {formatTime(timeRemaining)}
-                  </p>
-                  <p className="text-xs text-text-dark/60 mt-1">
-                    Your spot is reserved for 5 minutes
-                  </p>
-                </div>
               </div>
             )}
           </div>

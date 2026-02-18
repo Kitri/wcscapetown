@@ -232,14 +232,10 @@ export async function POST(request: NextRequest) {
     const passDisplayName = `Weekender Full Pass`;
     const passDescription = `Weekender Full Pass - ${TIER_NAMES[priceTier]}`;
 
-    // Calculate checkout expiry (5 minutes from now)
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-
     // Build Yoco request body per spec
     const yocoRequestBody = {
       amount: amountCents,
       currency: 'ZAR',
-      expiresAt,
       successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/success?ref=${orderId}&session=${sessionId}`,
       cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/cancelled?ref=${orderId}&session=${sessionId}`,
       failureUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/failed?ref=${orderId}&session=${sessionId}`,

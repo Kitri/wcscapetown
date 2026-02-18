@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logWeekenderEvent, getOrderMemberIds } from '@/lib/redis';
-import { completeRegistration, isOrderExpired, expireRegistrationsByOrder } from '@/lib/db';
+import { completeRegistration } from '@/lib/db';
 import { logInfo, logError } from '@/lib/blobLogger';
 
 export async function POST(request: NextRequest) {
@@ -13,26 +13,6 @@ export async function POST(request: NextRequest) {
         { error: 'Order reference is required' },
         { status: 400 }
       );
-    }
-
-    // Check if the registration has expired (past 5 min timeout)
-    const expired = await isOrderExpired(reference);
-    if (expired) {
-      // Mark registrations as expired
-      await expireRegistrationsByOrder(reference);
-      
-      logWeekenderEvent(sessionId || reference, 'payment_expired', {
-        reference,
-        reason: 'Registration timeout exceeded',
-      }).catch(console.error);
-      
-      logError('weekender_payment', 'Payment received but registration expired', { sessionId, reference }).catch(console.error);
-      
-      return NextResponse.json({
-        success: false,
-        error: 'registration_expired',
-        message: 'Your registration has expired. The 5-minute payment window has passed. Please start a new registration.'
-      }, { status: 410 }); // 410 Gone
     }
 
     // Get member_ids from Redis using orderId (reference)

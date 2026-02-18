@@ -35,8 +35,8 @@ export interface Registration {
   created_at?: string;
 }
 
-// Registration timeout in minutes
-const REGISTRATION_TIMEOUT_MINUTES = 5;
+// Registration timeout in minutes (set to 1 for testing, change back to 5 for production)
+const REGISTRATION_TIMEOUT_MINUTES = 1;
 
 // Initialize database tables
 export async function initializeDatabase(): Promise<void> {
