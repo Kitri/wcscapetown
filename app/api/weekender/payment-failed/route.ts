@@ -17,11 +17,11 @@ export async function POST(request: NextRequest) {
     // Get member_ids from Redis using orderId (reference) and update payment status (non-blocking)
     getOrderMemberIds(reference)
       .then(memberIds => {
-        // Log payment cancelled event in Redis
-        logWeekenderEvent(sessionId || reference, 'payment_cancelled', {
+        // Log payment failed event in Redis
+        logWeekenderEvent(sessionId || reference, 'payment_failed', {
           reference,
           memberIds,
-          cancelledAt: new Date().toISOString(),
+          failedAt: new Date().toISOString(),
         }).catch(console.error);
         
         return Promise.all(memberIds.map(id => updateRegistrationPaymentStatus(id, 'failed')));
@@ -30,13 +30,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: 'Payment cancellation recorded'
+      message: 'Payment failure recorded'
     });
 
   } catch (error) {
-    console.error('Error recording payment cancellation:', error);
+    console.error('Error recording payment failure:', error);
     return NextResponse.json(
-      { error: 'Failed to record cancellation' },
+      { error: 'Failed to record payment failure' },
       { status: 500 }
     );
   }

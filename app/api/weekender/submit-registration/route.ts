@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logWeekenderEvent } from '@/lib/redis';
-import { createRegistration, findOrCreateMember, hasWeekenderRegistration } from '@/lib/db';
+import { logWeekenderEvent, setOrderMemberIds } from '@/lib/redis';
+import { 
+  createRegistration, 
+  findOrCreateMember, 
+  getExistingRegistration,
+  updateRegistrationForRetry,
+} from '@/lib/db';
 import { logApiResponse, logError, logInfo, getNextOrderNumber } from '@/lib/blobLogger';
 
 // Price tiers in cents
@@ -32,7 +37,7 @@ interface SingleRegistration {
   name: string;
   surname: string;
   email: string;
-  role: 'Lead' | 'Follow';
+  role: 'L' | 'F';
   level: 1 | 2;
 }
 
@@ -80,38 +85,14 @@ export async function POST(request: NextRequest) {
     const isSingle = registration.type === 'single';
     const amountCents = isSingle ? PRICES.single[priceTier] : PRICES.couple[priceTier];
 
-    // Check if any person already has a weekender registration (check registrations table)
-    if (isSingle) {
-      const alreadyRegistered = await hasWeekenderRegistration(registration.name, registration.surname);
-      if (alreadyRegistered) {
-        return NextResponse.json({
-          error: 'already_registered',
-          message: `${registration.name} ${registration.surname} is already registered for the weekender. Please contact weekender@wcscapetown.co.za if this is incorrect.`
-        }, { status: 409 });
-      }
-    } else {
-      // Check both in parallel for speed
-      const [leaderRegistered, followerRegistered] = await Promise.all([
-        hasWeekenderRegistration(registration.leader.name, registration.leader.surname),
-        hasWeekenderRegistration(registration.follower.name, registration.follower.surname),
-      ]);
-      
-      if (leaderRegistered || followerRegistered) {
-        const name = leaderRegistered 
-          ? `${registration.leader.name} ${registration.leader.surname}` 
-          : `${registration.follower.name} ${registration.follower.surname}`;
-        return NextResponse.json({
-          error: 'already_registered',
-          message: `${name} is already registered for the weekender. Please contact weekender@wcscapetown.co.za if this is incorrect.`
-        }, { status: 409 });
-      }
-    }
+    // Generate order ID first (needed for db and Redis)
+    const orderId = await getNextOrderNumber();
 
-    // Find or create member(s) and create registration(s)
     let primaryMemberId: number;
+    let allMemberIds: number[] = [];
     
     if (isSingle) {
-      // Find existing member or create new one
+      // Step 1: Find or create member
       primaryMemberId = await findOrCreateMember({
         name: registration.name,
         surname: registration.surname,
@@ -119,87 +100,149 @@ export async function POST(request: NextRequest) {
         level: registration.level,
       });
 
-      await createRegistration({
-        email: registration.email,
-        member_id: primaryMemberId,
-        role: registration.role,
-        level: registration.level,
-        booking_session_id: sessionId,
-        pass_type: 'weekend',
-        price_tier: priceTier,
-        amount_cents: amountCents,
-        payment_status: 'pending',
-        registration_type: 'single',
-      });
+      // Step 2: Check existing registration for this member
+      const existingReg = await getExistingRegistration(primaryMemberId);
+      
+      if (existingReg) {
+        if (existingReg.registrationStatus === 'complete') {
+          // Already fully registered - block
+          return NextResponse.json({
+            error: 'already_registered',
+            message: `${registration.name} ${registration.surname} is already registered for the weekender. Please contact weekender@wcscapetown.co.za if this is incorrect.`
+          }, { status: 409 });
+        } else {
+          // Pending or expired - update existing record (never create new)
+          await updateRegistrationForRetry(primaryMemberId, sessionId, orderId, registration.email, priceTier, amountCents);
+        }
+      } else {
+        // No existing registration - create new
+        await createRegistration({
+          email: registration.email,
+          member_id: primaryMemberId,
+          role: registration.role,
+          level: registration.level,
+          booking_session_id: sessionId,
+          order_id: orderId,
+          pass_type: 'weekend',
+          price_tier: priceTier,
+          amount_cents: amountCents,
+          payment_status: 'pending',
+          registration_status: 'pending',
+          registration_type: 'single',
+        });
+      }
+      allMemberIds = [primaryMemberId];
     } else {
-      // Find or create both members in parallel
+      // Couple registration
+      // Step 1: Find or create both members
       const [leaderId, followerId] = await Promise.all([
         findOrCreateMember({
           name: registration.leader.name,
           surname: registration.leader.surname,
-          role: 'Lead',
+          role: 'L',
           level: registration.leader.level,
         }),
         findOrCreateMember({
           name: registration.follower.name,
           surname: registration.follower.surname,
-          role: 'Follow',
+          role: 'F',
           level: registration.follower.level,
         }),
       ]);
       
       primaryMemberId = leaderId;
 
-      // Create both registrations in parallel
-      await Promise.all([
-        createRegistration({
+      // Step 2: Check existing registrations for both members
+      const [leaderReg, followerReg] = await Promise.all([
+        getExistingRegistration(leaderId),
+        getExistingRegistration(followerId),
+      ]);
+      
+      // Check if either is already complete
+      if (leaderReg?.registrationStatus === 'complete') {
+        return NextResponse.json({
+          error: 'already_registered',
+          message: `${registration.leader.name} ${registration.leader.surname} is already registered for the weekender. Please contact weekender@wcscapetown.co.za if this is incorrect.`
+        }, { status: 409 });
+      }
+      if (followerReg?.registrationStatus === 'complete') {
+        return NextResponse.json({
+          error: 'already_registered',
+          message: `${registration.follower.name} ${registration.follower.surname} is already registered for the weekender. Please contact weekender@wcscapetown.co.za if this is incorrect.`
+        }, { status: 409 });
+      }
+      
+      // Handle leader registration
+      if (leaderReg) {
+        // Existing record (pending or expired) - update it
+        await updateRegistrationForRetry(leaderId, sessionId, orderId, registration.email, priceTier, amountCents / 2);
+      } else {
+        await createRegistration({
           email: registration.email,
           member_id: leaderId,
-          role: 'Lead',
+          role: 'L',
           level: registration.leader.level,
           booking_session_id: sessionId,
+          order_id: orderId,
           pass_type: 'weekend',
           price_tier: priceTier,
           amount_cents: amountCents / 2,
           payment_status: 'pending',
+          registration_status: 'pending',
           registration_type: 'couple',
-        }),
-        createRegistration({
+        });
+      }
+      
+      // Handle follower registration
+      if (followerReg) {
+        // Existing record (pending or expired) - update it
+        await updateRegistrationForRetry(followerId, sessionId, orderId, registration.email, priceTier, amountCents / 2);
+      } else {
+        await createRegistration({
           email: registration.email,
           member_id: followerId,
-          role: 'Follow',
+          role: 'F',
           level: registration.follower.level,
           booking_session_id: sessionId,
+          order_id: orderId,
           pass_type: 'weekend',
           price_tier: priceTier,
           amount_cents: amountCents / 2,
           payment_status: 'pending',
+          registration_status: 'pending',
           registration_type: 'couple',
-        }),
-      ]);
+        });
+      }
+      allMemberIds = [leaderId, followerId];
     }
+
+    // Store member_ids in Redis keyed by orderId (unique per registration attempt)
+    await setOrderMemberIds(orderId, allMemberIds);
 
     // Log payment in progress (non-blocking)
     logWeekenderEvent(sessionId, 'payment_in_progress', {
       registrationType: registration.type,
       amountCents,
       priceTier,
+      orderId,
+      memberIds: allMemberIds,
     }).catch(console.error);
-
-    // Generate order ID
-    const orderId = await getNextOrderNumber();
     const customerEmail = isSingle ? registration.email : registration.email;
     const quantity = isSingle ? 1 : 2;
     const passDisplayName = `Weekender Full Pass`;
     const passDescription = `Weekender Full Pass - ${TIER_NAMES[priceTier]}`;
 
+    // Calculate checkout expiry (5 minutes from now)
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
+
     // Build Yoco request body per spec
     const yocoRequestBody = {
       amount: amountCents,
       currency: 'ZAR',
+      expiresAt,
       successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/success?ref=${orderId}&session=${sessionId}`,
-      cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/cancelled?session=${sessionId}`,
-      failureUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/failed?session=${sessionId}`,
+      cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/cancelled?ref=${orderId}&session=${sessionId}`,
+      failureUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/failed?ref=${orderId}&session=${sessionId}`,
       metadata: {
         orderId,
         customerId: `MEMBER-${primaryMemberId}`,

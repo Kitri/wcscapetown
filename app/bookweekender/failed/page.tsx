@@ -1,7 +1,25 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Header from "@/components/Header";
 import Link from 'next/link';
 
 export default function BookWeekenderFailed() {
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get('session');
+
+  useEffect(() => {
+    // Log payment failed event
+    if (sessionId) {
+      fetch('/api/weekender/payment-failed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId })
+      }).catch(console.error);
+    }
+  }, [sessionId]);
+
   return (
     <>
       <Header />
@@ -31,9 +49,10 @@ export default function BookWeekenderFailed() {
             </ul>
           </div>
 
-          <p className="text-sm text-text-dark/60 mb-6">
-            Please try again with a different card or contact your bank if the issue persists.
-          </p>
+          <div className="bg-yellow-accent/20 rounded-lg p-4 mb-6">
+            <p className="text-sm font-semibold">You have 5 minutes to retry</p>
+            <p className="text-xs text-text-dark/60 mt-1">Your spot is reserved while you try again</p>
+          </div>
 
           <Link
             href="/bookweekender"

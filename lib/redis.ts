@@ -44,6 +44,7 @@ export type WeekenderEventType =
   | 'payment_complete'
   | 'payment_cancelled'
   | 'payment_failed'
+  | 'payment_expired'
   | 'session_expired';
 
 export interface WeekenderEvent {
@@ -93,6 +94,20 @@ export async function getSessionEvents(sessionId: string): Promise<WeekenderEven
   const client = await getRedisClient();
   const events = await client.lRange(`weekender:events:${sessionId}`, 0, -1);
   return events.map((e) => JSON.parse(e) as WeekenderEvent);
+}
+
+// Store member_ids for an order
+export async function setOrderMemberIds(orderId: string, memberIds: number[]): Promise<void> {
+  const client = await getRedisClient();
+  await client.set(`weekender:order:${orderId}:members`, JSON.stringify(memberIds));
+}
+
+// Get member_ids for an order
+export async function getOrderMemberIds(orderId: string): Promise<number[]> {
+  const client = await getRedisClient();
+  const data = await client.get(`weekender:order:${orderId}:members`);
+  if (!data) return [];
+  return JSON.parse(data) as number[];
 }
 
 // Count registrations that started in the "Now" period (first 24 hours)
