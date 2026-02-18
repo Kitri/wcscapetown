@@ -671,3 +671,67 @@ export async function shouldWaitlistRole(
   
   return { shouldWaitlist: false, leads, followers, waitlistCount, message: '' };
 }
+
+// Get day pass role counts for a specific level (for role balancing)
+// Only counts completed registrations
+export async function getDayPassRoleCounts(level: number): Promise<{ leads: number; followers: number }> {
+  const sql = getDb();
+  
+  const result = await sql`
+    SELECT 
+      role,
+      COUNT(*) as count
+    FROM registrations
+    WHERE level = ${level}
+    AND pass_type = 'day'
+    AND registration_status = 'complete'
+    GROUP BY role
+  `;
+  
+  let leads = 0;
+  let followers = 0;
+  
+  for (const row of result) {
+    if (row.role === 'L') leads = Number(row.count);
+    if (row.role === 'F') followers = Number(row.count);
+  }
+  
+  return { leads, followers };
+}
+
+// Count waitlisted day pass registrations for a specific role and level
+export async function getDayPassWaitlistCount(role: 'L' | 'F', level: number): Promise<number> {
+  const sql = getDb();
+  
+  const result = await sql`
+    SELECT COUNT(*) as count
+    FROM registrations
+    WHERE role = ${role}
+    AND level = ${level}
+    AND pass_type = 'day'
+    AND registration_status = 'waitlist'
+  `;
+  
+  return Number(result[0].count);
+}
+
+// Check if a role needs to go on waitlist for day pass
+// Rules: Level 2 followers always go to waitlist (until weekend L2 is balanced)
+export async function shouldWaitlistDayPassRole(
+  role: 'L' | 'F',
+  level: number
+): Promise<{ shouldWaitlist: boolean; leads: number; followers: number; waitlistCount: number; message: string }> {
+  // Only apply waitlist to level 2 followers
+  if (level !== 2 || role !== 'F') {
+    return { shouldWaitlist: false, leads: 0, followers: 0, waitlistCount: 0, message: '' };
+  }
+  
+  // All L2 followers go to waitlist for now
+  return {
+    shouldWaitlist: true,
+    leads: 0,
+    followers: 0,
+    waitlistCount: 0,
+    message: `For role balancing purposes, Level 2 day pass followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+  };
+}

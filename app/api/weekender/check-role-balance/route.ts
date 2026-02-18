@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { shouldWaitlistRole } from '@/lib/db';
+import { shouldWaitlistRole, shouldWaitlistDayPassRole } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,15 +10,18 @@ export async function POST(request: NextRequest) {
       passType: 'weekend' | 'day' | 'party';
     };
 
-    // Only apply waitlist logic to weekend passes
-    if (passType !== 'weekend') {
+    // Party passes don't have waitlist logic
+    if (passType === 'party') {
       return NextResponse.json({
         shouldWaitlist: false,
         message: ''
       });
     }
 
-    const result = await shouldWaitlistRole(role, level);
+    // Use appropriate function based on pass type
+    const result = passType === 'day' 
+      ? await shouldWaitlistDayPassRole(role, level)
+      : await shouldWaitlistRole(role, level);
 
     return NextResponse.json({
       shouldWaitlist: result.shouldWaitlist,
