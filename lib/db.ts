@@ -27,7 +27,7 @@ export interface Registration {
   booking_session_id: string;
   order_id: string;
   pass_type: 'weekend' | 'day_saturday' | 'day_sunday' | 'party';
-  price_tier: 'now' | 'now_now' | 'just_now' | 'ai_tog';
+  pricing_tier: 'now' | 'now-now' | 'just-now' | 'ai-tog';
   amount_cents: number;
   payment_status: 'pending' | 'complete' | 'failed' | 'expired';
   registration_status: 'pending' | 'complete' | 'expired';
@@ -64,7 +64,7 @@ export async function initializeDatabase(): Promise<void> {
       level INTEGER NOT NULL CHECK (level IN (1, 2)),
       booking_session_id VARCHAR(255) NOT NULL,
       pass_type VARCHAR(20) NOT NULL CHECK (pass_type IN ('weekend', 'day_saturday', 'day_sunday', 'party')),
-      price_tier VARCHAR(20) NOT NULL CHECK (price_tier IN ('now', 'now_now', 'just_now', 'ai_tog')),
+      pricing_tier VARCHAR(20) NOT NULL CHECK (pricing_tier IN ('now', 'now-now', 'just-now', 'ai-tog')),
       amount_cents INTEGER NOT NULL,
       payment_status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'complete', 'failed', 'expired')),
       registration_type VARCHAR(10) NOT NULL CHECK (registration_type IN ('single', 'couple')),
@@ -93,12 +93,12 @@ export async function createRegistration(registration: Omit<Registration, 'id' |
   const result = await sql`
     INSERT INTO registrations (
       email, member_id, role, level, booking_session_id, order_id,
-      pass_type, price_tier, amount_cents, payment_status, registration_status, registration_type, created_at
+      pass_type, pricing_tier, amount_cents, payment_status, registration_status, registration_type, created_at
     )
     VALUES (
       ${registration.email}, ${registration.member_id}, ${registration.role}, 
       ${registration.level}, ${registration.booking_session_id}, ${registration.order_id},
-      ${registration.pass_type}, ${registration.price_tier}, ${registration.amount_cents}, ${registration.payment_status},
+      ${registration.pass_type}, ${registration.pricing_tier}, ${registration.amount_cents}, ${registration.payment_status},
       ${registration.registration_status}, ${registration.registration_type}, now() AT TIME ZONE 'Africa/Johannesburg'
     )
     RETURNING id
@@ -259,7 +259,7 @@ export async function updateRegistrationForRetry(
     SET booking_session_id = ${newSessionId},
         order_id = ${orderId},
         email = ${email},
-        price_tier = ${priceTier},
+        pricing_tier = ${priceTier},
         amount_cents = ${amountCents},
         payment_status = 'pending',
         registration_status = 'pending',

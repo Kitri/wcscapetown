@@ -9,27 +9,27 @@ import {
 import { logApiResponse, logError, logInfo, getNextOrderNumber } from '@/lib/blobLogger';
 
 // Price tiers in cents
-const PRICES = {
+const PRICES: Record<string, Record<string, number>> = {
   single: {
-    now: 160000,      // R1600
-    now_now: 180000,  // R1800
-    just_now: 220000, // R2200
-    ai_tog: 240000,   // R2400
+    'now': 160000,      // R1600
+    'now-now': 180000,  // R1800
+    'just-now': 220000, // R2200
+    'ai-tog': 240000,   // R2400
   },
   couple: {
-    now: 320000,      // R3200
-    now_now: 360000,  // R3600
-    just_now: 440000, // R4400
-    ai_tog: 480000,   // R4800
+    'now': 320000,      // R3200
+    'now-now': 360000,  // R3600
+    'just-now': 440000, // R4400
+    'ai-tog': 480000,   // R4800
   },
 };
 
 // Price tier display names
 const TIER_NAMES: Record<string, string> = {
-  now: 'Now',
-  now_now: 'Now Now',
-  just_now: 'Just Now',
-  ai_tog: 'Ai Tog',
+  'now': 'Now',
+  'now-now': 'Now Now',
+  'just-now': 'Just Now',
+  'ai-tog': 'Ai Tog',
 };
 
 interface SingleRegistration {
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     const { sessionId, registration, priceTier } = body as {
       sessionId: string;
       registration: RegistrationData;
-      priceTier: 'now' | 'now_now' | 'just_now' | 'ai_tog';
+      priceTier: 'now' | 'now-now' | 'just-now' | 'ai-tog';
     };
 
     // Validation
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
           booking_session_id: sessionId,
           order_id: orderId,
           pass_type: 'weekend',
-          price_tier: priceTier,
+          pricing_tier: priceTier,
           amount_cents: amountCents,
           payment_status: 'pending',
           registration_status: 'pending',
@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
           booking_session_id: sessionId,
           order_id: orderId,
           pass_type: 'weekend',
-          price_tier: priceTier,
+          pricing_tier: priceTier,
           amount_cents: amountCents / 2,
           payment_status: 'pending',
           registration_status: 'pending',
@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
           booking_session_id: sessionId,
           order_id: orderId,
           pass_type: 'weekend',
-          price_tier: priceTier,
+          pricing_tier: priceTier,
           amount_cents: amountCents / 2,
           payment_status: 'pending',
           registration_status: 'pending',
