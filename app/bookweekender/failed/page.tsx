@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from "@/components/Header";
 import Link from 'next/link';
 
-export default function BookWeekenderFailed() {
+function FailedContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session');
 
@@ -67,5 +67,20 @@ export default function BookWeekenderFailed() {
         </div>
       </main>
     </>
+  );
+}
+
+export default function BookWeekenderFailed() {
+  return (
+    <Suspense fallback={
+      <>
+        <Header />
+        <main className="min-h-screen bg-cloud-dancer flex items-center justify-center p-4">
+          <div className="animate-spin h-8 w-8 border-4 border-yellow-accent border-t-transparent rounded-full"></div>
+        </main>
+      </>
+    }>
+      <FailedContent />
+    </Suspense>
   );
 }

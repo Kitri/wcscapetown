@@ -29,8 +29,8 @@ export interface Registration {
   pass_type: 'weekend' | 'day_saturday' | 'day_sunday' | 'party';
   pricing_tier: 'now' | 'now-now' | 'just-now' | 'ai-tog';
   amount_cents: number;
-  payment_status: 'pending' | 'complete' | 'failed' | 'expired';
-  registration_status: 'pending' | 'complete' | 'expired';
+  payment_status: 'pending' | 'complete' | 'failed' | 'expired' | 'waitlist';
+  registration_status: 'pending' | 'complete' | 'expired' | 'waitlist';
   registration_type: 'single' | 'couple';
   created_at?: string;
 }
@@ -93,7 +93,7 @@ export async function createRegistration(registration: Omit<Registration, 'id' |
   const result = await sql`
     INSERT INTO registrations (
       email, member_id, role, level, booking_session_id, order_id,
-      pass_type, pricing_tier, amount_cents, payment_status, registration_status, registration_type, created_at
+      pass_type, price_tier, amount_cents, payment_status, registration_status, registration_type, created_at
     )
     VALUES (
       ${registration.email}, ${registration.member_id}, ${registration.role}, 
@@ -259,7 +259,7 @@ export async function updateRegistrationForRetry(
     SET booking_session_id = ${newSessionId},
         order_id = ${orderId},
         email = ${email},
-        pricing_tier = ${priceTier},
+        price_tier = ${priceTier},
         amount_cents = ${amountCents},
         payment_status = 'pending',
         registration_status = 'pending',
@@ -348,4 +348,18 @@ export async function countCompletedRegistrations(): Promise<number> {
   `;
   
   return Number(result[0].count);
+}
+
+// Get all member IDs with completed "now" tier registrations
+export async function getCompletedNowTierMemberIds(): Promise<number[]> {
+  const sql = getDb();
+  
+  const result = await sql`
+    SELECT member_id FROM registrations 
+    WHERE registration_status = 'complete'
+    AND price_tier = 'now'
+    AND pass_type = 'weekend'
+  `;
+  
+  return result.map(r => r.member_id);
 }

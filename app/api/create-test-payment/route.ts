@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for required environment variables
-    if (!process.env.YOCO_SECRET_KEY) {
-      console.error('YOCO_SECRET_KEY not configured');
+    if (!process.env.YOCO_CO_SECRET_KEY) {
+      console.error('YOCO_CO_SECRET_KEY not configured');
       return NextResponse.json(
         { error: 'Payment system not configured' },
         { status: 500 }
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const yocoResponse = await fetch('https://payments.yoco.com/api/checkouts', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.YOCO_SECRET_KEY}`,
+        'Authorization': `Bearer ${process.env.YOCO_CO_SECRET_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

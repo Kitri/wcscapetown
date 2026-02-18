@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logWeekenderEvent, setOrderMemberIds } from '@/lib/redis';
+import { logWeekenderEvent, setOrderMemberIds, addToTicketQueue } from '@/lib/redis';
 import { 
   createRegistration, 
   findOrCreateMember, 
@@ -61,10 +61,11 @@ type RegistrationData = SingleRegistration | CoupleRegistration;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { sessionId, registration, priceTier } = body as {
+    const { sessionId, registration, priceTier, isWaitlist } = body as {
       sessionId: string;
       registration: RegistrationData;
       priceTier: 'now' | 'now-now' | 'just-now' | 'ai-tog';
+      isWaitlist?: boolean;
     };
 
     // Validation
@@ -76,11 +77,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Registration data and price tier are required' }, { status: 400 });
     }
 
-    // Check for required environment variables
-    if (!process.env.YOCO_SECRET_KEY || !process.env.NEXT_PUBLIC_BASE_URL) {
+    // Check for required environment variables (only needed for non-waitlist)
+    if (!isWaitlist && (!process.env.YOCO_CO_SECRET_KEY || !process.env.NEXT_PUBLIC_BASE_URL)) {
       console.error('Missing required environment variables');
       return NextResponse.json({ error: 'Payment system not configured' }, { status: 500 });
     }
+    
+    // Determine registration status based on waitlist flag
+    const registrationStatus = isWaitlist ? 'waitlist' : 'pending';
+    const paymentStatus = isWaitlist ? 'waitlist' : 'pending';
 
     const isSingle = registration.type === 'single';
     const amountCents = isSingle ? PRICES.single[priceTier] : PRICES.couple[priceTier];
@@ -126,8 +131,8 @@ export async function POST(request: NextRequest) {
           pass_type: 'weekend',
           pricing_tier: priceTier,
           amount_cents: amountCents,
-          payment_status: 'pending',
-          registration_status: 'pending',
+          payment_status: paymentStatus,
+          registration_status: registrationStatus,
           registration_type: 'single',
         });
       }
@@ -187,8 +192,8 @@ export async function POST(request: NextRequest) {
           pass_type: 'weekend',
           pricing_tier: priceTier,
           amount_cents: amountCents / 2,
-          payment_status: 'pending',
-          registration_status: 'pending',
+          payment_status: paymentStatus,
+          registration_status: registrationStatus,
           registration_type: 'couple',
         });
       }
@@ -208,8 +213,8 @@ export async function POST(request: NextRequest) {
           pass_type: 'weekend',
           pricing_tier: priceTier,
           amount_cents: amountCents / 2,
-          payment_status: 'pending',
-          registration_status: 'pending',
+          payment_status: paymentStatus,
+          registration_status: registrationStatus,
           registration_type: 'couple',
         });
       }
@@ -218,6 +223,34 @@ export async function POST(request: NextRequest) {
 
     // Store member_ids in Redis keyed by orderId (unique per registration attempt)
     await setOrderMemberIds(orderId, allMemberIds);
+    
+    // Add to ticket queue (for "now" tier limit tracking) - only for non-waitlist
+    const spotCount = isSingle ? 1 : 2;
+    if (!isWaitlist) {
+      await addToTicketQueue(orderId, spotCount);
+    }
+
+    // For waitlist registrations, return early without creating Yoco checkout
+    if (isWaitlist) {
+      logWeekenderEvent(sessionId, 'waitlist_registration', {
+        registrationType: registration.type,
+        priceTier,
+        orderId,
+        memberIds: allMemberIds,
+      }).catch(console.error);
+
+      logInfo('weekender_registration', 'Waitlist registration complete', {
+        sessionId,
+        orderId,
+        registrationType: registration.type,
+      }).catch(console.error);
+
+      return NextResponse.json({
+        success: true,
+        reference: orderId,
+        isWaitlist: true,
+      });
+    }
 
     // Log payment in progress (non-blocking)
     logWeekenderEvent(sessionId, 'payment_in_progress', {
@@ -268,7 +301,7 @@ export async function POST(request: NextRequest) {
     const yocoResponse = await fetch('https://payments.yoco.com/api/checkouts', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.YOCO_SECRET_KEY}`,
+        'Authorization': `Bearer ${process.env.YOCO_CO_SECRET_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(yocoRequestBody),
