@@ -6,9 +6,6 @@ export default function WeekenderBanner() {
       <div className="px-[5%] max-w-[1200px] mx-auto">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="text-center md:text-left">
-            <p className="text-sm font-medium opacity-90 mb-1">
-              🎉 Weekender Registration Now Open!
-            </p>
             <h2 className="font-spartan font-bold text-xl md:text-2xl">
               WCS Cape Town Weekender — March 20–22, 2026
             </h2>

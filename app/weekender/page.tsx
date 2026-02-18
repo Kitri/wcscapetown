@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 const WEEKENDER_SOLD_OUT = {
-  nowWeekend: false,
+  nowWeekend: true,
   nowNowWeekend: false,
   nowNowDay: false,
   justNowWeekend: false,
@@ -98,10 +98,6 @@ export default function Weekender({
             >
               🌟 Book Your Pass Now 🌟
             </Link>
-            
-            <p className="text-sm text-white/80 mt-4">
-              Registration is open! First 10 tickets get the special &quot;Now&quot; price.
-            </p>
           </div>
 
         </section>
@@ -392,9 +388,6 @@ export default function Weekender({
             <h2 className="font-spartan font-semibold text-[32px] md:text-[40px] text-center mb-4">
               Pass Options
             </h2>
-            <p className="text-center text-lg text-text-dark/70 mb-10 max-w-[850px] mx-auto">
-              Bookings open <span className="font-semibold">Wednesday 18 February 2026</span>. Book and pay on this website.
-            </p>
 
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -422,14 +415,19 @@ export default function Weekender({
                     </p>
                     <p className="text-xs text-text-dark/60">First 10 tickets • 24 hours • opens 18 Feb</p>
 
-                    <div className="flex items-center justify-between py-2 border-t border-text-dark/10 mt-2">
-                      <span className="font-semibold">Now-now</span>
-                      <PriceCell price={1800} isSoldOut={soldOut.nowNowWeekend} />
+                    {/* Active tier highlight */}
+                    <div className="mt-2 -mx-2 px-2 py-2 bg-yellow-accent/15 border-l-4 border-yellow-accent rounded-r-lg">
+                      <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                          <span className="font-semibold">Now-now</span>
+                        </div>
+                        <PriceCell price={1800} isSoldOut={soldOut.nowNowWeekend} />
+                      </div>
+                      <p className="text-xs text-text-dark/70 mt-1">Classic SA “soonish but not really now”</p>
+                      <p className="text-xs text-text-dark/70">
+                        Limited tickets • until sold out or 8 March (whichever comes first)
+                      </p>
                     </div>
-                    <p className="text-xs text-text-dark/60 mt-1">Classic SA “soonish but not really now”</p>
-                    <p className="text-xs text-text-dark/60">
-                      Limited tickets • until sold out or 8 March (whichever comes first)
-                    </p>
 
                     <div className="flex items-center justify-between py-2 border-t border-text-dark/10 mt-2">
                       <span className="font-semibold">Just-now</span>
@@ -445,8 +443,15 @@ export default function Weekender({
                       <PriceCell price={2400} isSoldOut={soldOut.aiTogWeekend} />
                     </div>
                     <p className="text-xs text-text-dark/60 mt-1">
-                      “Ai-tog, I should&apos;ve bought earlier” • on the day
+                      "Ai-tog, I should&apos;ve bought earlier" • on the day
                     </p>
+                    
+                    <Link
+                      href="/bookweekender?pass=weekend"
+                      className="block mt-4 w-full bg-yellow-accent text-text-dark text-center px-4 py-2 rounded-lg font-semibold text-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
+                    >
+                      Book Weekend Pass
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -466,14 +471,19 @@ export default function Weekender({
                   </ul>
 
                   <div className="text-sm">
-                    <div className="flex items-center justify-between py-2 border-t border-text-dark/10">
-                      <span className="font-semibold">Now-now</span>
-                      <PriceCell price={1000} isSoldOut={soldOut.nowNowDay} />
+                    {/* Active tier highlight */}
+                    <div className="-mx-2 px-2 py-2 bg-yellow-accent/15 border-l-4 border-yellow-accent rounded-r-lg border-t border-t-text-dark/10">
+                      <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                          <span className="font-semibold">Now-now</span>
+                        </div>
+                        <PriceCell price={1000} isSoldOut={soldOut.nowNowDay} />
+                      </div>
+                      <p className="text-xs text-text-dark/70 mt-1">Classic SA “soonish but not really now”</p>
+                      <p className="text-xs text-text-dark/70">
+                        Limited tickets • until sold out or 8 March (whichever comes first)
+                      </p>
                     </div>
-                    <p className="text-xs text-text-dark/60 mt-1">Classic SA “soonish but not really now”</p>
-                    <p className="text-xs text-text-dark/60">
-                      Limited tickets • until sold out or 8 March (whichever comes first)
-                    </p>
 
                     <div className="flex items-center justify-between py-2 border-t border-text-dark/10 mt-2">
                       <span className="font-semibold">Just-now</span>
@@ -489,8 +499,15 @@ export default function Weekender({
                       <PriceCell price={1400} isSoldOut={soldOut.aiTogDay} />
                     </div>
                     <p className="text-xs text-text-dark/60 mt-1">
-                      “Ai-tog, I should&apos;ve bought earlier” • on the day
+                      "Ai-tog, I should&apos;ve bought earlier" • on the day
                     </p>
+                    
+                    <Link
+                      href="/bookweekender?pass=day"
+                      className="block mt-4 w-full bg-yellow-accent text-text-dark text-center px-4 py-2 rounded-lg font-semibold text-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
+                    >
+                      Book Day Pass
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -508,11 +525,23 @@ export default function Weekender({
                     <li>✓ Sunday night party</li>
                   </ul>
 
-                  <div className="flex items-center justify-between py-2 border-t border-text-dark/10">
-                    <span className="font-semibold">Price</span>
-                    <PriceCell price={800} isSoldOut={soldOut.partyPass} />
+                  {/* Active tier highlight */}
+                  <div className="-mx-2 px-2 py-2 bg-yellow-accent/15 border-l-4 border-yellow-accent rounded-r-lg border-t border-t-text-dark/10">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold">Price</span>
+                      </div>
+                      <PriceCell price={800} isSoldOut={soldOut.partyPass} />
+                    </div>
+                    <p className="text-xs text-text-dark/70 mt-1">Static price (not linked to tiers)</p>
                   </div>
-                  <p className="text-xs text-text-dark/60 mt-1">Static price (not linked to tiers)</p>
+                  
+                  <Link
+                    href="/bookweekender?pass=party"
+                    className="block mt-4 w-full bg-yellow-accent text-text-dark text-center px-4 py-2 rounded-lg font-semibold text-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
+                  >
+                    Book Party Pass
+                  </Link>
                 </div>
               </div>
             </div>
@@ -535,6 +564,9 @@ export default function Weekender({
                   <PriceCell price={300} isSoldOut={soldOut.spotlightCritique} />
                 </div>
               </div>
+              <p className="mt-4 text-sm font-semibold text-pink-accent">
+                Bookings will open soon
+              </p>
             </div>
 
             <div className="mt-10 bg-white rounded-xl p-6 md:p-8 border-2 border-text-dark/10">
@@ -555,7 +587,14 @@ export default function Weekender({
               </p>
             </div>
 
-            <p className="text-sm text-text-dark/60 mt-4 text-center">
+            {/* Community Sponsors Thank You */}
+            <div className="mt-10 bg-gradient-to-r from-pink-accent/5 to-yellow-accent/5 rounded-xl p-6 md:p-8 border-2 border-pink-accent/20 text-center">
+              <p className="text-lg text-text-dark/80">
+                💜 A heartfelt <span className="font-semibold text-pink-accent">thank you</span> to our community sponsors who are making it possible for us to bring four world-class pros to Cape Town — an experience that would otherwise be well beyond our reach.
+              </p>
+            </div>
+
+            <p className="text-sm text-text-dark/60 mt-6 text-center">
               Prices are in ZAR. Availability is limited — if a tier sells out, the next tier applies.
             </p>
           </div>

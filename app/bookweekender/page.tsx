@@ -1,20 +1,82 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Header from "@/components/Header";
 import { getOrCreateSessionId } from '@/lib/sessionId';
 
 type Step = 'start' | 'verify-name' | 'select-type' | 'single-form' | 'couple-form' | 'processing';
 type Role = 'L' | 'F';
 type Level = 1 | 2;
-type PricingTier = 'now' | 'now-now' | 'just-now' | 'ai-tog';
+type PassType = 'weekend' | 'day' | 'party';
+type DaySelection = 'saturday' | 'sunday';
 
-const PRICES: Record<PricingTier, { single: number; couple: number; display: string }> = {
-  'now': { single: 1600, couple: 3200, display: 'Now' },
-  'now-now': { single: 1800, couple: 3600, display: 'Now Now' },
-  'just-now': { single: 2200, couple: 4400, display: 'Just Now' },
-  'ai-tog': { single: 2400, couple: 4800, display: 'Ai Tog' },
+// Component to handle URL params (must be wrapped in Suspense)
+function UrlParamHandler({ 
+  onPassType, 
+  sessionId 
+}: { 
+  onPassType: (pass: PassType) => void; 
+  sessionId: string;
+}) {
+  const searchParams = useSearchParams();
+  const autoStarted = useRef(false);
+  
+  useEffect(() => {
+    if (autoStarted.current || !sessionId) return;
+    
+    const passParam = searchParams.get('pass');
+    if (passParam && ['weekend', 'day', 'party'].includes(passParam)) {
+      autoStarted.current = true;
+      onPassType(passParam as PassType);
+    }
+  }, [sessionId, searchParams, onPassType]);
+  
+  return null;
+}
+
+const PASS_PRICES: Record<PassType, { single: number; couple: number; name: string; description: string[]; tierNote: string; headerColor: string }> = {
+  'weekend': { 
+    single: 1800, 
+    couple: 3600, 
+    name: 'Weekend Pass',
+    description: [
+      'Friday pre-party',
+      'All workshops (Sat + Sun)',
+      'Community lunch (Saturday)',
+      'All evening parties (Fri + Sat + Sun)',
+    ],
+    tierNote: 'Until sold out or 8 March (whichever comes first)',
+    headerColor: 'bg-pink-accent/10',
+  },
+  'day': { 
+    single: 1000, 
+    couple: 2000, 
+    name: 'Day Pass',
+    description: [
+      'Workshops (one day)',
+      'Community lunch (Saturday only)',
+      'Evening party for your day',
+    ],
+    tierNote: 'Until sold out or 8 March (whichever comes first)',
+    headerColor: 'bg-purple-accent/10',
+  },
+  'party': { 
+    single: 800, 
+    couple: 1600, 
+    name: 'Party Pass',
+    description: [
+      'Friday pre-party',
+      'Saturday evening party',
+      'Sunday evening party',
+      'Does not include workshops',
+    ],
+    tierNote: 'Static price (not linked to tiers)',
+    headerColor: 'bg-yellow-accent/10',
+  },
 };
+
+const FRIDAY_ADDON_PRICE = 200;
 
 // Registration opens: Wednesday 18 February 2026 07:00 SAST
 const REGISTRATION_OPENS = new Date('2026-02-18T05:00:00Z'); // 07:00 SAST = 05:00 UTC
@@ -23,6 +85,7 @@ export default function BookWeekender() {
   const [step, setStep] = useState<Step>('start');
   const [sessionId, setSessionId] = useState<string>('');
   const [loading, setLoading] = useState(false);
+  const [loadingPassType, setLoadingPassType] = useState<PassType | null>(null);
   const [error, setError] = useState('');
   const [registrationOpen, setRegistrationOpen] = useState(false);
   
@@ -46,12 +109,12 @@ export default function BookWeekender() {
   const [verifyName, setVerifyName] = useState('');
   const [verifySurname, setVerifySurname] = useState('');
   
-  // Pricing tier - "Now" tier is sold out, everyone gets "Now-Now"
-  const [pricingTier, setPricingTier] = useState<PricingTier>('now-now');
+  // Selected pass type
+  const [passType, setPassType] = useState<PassType>('weekend');
   
-  
-  // Now tier is sold out
-  const nowTierSoldOut = true;
+  // Day pass options
+  const [daySelection, setDaySelection] = useState<DaySelection>('saturday');
+  const [addFridayParty, setAddFridayParty] = useState(false);
   
   useEffect(() => {
     setSessionId(getOrCreateSessionId());
@@ -60,13 +123,15 @@ export default function BookWeekender() {
     setRegistrationOpen(now >= REGISTRATION_OPENS);
   }, []);
 
-  const handleStartRegistration = async () => {
+  const handleStartRegistration = async (selectedPassType: PassType) => {
     if (!registrationOpen) {
       setError('Registration is not yet open. Please come back at 7am on 18 February 2026.');
       return;
     }
 
+    setPassType(selectedPassType);
     setLoading(true);
+    setLoadingPassType(selectedPassType);
     setError('');
 
     try {
@@ -95,10 +160,11 @@ export default function BookWeekender() {
       setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
+      setLoadingPassType(null);
     }
   };
 
-  // "Now" tier is sold out - go straight to form with "Now-Now" pricing
+  // "Now" tier is sold out
   const handleSelectSingle = () => {
     setStep('single-form');
   };
@@ -165,7 +231,10 @@ export default function BookWeekender() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId,
-          priceTier: pricingTier,
+          priceTier: 'now-now',
+          passType,
+          daySelection: passType === 'day' ? daySelection : undefined,
+          addFridayParty: passType === 'day' ? addFridayParty : undefined,
           registration: {
             type: 'single',
             name: name.trim(),
@@ -217,7 +286,10 @@ export default function BookWeekender() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId,
-          priceTier: pricingTier,
+          priceTier: 'now-now',
+          passType,
+          daySelection: passType === 'day' ? daySelection : undefined,
+          addFridayParty: passType === 'day' ? addFridayParty : undefined,
           registration: {
             type: 'couple',
             email: coupleEmail.trim(),
@@ -259,6 +331,9 @@ export default function BookWeekender() {
 
   return (
     <>
+      <Suspense fallback={null}>
+        <UrlParamHandler onPassType={handleStartRegistration} sessionId={sessionId} />
+      </Suspense>
       <Header />
       <main className="min-h-screen bg-cloud-dancer">
         <section className="bg-black text-white py-12">
@@ -271,7 +346,7 @@ export default function BookWeekender() {
         </section>
 
         <section className="px-[5%] py-12">
-          <div className="max-w-lg mx-auto">
+          <div className={`mx-auto ${step === 'start' ? 'max-w-[1100px]' : 'max-w-lg'}`}>
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
@@ -281,51 +356,116 @@ export default function BookWeekender() {
 
             {/* Step: Start */}
             {step === 'start' && (
-              <div className="bg-white rounded-xl p-8 shadow-lg text-center">
-                <h2 className="font-spartan font-semibold text-2xl mb-4">Weekend Pass</h2>
-                <p className="text-3xl font-bold text-pink-accent mb-2">
-                  R{PRICES[pricingTier].single.toLocaleString()}
-                </p>
-                <p className="text-sm text-text-dark/60 mb-6">
-                  {nowTierSoldOut 
-                    ? '"Now Now" price' 
-                    : '"Now" price — first 10 tickets'
-                  }
-                </p>
-                
-                {nowTierSoldOut && (
-                  <div className="bg-pink-accent/10 border border-pink-accent/30 rounded-lg p-4 mb-6">
-                    <p className="text-sm font-semibold text-pink-accent">
-                      🎉 The first 10 &quot;Now&quot; tickets are sold out!
-                    </p>
-                    <p className="text-xs text-text-dark/60 mt-1">
-                      Register now at the &quot;Now Now&quot; price
-                    </p>
+              <>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Weekend Pass */}
+                <div className="bg-white rounded-xl border-2 border-text-dark/10 overflow-hidden">
+                  <div className="p-5 bg-pink-accent/10">
+                    <h3 className="font-spartan font-semibold text-xl">{PASS_PRICES.weekend.name}</h3>
+                    <p className="text-xs text-text-dark/70 mt-1">Best value for the full weekend</p>
                   </div>
-                )}
-                
-                <ul className="text-left text-sm text-text-dark/80 space-y-2 mb-8">
-                  <li>✓ Friday pre-party</li>
-                  <li>✓ All workshops (Sat + Sun)</li>
-                  <li>✓ Community lunch (Saturday)</li>
-                  <li>✓ All evening parties (Fri + Sat + Sun)</li>
-                </ul>
+                  <div className="p-5">
+                    <ul className="text-sm text-text-dark/80 space-y-2 mb-4">
+                      {PASS_PRICES.weekend.description.map((item, i) => (
+                        <li key={i}>✓ {item}</li>
+                      ))}
+                    </ul>
 
-                {!registrationOpen ? (
-                  <div className="bg-yellow-accent/20 rounded-lg p-4 mb-6">
-                    <p className="font-semibold text-text-dark">Registration opens:</p>
-                    <p className="text-lg font-bold">7am, 18 February 2026</p>
+                    <div className="border-t border-text-dark/10 pt-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold">Now-Now</span>
+                        <span className="font-bold text-lg">R{PASS_PRICES.weekend.single.toLocaleString()}</span>
+                      </div>
+                      <p className="text-xs text-text-dark/60 mb-4">{PASS_PRICES.weekend.tierNote}</p>
+                    </div>
+
+                    <button
+                      onClick={() => handleStartRegistration('weekend')}
+                      disabled={loading}
+                      className="w-full bg-yellow-accent text-text-dark px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loadingPassType === 'weekend' ? 'Starting...' : 'Register'}
+                    </button>
                   </div>
-                ) : null}
+                </div>
 
-                <button
-                  onClick={handleStartRegistration}
-                  disabled={loading}
-                  className="w-full bg-yellow-accent text-text-dark px-8 py-4 rounded-lg font-semibold text-lg hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Starting...' : 'Register Now'}
-                </button>
+                {/* Day Pass */}
+                <div className="bg-white rounded-xl border-2 border-text-dark/10 overflow-hidden">
+                  <div className="p-5 bg-purple-accent/10">
+                    <h3 className="font-spartan font-semibold text-xl">{PASS_PRICES.day.name}</h3>
+                    <p className="text-xs text-text-dark/70 mt-1">Choose Saturday or Sunday</p>
+                  </div>
+                  <div className="p-5">
+                    <ul className="text-sm text-text-dark/80 space-y-2 mb-4">
+                      {PASS_PRICES.day.description.map((item, i) => (
+                        <li key={i}>✓ {item}</li>
+                      ))}
+                      <li className="text-text-dark/60">+ Friday pre-party add-on (R200)</li>
+                    </ul>
+
+                    <div className="border-t border-text-dark/10 pt-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold">Now-Now</span>
+                        <span className="font-bold text-lg">R{PASS_PRICES.day.single.toLocaleString()}</span>
+                      </div>
+                      <p className="text-xs text-text-dark/60 mb-4">{PASS_PRICES.day.tierNote}</p>
+                    </div>
+
+                    <button
+                      onClick={() => handleStartRegistration('day')}
+                      disabled={loading}
+                      className="w-full bg-yellow-accent text-text-dark px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loadingPassType === 'day' ? 'Starting...' : 'Register'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Party Pass */}
+                <div className="bg-white rounded-xl border-2 border-text-dark/10 overflow-hidden">
+                  <div className="p-5 bg-yellow-accent/10">
+                    <h3 className="font-spartan font-semibold text-xl">{PASS_PRICES.party.name}</h3>
+                    <p className="text-xs text-text-dark/70 mt-1">Parties only (no workshops)</p>
+                  </div>
+                  <div className="p-5">
+                    <ul className="text-sm text-text-dark/80 space-y-2 mb-4">
+                      {PASS_PRICES.party.description.map((item, i) => (
+                        <li key={i} className={item.includes('not include') ? 'text-text-dark/60' : ''}>✓ {item}</li>
+                      ))}
+                    </ul>
+
+                    <div className="border-t border-text-dark/10 pt-4">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-semibold">Price</span>
+                        <span className="font-bold text-lg">R{PASS_PRICES.party.single.toLocaleString()}</span>
+                      </div>
+                      <p className="text-xs text-text-dark/60 mb-4">{PASS_PRICES.party.tierNote}</p>
+                    </div>
+
+                    <button
+                      onClick={() => handleStartRegistration('party')}
+                      disabled={loading}
+                      className="w-full bg-yellow-accent text-text-dark px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loadingPassType === 'party' ? 'Starting...' : 'Register'}
+                    </button>
+                  </div>
+                </div>
               </div>
+
+              {/* Contact / Financial Assistance */}
+              <div className="mt-8 bg-white rounded-xl p-6 border-2 border-text-dark/10">
+                <p className="text-sm text-text-dark/80">
+                  <span className="font-semibold">Questions?</span> Email{' '}
+                  <a href="mailto:weekender@wcscapetown.co.za" className="text-pink-accent hover:text-yellow-accent underline">
+                    weekender@wcscapetown.co.za
+                  </a>
+                </p>
+                <p className="text-sm text-text-dark/70 mt-2">
+                  If finances are a barrier, let us know — we may be able to connect you with a community member willing to sponsor or subsidise a pass.
+                </p>
+              </div>
+              </>
             )}
 
             {/* Step: Verify Name (when session flagged as registered) */}
@@ -383,7 +523,51 @@ export default function BookWeekender() {
             {/* Step: Select Type */}
             {step === 'select-type' && (
               <div className="bg-white rounded-xl p-8 shadow-lg">
-                <h2 className="font-spartan font-semibold text-2xl mb-6 text-center">How are you registering?</h2>
+                <h2 className="font-spartan font-semibold text-2xl mb-2 text-center">{PASS_PRICES[passType].name}</h2>
+                <p className="text-center text-text-dark/60 mb-6">How are you registering?</p>
+                
+                {/* Day selection for Day Pass */}
+                {passType === 'day' && (
+                  <div className="mb-6 p-4 bg-purple-accent/5 rounded-lg border border-purple-accent/20">
+                    <label className="block text-sm font-semibold text-text-dark mb-3">Which day?</label>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-white transition-colors">
+                        <input
+                          type="radio"
+                          name="day-selection"
+                          checked={daySelection === 'saturday'}
+                          onChange={() => setDaySelection('saturday')}
+                          className="w-4 h-4"
+                        />
+                        <span>Saturday 21 March</span>
+                      </label>
+                      <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-white transition-colors">
+                        <input
+                          type="radio"
+                          name="day-selection"
+                          checked={daySelection === 'sunday'}
+                          onChange={() => setDaySelection('sunday')}
+                          className="w-4 h-4"
+                        />
+                        <span>Sunday 22 March</span>
+                      </label>
+                    </div>
+                    
+                    <div className="mt-4 pt-4 border-t border-purple-accent/20">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={addFridayParty}
+                          onChange={(e) => setAddFridayParty(e.target.checked)}
+                          className="w-4 h-4"
+                        />
+                        <span className="text-sm">
+                          Add Friday pre-party <span className="text-text-dark/60">(+R{FRIDAY_ADDON_PRICE})</span>
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="space-y-4">
                   <button
@@ -392,7 +576,9 @@ export default function BookWeekender() {
                     className="w-full bg-cloud-dancer border-2 border-text-dark/10 hover:border-yellow-accent px-6 py-4 rounded-lg text-left transition-colors disabled:opacity-50"
                   >
                     <p className="font-semibold text-lg">Just me</p>
-                    <p className="text-sm text-text-dark/60">Single registration — R{PRICES[pricingTier].single.toLocaleString()}</p>
+                    <p className="text-sm text-text-dark/60">
+                      Single registration — R{(PASS_PRICES[passType].single + (passType === 'day' && addFridayParty ? FRIDAY_ADDON_PRICE : 0)).toLocaleString()}
+                    </p>
                   </button>
                   
                   <button
@@ -401,7 +587,9 @@ export default function BookWeekender() {
                     className="w-full bg-cloud-dancer border-2 border-text-dark/10 hover:border-yellow-accent px-6 py-4 rounded-lg text-left transition-colors disabled:opacity-50"
                   >
                     <p className="font-semibold text-lg">Lead & Follow pair</p>
-                    <p className="text-sm text-text-dark/60">Couple registration — R{PRICES[pricingTier].couple.toLocaleString()}</p>
+                    <p className="text-sm text-text-dark/60">
+                      Couple registration — R{(PASS_PRICES[passType].couple + (passType === 'day' && addFridayParty ? FRIDAY_ADDON_PRICE * 2 : 0)).toLocaleString()}
+                    </p>
                   </button>
                 </div>
 
@@ -508,13 +696,16 @@ export default function BookWeekender() {
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-text-dark/10">
+                  {passType === 'day' && (
+                    <div className="text-sm text-text-dark/70 mb-3">
+                      <p>{daySelection === 'saturday' ? 'Saturday 21 March' : 'Sunday 22 March'}</p>
+                      {addFridayParty && <p>+ Friday pre-party</p>}
+                    </div>
+                  )}
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-semibold">Total</span>
-                    <span className="text-2xl font-bold">R{PRICES[pricingTier].single.toLocaleString()}</span>
+                    <span className="font-semibold">{PASS_PRICES[passType].name}{passType === 'day' && addFridayParty ? ' + Friday' : ''}</span>
+                    <span className="text-2xl font-bold">R{(PASS_PRICES[passType].single + (passType === 'day' && addFridayParty ? FRIDAY_ADDON_PRICE : 0)).toLocaleString()}</span>
                   </div>
-                  <p className="text-sm text-text-dark/60 mb-4">
-                    &quot;{PRICES[pricingTier].display}&quot; pricing tier
-                  </p>
                 </div>
                   
                 <button
@@ -661,12 +852,18 @@ export default function BookWeekender() {
                 </div>
 
                 <div className="mt-8 pt-6 border-t border-text-dark/10">
+                  {passType === 'day' && (
+                    <div className="text-sm text-text-dark/70 mb-3">
+                      <p>{daySelection === 'saturday' ? 'Saturday 21 March' : 'Sunday 22 March'}</p>
+                      {addFridayParty && <p>+ Friday pre-party (x2)</p>}
+                    </div>
+                  )}
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-semibold">Total (2 people)</span>
-                    <span className="text-2xl font-bold">R{PRICES[pricingTier].couple.toLocaleString()}</span>
+                    <span className="text-2xl font-bold">R{(PASS_PRICES[passType].couple + (passType === 'day' && addFridayParty ? FRIDAY_ADDON_PRICE * 2 : 0)).toLocaleString()}</span>
                   </div>
                   <p className="text-sm text-text-dark/60 mb-4">
-                    &quot;{PRICES[pricingTier].display}&quot; pricing tier
+                    {PASS_PRICES[passType].name}{passType === 'day' && addFridayParty ? ' + Friday' : ''}
                   </p>
                 </div>
                   

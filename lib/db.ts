@@ -26,7 +26,7 @@ export interface Registration {
   level: 1 | 2;
   booking_session_id: string;
   order_id: string;
-  pass_type: 'weekend' | 'day_saturday' | 'day_sunday' | 'party';
+  pass_type: 'weekend' | 'day' | 'day_saturday' | 'day_sunday' | 'party';
   pricing_tier: 'now' | 'now-now' | 'just-now' | 'ai-tog';
   amount_cents: number;
   payment_status: 'pending' | 'complete' | 'failed' | 'expired' | 'waitlist';
@@ -63,7 +63,7 @@ export async function initializeDatabase(): Promise<void> {
       role VARCHAR(10) NOT NULL CHECK (role IN ('Lead', 'Follow')),
       level INTEGER NOT NULL CHECK (level IN (1, 2)),
       booking_session_id VARCHAR(255) NOT NULL,
-      pass_type VARCHAR(20) NOT NULL CHECK (pass_type IN ('weekend', 'day_saturday', 'day_sunday', 'party')),
+      pass_type VARCHAR(20) NOT NULL CHECK (pass_type IN ('weekend', 'day', 'day_saturday', 'day_sunday', 'party')),
       pricing_tier VARCHAR(20) NOT NULL CHECK (pricing_tier IN ('now', 'now-now', 'just-now', 'ai-tog')),
       amount_cents INTEGER NOT NULL,
       payment_status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending', 'complete', 'failed', 'expired')),
@@ -86,10 +86,36 @@ export async function createMember(member: Omit<Member, 'member_id' | 'created_a
   return result[0].member_id;
 }
 
-// Insert a new registration
+// Insert or update a registration (upsert by member_id)
 export async function createRegistration(registration: Omit<Registration, 'id' | 'created_at'>): Promise<number> {
   const sql = getDb();
   
+  // Check if a registration already exists for this member_id
+  const existing = await sql`
+    SELECT id FROM registrations WHERE member_id = ${registration.member_id} LIMIT 1
+  `;
+  
+  if (existing.length > 0) {
+    // Update existing registration
+    await sql`
+      UPDATE registrations SET
+        email = ${registration.email},
+        role = ${registration.role},
+        level = ${registration.level},
+        booking_session_id = ${registration.booking_session_id},
+        order_id = ${registration.order_id},
+        pass_type = ${registration.pass_type},
+        price_tier = ${registration.pricing_tier},
+        amount_cents = ${registration.amount_cents},
+        payment_status = ${registration.payment_status},
+        registration_status = ${registration.registration_status},
+        registration_type = ${registration.registration_type}
+      WHERE member_id = ${registration.member_id}
+    `;
+    return existing[0].id;
+  }
+  
+  // Insert new registration
   const result = await sql`
     INSERT INTO registrations (
       email, member_id, role, level, booking_session_id, order_id,
@@ -249,7 +275,7 @@ export async function updateRegistrationForRetry(
   newSessionId: string,
   orderId: string,
   email: string,
-  priceTier: string,
+  passType: string,
   amountCents: number
 ): Promise<void> {
   const sql = getDb();
@@ -259,7 +285,8 @@ export async function updateRegistrationForRetry(
     SET booking_session_id = ${newSessionId},
         order_id = ${orderId},
         email = ${email},
-        price_tier = ${priceTier},
+        pass_type = ${passType},
+        price_tier = 'now-now',
         amount_cents = ${amountCents},
         payment_status = 'pending',
         registration_status = 'pending',
@@ -380,4 +407,85 @@ export async function isNowTierSoldOut(): Promise<{ soldOut: boolean; completedC
     soldOut: completedCount >= 10,
     completedCount,
   };
+}
+
+// Create or update day pass details entry (upsert by registration_id)
+export async function createDayPassDetails(
+  registrationId: number,
+  workshopDay: 'Saturday' | 'Sunday',
+  partyAddOn: boolean
+): Promise<number> {
+  const sql = getDb();
+  
+  // Check if day pass details already exist for this registration_id
+  const existing = await sql`
+    SELECT id FROM day_pass_details WHERE registration_id = ${registrationId} LIMIT 1
+  `;
+  
+  if (existing.length > 0) {
+    // Update existing record
+    await sql`
+      UPDATE day_pass_details SET
+        workshop_day = ${workshopDay},
+        party_add_on = ${partyAddOn}
+      WHERE registration_id = ${registrationId}
+    `;
+    return existing[0].id;
+  }
+  
+  // Insert new record
+  const result = await sql`
+    INSERT INTO day_pass_details (registration_id, workshop_day, party_add_on)
+    VALUES (${registrationId}, ${workshopDay}, ${partyAddOn})
+    RETURNING id
+  `;
+  
+  return result[0].id;
+}
+
+// Create or update couple registration entry (upsert by lead_id)
+export async function createCoupleRegistration(
+  leadId: number,
+  followId: number
+): Promise<number> {
+  const sql = getDb();
+  
+  // Check if couple registration already exists for this lead_id
+  const existing = await sql`
+    SELECT id FROM couple_registrations WHERE lead_id = ${leadId} LIMIT 1
+  `;
+  
+  if (existing.length > 0) {
+    // Update existing record
+    await sql`
+      UPDATE couple_registrations SET
+        follow_id = ${followId}
+      WHERE lead_id = ${leadId}
+    `;
+    return existing[0].id;
+  }
+  
+  // Insert new record
+  const result = await sql`
+    INSERT INTO couple_registrations (lead_id, follow_id)
+    VALUES (${leadId}, ${followId})
+    RETURNING id
+  `;
+  
+  return result[0].id;
+}
+
+// Get registration ID by member_id (for day pass details)
+export async function getRegistrationIdByMemberId(memberId: number): Promise<number | null> {
+  const sql = getDb();
+  
+  const result = await sql`
+    SELECT id FROM registrations
+    WHERE member_id = ${memberId}
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+  
+  if (result.length === 0) return null;
+  return result[0].id;
 }

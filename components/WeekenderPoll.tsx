@@ -19,9 +19,6 @@ export default function WeekenderPoll() {
         <p className="text-lg md:text-xl font-medium mb-3">
           March 20-22, 2026 • Cape Town
         </p>
-        <p className="text-sm md:text-base text-text-dark/70 mb-6">
-          Bookings open <span className="font-semibold">Wednesday 18 February 2026</span> — flash sale for the first 24 hours / first 10 tickets.
-        </p>
         
         {/* Instructor Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-[700px] mx-auto mb-6">

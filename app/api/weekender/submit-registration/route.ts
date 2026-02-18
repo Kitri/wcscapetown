@@ -5,32 +5,22 @@ import {
   findOrCreateMember, 
   getExistingRegistration,
   updateRegistrationForRetry,
+  createDayPassDetails,
+  createCoupleRegistration,
+  getRegistrationIdByMemberId,
 } from '@/lib/db';
 import { logApiResponse, logError, logInfo, getNextOrderNumber } from '@/lib/blobLogger';
 
-// Price tiers in cents
-const PRICES: Record<string, Record<string, number>> = {
-  single: {
-    'now': 160000,      // R1600
-    'now-now': 180000,  // R1800
-    'just-now': 220000, // R2200
-    'ai-tog': 240000,   // R2400
-  },
-  couple: {
-    'now': 320000,      // R3200
-    'now-now': 360000,  // R3600
-    'just-now': 440000, // R4400
-    'ai-tog': 480000,   // R4800
-  },
+// Pass type pricing in cents
+type PassType = 'weekend' | 'day' | 'party';
+
+const PASS_PRICES: Record<PassType, { single: number; couple: number; name: string }> = {
+  'weekend': { single: 180000, couple: 360000, name: 'Weekend Pass' },  // R1800/R3600
+  'day': { single: 100000, couple: 200000, name: 'Day Pass' },          // R1000/R2000
+  'party': { single: 80000, couple: 160000, name: 'Party Pass' },       // R800/R1600
 };
 
-// Price tier display names
-const TIER_NAMES: Record<string, string> = {
-  'now': 'Now',
-  'now-now': 'Now Now',
-  'just-now': 'Just Now',
-  'ai-tog': 'Ai Tog',
-};
+const FRIDAY_ADDON_CENTS = 20000; // R200
 
 interface SingleRegistration {
   type: 'single';
@@ -61,10 +51,13 @@ type RegistrationData = SingleRegistration | CoupleRegistration;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { sessionId, registration, priceTier, isWaitlist } = body as {
+    const { sessionId, registration, priceTier, passType = 'weekend', daySelection, addFridayParty, isWaitlist } = body as {
       sessionId: string;
       registration: RegistrationData;
       priceTier: 'now' | 'now-now' | 'just-now' | 'ai-tog';
+      passType?: PassType;
+      daySelection?: 'saturday' | 'sunday';
+      addFridayParty?: boolean;
       isWaitlist?: boolean;
     };
 
@@ -88,7 +81,10 @@ export async function POST(request: NextRequest) {
     const paymentStatus = isWaitlist ? 'waitlist' : 'pending';
 
     const isSingle = registration.type === 'single';
-    const amountCents = isSingle ? PRICES.single[priceTier] : PRICES.couple[priceTier];
+    const passInfo = PASS_PRICES[passType] || PASS_PRICES['weekend'];
+    // Add Friday addon price for Day Pass if selected
+    const fridayAddon = (passType === 'day' && addFridayParty) ? (isSingle ? FRIDAY_ADDON_CENTS : FRIDAY_ADDON_CENTS * 2) : 0;
+    const amountCents = (isSingle ? passInfo.single : passInfo.couple) + fridayAddon;
 
     // Generate order ID first (needed for db and Redis)
     const orderId = await getNextOrderNumber();
@@ -117,24 +113,30 @@ export async function POST(request: NextRequest) {
           }, { status: 409 });
         } else {
           // Pending or expired - update existing record (never create new)
-          await updateRegistrationForRetry(primaryMemberId, sessionId, orderId, registration.email, priceTier, amountCents);
+        await updateRegistrationForRetry(primaryMemberId, sessionId, orderId, registration.email, passType, amountCents);
         }
       } else {
         // No existing registration - create new
-        await createRegistration({
+        const registrationId = await createRegistration({
           email: registration.email,
           member_id: primaryMemberId,
           role: registration.role,
           level: registration.level,
           booking_session_id: sessionId,
           order_id: orderId,
-          pass_type: 'weekend',
+          pass_type: passType,
           pricing_tier: priceTier,
           amount_cents: amountCents,
           payment_status: paymentStatus,
           registration_status: registrationStatus,
           registration_type: 'single',
         });
+        
+        // Create day_pass_details for day pass
+        if (passType === 'day' && daySelection) {
+          const workshopDay = daySelection === 'saturday' ? 'Saturday' : 'Sunday';
+          await createDayPassDetails(registrationId, workshopDay, addFridayParty || false);
+        }
       }
       allMemberIds = [primaryMemberId];
     } else {
@@ -178,18 +180,20 @@ export async function POST(request: NextRequest) {
       }
       
       // Handle leader registration
+      let leaderRegistrationId: number | null = null;
       if (leaderReg) {
         // Existing record (pending or expired) - update it
-        await updateRegistrationForRetry(leaderId, sessionId, orderId, registration.email, priceTier, amountCents / 2);
+        await updateRegistrationForRetry(leaderId, sessionId, orderId, registration.email, passType, amountCents / 2);
+        leaderRegistrationId = await getRegistrationIdByMemberId(leaderId);
       } else {
-        await createRegistration({
+        leaderRegistrationId = await createRegistration({
           email: registration.email,
           member_id: leaderId,
           role: 'L',
           level: registration.leader.level,
           booking_session_id: sessionId,
           order_id: orderId,
-          pass_type: 'weekend',
+          pass_type: passType,
           pricing_tier: priceTier,
           amount_cents: amountCents / 2,
           payment_status: paymentStatus,
@@ -199,18 +203,20 @@ export async function POST(request: NextRequest) {
       }
       
       // Handle follower registration
+      let followerRegistrationId: number | null = null;
       if (followerReg) {
         // Existing record (pending or expired) - update it
-        await updateRegistrationForRetry(followerId, sessionId, orderId, registration.email, priceTier, amountCents / 2);
+        await updateRegistrationForRetry(followerId, sessionId, orderId, registration.email, passType, amountCents / 2);
+        followerRegistrationId = await getRegistrationIdByMemberId(followerId);
       } else {
-        await createRegistration({
+        followerRegistrationId = await createRegistration({
           email: registration.email,
           member_id: followerId,
           role: 'F',
           level: registration.follower.level,
           booking_session_id: sessionId,
           order_id: orderId,
-          pass_type: 'weekend',
+          pass_type: passType,
           pricing_tier: priceTier,
           amount_cents: amountCents / 2,
           payment_status: paymentStatus,
@@ -218,6 +224,21 @@ export async function POST(request: NextRequest) {
           registration_type: 'couple',
         });
       }
+      
+      // Create couple_registrations entry
+      await createCoupleRegistration(leaderId, followerId);
+      
+      // Create day_pass_details for day pass (for both leader and follower)
+      if (passType === 'day' && daySelection) {
+        const workshopDay = daySelection === 'saturday' ? 'Saturday' : 'Sunday';
+        if (leaderRegistrationId) {
+          await createDayPassDetails(leaderRegistrationId, workshopDay, addFridayParty || false);
+        }
+        if (followerRegistrationId) {
+          await createDayPassDetails(followerRegistrationId, workshopDay, addFridayParty || false);
+        }
+      }
+      
       allMemberIds = [leaderId, followerId];
     }
 
@@ -256,8 +277,17 @@ export async function POST(request: NextRequest) {
     }).catch(console.error);
     const customerEmail = isSingle ? registration.email : registration.email;
     const quantity = isSingle ? 1 : 2;
-    const passDisplayName = `Weekender Full Pass`;
-    const passDescription = `Weekender Full Pass - ${TIER_NAMES[priceTier]}`;
+    
+    // Build pass display name with day info for Day Pass
+    let passDisplayName = passInfo.name;
+    let passDescription = `${passInfo.name} - WCS Cape Town Weekender`;
+    if (passType === 'day' && daySelection) {
+      const dayText = daySelection === 'saturday' ? 'Saturday 21 March' : 'Sunday 22 March';
+      passDisplayName = `${passInfo.name} (${dayText})`;
+      passDescription = `${passInfo.name} - ${dayText}${addFridayParty ? ' + Friday Pre-Party' : ''}`;
+    } else if (passType === 'day' && addFridayParty) {
+      passDescription = `${passInfo.name} + Friday Pre-Party - WCS Cape Town Weekender`;
+    }
 
     // Build Yoco request body per spec
     const yocoRequestBody = {
@@ -267,7 +297,7 @@ export async function POST(request: NextRequest) {
       cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/cancelled?ref=${orderId}&session=${sessionId}`,
       failureUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/failed?ref=${orderId}&session=${sessionId}`,
       metadata: {
-        orderId,
+        orderId: `${orderId}`,
         customerId: `MEMBER-${primaryMemberId}`,
         customerEmail,
         source: 'web_checkout',
