@@ -129,11 +129,20 @@ export default function BookWeekender() {
     '2-F': { shouldWaitlist: boolean; message: string } | null;
   }>({ '1-L': null, '1-F': null, '2-L': null, '2-F': null });
   
+  // Party pass sold out status
+  const [partyPassSoldOut, setPartyPassSoldOut] = useState(false);
+  
   useEffect(() => {
     setSessionId(getOrCreateSessionId());
     // Check if registration is open
     const now = new Date();
     setRegistrationOpen(now >= REGISTRATION_OPENS);
+    
+    // Check party pass availability on mount
+    fetch('/api/weekender/check-party-availability')
+      .then(res => res.json())
+      .then(data => setPartyPassSoldOut(data.soldOut))
+      .catch(console.error);
   }, []);
 
   const handleStartRegistration = async (selectedPassType: PassType) => {
@@ -527,7 +536,7 @@ export default function BookWeekender() {
                 </div>
 
                 {/* Party Pass */}
-                <div className="bg-white rounded-xl border-2 border-text-dark/10 overflow-hidden">
+                <div className={`bg-white rounded-xl border-2 overflow-hidden ${partyPassSoldOut ? 'border-text-dark/5 opacity-75' : 'border-text-dark/10'}`}>
                   <div className="p-5 bg-yellow-accent/10">
                     <h3 className="font-spartan font-semibold text-xl">{PASS_PRICES.party.name}</h3>
                     <p className="text-xs text-text-dark/70 mt-1">Parties only (no workshops)</p>
@@ -542,18 +551,33 @@ export default function BookWeekender() {
                     <div className="border-t border-text-dark/10 pt-4">
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-semibold">Price</span>
-                        <span className="font-bold text-lg">R{PASS_PRICES.party.single.toLocaleString()}</span>
+                        {partyPassSoldOut ? (
+                          <span className="text-text-dark/40 line-through font-bold text-lg">R{PASS_PRICES.party.single.toLocaleString()}</span>
+                        ) : (
+                          <span className="font-bold text-lg">R{PASS_PRICES.party.single.toLocaleString()}</span>
+                        )}
                       </div>
                       <p className="text-xs text-text-dark/60 mb-4">{PASS_PRICES.party.tierNote}</p>
                     </div>
 
-                    <button
-                      onClick={() => handleStartRegistration('party')}
-                      disabled={loading}
-                      className="w-full bg-yellow-accent text-text-dark px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {loadingPassType === 'party' ? 'Starting...' : 'Register'}
-                    </button>
+                    {partyPassSoldOut ? (
+                      <div className="text-center">
+                        <span className="inline-block bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg">
+                          Sold Out For Now
+                        </span>
+                        <p className="text-xs text-text-dark/60 mt-2">
+                          We may open more slots depending on venue capacity
+                        </p>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => handleStartRegistration('party')}
+                        disabled={loading}
+                        className="w-full bg-yellow-accent text-text-dark px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {loadingPassType === 'party' ? 'Starting...' : 'Register'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

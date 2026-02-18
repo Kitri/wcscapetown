@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import VideoGallery from "@/components/VideoGallery";
 import Image from "next/image";
 import Link from "next/link";
+import { isPartyPassSoldOut } from "@/lib/db";
 
 const WEEKENDER_SOLD_OUT = {
   nowWeekend: true,
@@ -11,7 +12,6 @@ const WEEKENDER_SOLD_OUT = {
   justNowDay: false,
   aiTogWeekend: false,
   aiTogDay: false,
-  partyPass: false,
   spotlightCritique: false,
 } as const;
 
@@ -61,12 +61,16 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
-export default function Weekender({
+export default async function Weekender({
   searchParams,
 }: {
   searchParams?: { tab?: string };
 }) {
-  const soldOut = WEEKENDER_SOLD_OUT;
+  const partyPassStatus = await isPartyPassSoldOut();
+  const soldOut = {
+    ...WEEKENDER_SOLD_OUT,
+    partyPass: partyPassStatus.soldOut,
+  };
   const tab = (searchParams?.tab ?? "passes").toLowerCase();
   const isPros = tab === "pros";
   const isSchedule = tab === "schedule";
@@ -536,12 +540,23 @@ export default function Weekender({
                     <p className="text-xs text-text-dark/70 mt-1">Static price (not linked to tiers)</p>
                   </div>
                   
-                  <Link
-                    href="/bookweekender?pass=party"
-                    className="block mt-4 w-full bg-yellow-accent text-text-dark text-center px-4 py-2 rounded-lg font-semibold text-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
-                  >
-                    Book Party Pass
-                  </Link>
+                  {soldOut.partyPass ? (
+                    <div className="mt-4 text-center">
+                      <span className="inline-block bg-red-600 text-white text-sm font-semibold px-4 py-2 rounded-lg">
+                        Sold Out For Now
+                      </span>
+                      <p className="text-xs text-text-dark/60 mt-2">
+                        We may open more slots depending on venue capacity
+                      </p>
+                    </div>
+                  ) : (
+                    <Link
+                      href="/bookweekender?pass=party"
+                      className="block mt-4 w-full bg-yellow-accent text-text-dark text-center px-4 py-2 rounded-lg font-semibold text-sm hover:-translate-y-0.5 hover:shadow-md transition-all"
+                    >
+                      Book Party Pass
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>
