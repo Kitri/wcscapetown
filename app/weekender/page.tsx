@@ -4,9 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { isPartyPassSoldOut } from "@/lib/db";
 
-// Force dynamic rendering to always fetch fresh party pass availability
-export const dynamic = 'force-dynamic';
-
 const WEEKENDER_SOLD_OUT = {
   nowWeekend: true,
   nowNowWeekend: false,
