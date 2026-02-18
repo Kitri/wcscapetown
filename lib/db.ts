@@ -363,3 +363,21 @@ export async function getCompletedNowTierMemberIds(): Promise<number[]> {
   
   return result.map(r => r.member_id);
 }
+
+// Check if "Now" tier is sold out (10+ completed registrations)
+export async function isNowTierSoldOut(): Promise<{ soldOut: boolean; completedCount: number }> {
+  const sql = getDb();
+  
+  const result = await sql`
+    SELECT COUNT(*) as count FROM registrations 
+    WHERE registration_status = 'complete'
+    AND price_tier = 'now'
+    AND pass_type = 'weekend'
+  `;
+  
+  const completedCount = Number(result[0].count);
+  return {
+    soldOut: completedCount >= 10,
+    completedCount,
+  };
+}

@@ -17,8 +17,7 @@ const PRICES: Record<PricingTier, { single: number; couple: number; display: str
 };
 
 // Registration opens: Wednesday 18 February 2026 07:00 SAST
-// const REGISTRATION_OPENS = new Date('2026-02-18T05:00:00Z'); // 07:00 SAST = 05:00 UTC
-const REGISTRATION_OPENS = new Date('2026-02-18T00:00:00Z'); // 07:00 SAST = 05:00 UTC
+const REGISTRATION_OPENS = new Date('2026-02-18T05:00:00Z'); // 07:00 SAST = 05:00 UTC
 
 export default function BookWeekender() {
   const [step, setStep] = useState<Step>('start');
@@ -56,11 +55,25 @@ export default function BookWeekender() {
   const [isWaitlist, setIsWaitlist] = useState(false);
   const [pendingRegistrationType, setPendingRegistrationType] = useState<'single' | 'couple'>('single');
   
+  // Tier sold out status (from database)
+  const [nowTierSoldOut, setNowTierSoldOut] = useState(false);
+  
   useEffect(() => {
     setSessionId(getOrCreateSessionId());
     // Check if registration is open
     const now = new Date();
     setRegistrationOpen(now >= REGISTRATION_OPENS);
+    
+    // Check tier status from database
+    fetch('/api/weekender/tier-status')
+      .then(res => res.json())
+      .then(data => {
+        if (data.nowTierSoldOut) {
+          setNowTierSoldOut(true);
+          setPricingTier('now-now');
+        }
+      })
+      .catch(console.error);
   }, []);
 
   const handleStartRegistration = async () => {
@@ -362,10 +375,26 @@ export default function BookWeekender() {
             {step === 'start' && (
               <div className="bg-white rounded-xl p-8 shadow-lg text-center">
                 <h2 className="font-spartan font-semibold text-2xl mb-4">Weekend Pass</h2>
-                <p className="text-3xl font-bold text-pink-accent mb-2">R1,600</p>
-                <p className="text-sm text-text-dark/60 mb-6">
-                  "Now" price — first 10 tickets or 24 hours
+                <p className="text-3xl font-bold text-pink-accent mb-2">
+                  R{PRICES[pricingTier].single.toLocaleString()}
                 </p>
+                <p className="text-sm text-text-dark/60 mb-6">
+                  {nowTierSoldOut 
+                    ? '"Now Now" price' 
+                    : '"Now" price — first 10 tickets'
+                  }
+                </p>
+                
+                {nowTierSoldOut && (
+                  <div className="bg-pink-accent/10 border border-pink-accent/30 rounded-lg p-4 mb-6">
+                    <p className="text-sm font-semibold text-pink-accent">
+                      🎉 The first 10 &quot;Now&quot; tickets are sold out!
+                    </p>
+                    <p className="text-xs text-text-dark/60 mt-1">
+                      Register now at the &quot;Now Now&quot; price
+                    </p>
+                  </div>
+                )}
                 
                 <ul className="text-left text-sm text-text-dark/80 space-y-2 mb-8">
                   <li>✓ Friday pre-party</li>
