@@ -187,7 +187,7 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
         </div>
         <div className="flex h-8 rounded-lg overflow-hidden border border-text-dark/10">
           <div
-            className="bg-blue-500 flex items-center justify-center text-white text-xs font-semibold"
+            className="bg-purple-accent flex items-center justify-center text-white text-xs font-semibold"
             style={{ width: `${leadPercent}%` }}
           >
             {lead > 0 && `Lead: ${lead}`}
@@ -214,7 +214,7 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
         <div className="bg-white rounded-xl p-8 shadow-lg max-w-md w-full">
           <div className="flex justify-center mb-6">
             <Image
-              src="/images/WCS_Logo_Portrait.png"
+              src="/images/WCS CT Logo white.png"
               alt="WCS Cape Town"
               width={120}
               height={120}
@@ -264,7 +264,7 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
         <div className="px-[5%] flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Image
-              src="/images/WCS_Logo_Portrait.png"
+              src="/images/WCS CT Logo white.png"
               alt="WCS Cape Town"
               width={40}
               height={40}

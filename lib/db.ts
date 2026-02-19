@@ -14,7 +14,7 @@ export interface Member {
   name: string;
   surname: string;
   role: 'L' | 'F';
-  level: 1 | 2;
+  level: 0 | 1 | 2;
   created_at?: string;
 }
 
@@ -23,11 +23,11 @@ export interface Registration {
   email: string;
   member_id: number;
   role: 'L' | 'F';
-  level: 1 | 2;
+  level: 0 | 1 | 2;
   booking_session_id: string;
   order_id: string;
-  pass_type: 'weekend' | 'day' | 'day_saturday' | 'day_sunday' | 'party';
-  pricing_tier: 'now' | 'now-now' | 'just-now' | 'ai-tog' | 'promo';
+  pass_type: 'weekend' | 'day' | 'day_saturday' | 'day_sunday' | 'party' | 'bootcamp';
+  pricing_tier: 'now' | 'now-now' | 'just-now' | 'ai-tog' | 'promo' | 'full' | 'half';
   amount_cents: number;
   payment_status: 'pending' | 'complete' | 'failed' | 'expired' | 'waitlist';
   registration_status: 'pending' | 'complete' | 'expired' | 'waitlist';
@@ -86,17 +86,20 @@ export async function createMember(member: Omit<Member, 'member_id' | 'created_a
   return result[0].member_id;
 }
 
-// Insert or update a registration (upsert by member_id)
+// Insert or update a registration (upsert by member_id AND pass_type)
 export async function createRegistration(registration: Omit<Registration, 'id' | 'created_at'>): Promise<number> {
   const sql = getDb();
   
-  // Check if a registration already exists for this member_id
+  // Check if a registration already exists for this member_id AND pass_type
   const existing = await sql`
-    SELECT id FROM registrations WHERE member_id = ${registration.member_id} LIMIT 1
+    SELECT id FROM registrations 
+    WHERE member_id = ${registration.member_id} 
+    AND pass_type = ${registration.pass_type}
+    LIMIT 1
   `;
   
   if (existing.length > 0) {
-    // Update existing registration
+    // Update existing registration for this pass type
     await sql`
       UPDATE registrations SET
         email = ${registration.email},
@@ -104,13 +107,13 @@ export async function createRegistration(registration: Omit<Registration, 'id' |
         level = ${registration.level},
         booking_session_id = ${registration.booking_session_id},
         order_id = ${registration.order_id},
-        pass_type = ${registration.pass_type},
         price_tier = ${registration.pricing_tier},
         amount_cents = ${registration.amount_cents},
         payment_status = ${registration.payment_status},
         registration_status = ${registration.registration_status},
         registration_type = ${registration.registration_type}
       WHERE member_id = ${registration.member_id}
+      AND pass_type = ${registration.pass_type}
     `;
     return existing[0].id;
   }
@@ -734,4 +737,86 @@ export async function shouldWaitlistDayPassRole(
     waitlistCount: 0,
     message: `For role balancing purposes, Level 2 day pass followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
   };
+}
+
+// Create or update bootcamp details entry (upsert by registration_id)
+export async function createBootcampDetails(
+  registrationId: number,
+  bootcampType: 'beginner' | 'fasttrack',
+  wcsExperience: string,
+  howDidYouFindUs: string | null,
+  yearsExperience: number | null = null,
+  danceStyle: string | null = null,
+  danceRole: string | null = null
+): Promise<number> {
+  const sql = getDb();
+  
+  // Check if bootcamp details already exist for this registration_id
+  const existing = await sql`
+    SELECT id FROM bootcamp_details WHERE registration_id = ${registrationId} LIMIT 1
+  `;
+  
+  if (existing.length > 0) {
+    // Update existing record
+    await sql`
+      UPDATE bootcamp_details SET
+        bootcamp_type = ${bootcampType},
+        years_experience = ${yearsExperience},
+        dance_style = ${danceStyle},
+        dance_role = ${danceRole},
+        "WCS_experience" = ${wcsExperience},
+        how_did_you_find_us = ${howDidYouFindUs}
+      WHERE registration_id = ${registrationId}
+    `;
+    return existing[0].id;
+  }
+  
+  // Insert new record
+  const result = await sql`
+    INSERT INTO bootcamp_details (registration_id, bootcamp_type, years_experience, dance_style, dance_role, "WCS_experience", how_did_you_find_us)
+    VALUES (${registrationId}, ${bootcampType}, ${yearsExperience}, ${danceStyle}, ${danceRole}, ${wcsExperience}, ${howDidYouFindUs})
+    RETURNING id
+  `;
+  
+  return result[0].id;
+}
+
+// Validate weekender registration by name and surname
+export async function validateWeekenderByName(name: string, surname: string): Promise<{ valid: boolean; registrationId: number | null }> {
+  const sql = getDb();
+  
+  const result = await sql`
+    SELECT r.id
+    FROM registrations r
+    INNER JOIN members m ON r.member_id = m.member_id
+    WHERE LOWER(m.name) = LOWER(${name.trim()})
+    AND LOWER(m.surname) = LOWER(${surname.trim()})
+    AND r.pass_type = 'weekend'
+    AND r.registration_status = 'complete'
+    LIMIT 1
+  `;
+  
+  if (result.length > 0) {
+    return { valid: true, registrationId: result[0].id };
+  }
+  return { valid: false, registrationId: null };
+}
+
+// Validate weekender registration by order ID
+export async function validateWeekenderByOrderId(orderId: string): Promise<{ valid: boolean; registrationId: number | null }> {
+  const sql = getDb();
+  
+  const result = await sql`
+    SELECT r.id
+    FROM registrations r
+    WHERE r.order_id = ${orderId.trim()}
+    AND r.pass_type = 'weekend'
+    AND r.registration_status = 'complete'
+    LIMIT 1
+  `;
+  
+  if (result.length > 0) {
+    return { valid: true, registrationId: result[0].id };
+  }
+  return { valid: false, registrationId: null };
 }

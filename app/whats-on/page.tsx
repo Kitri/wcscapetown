@@ -87,27 +87,43 @@ export default function WhatsOn() {
                 <p className="text-xs italic mt-2 text-text-dark/60">28 February 2026</p>
               </a>
 
-              {/* Bootcamp (Morning) */}
+              {/* Beginner Bootcamp */}
               <a href="#bootcamps" className="group border-2 border-purple-accent/30 hover:border-purple-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-purple-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
                   MAR 7 
                 </div>
-                <h3 className="font-spartan font-semibold text-lg mb-2">Bootcamp: Absolute Beginners</h3>
+                <h3 className="font-spartan font-semibold text-lg mb-2">Beginner Bootcamp</h3>
                 <p className="text-sm text-text-dark/70 mb-1">11:00 - 14:00 • 3-hour WCS fundamentals</p>
                 <p className="text-xs italic mt-2 text-text-dark/60">7 March, Observatory</p>
-                <p className="text-xs mt-3 text-purple-accent font-semibold">Get ready for the Weekender</p>
+                <p className="text-xs mt-3 text-purple-accent font-semibold">R400 (R200 with Weekender pass)</p>
               </a>
 
-              {/* Bootcamp (Afternoon) */}
+              {/* Fast-Track Intensive */}
               <a href="#bootcamps" className="group border-2 border-yellow-accent/30 hover:border-yellow-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-yellow-accent text-text-dark px-4 py-2 rounded-full font-semibold text-xs mb-3">
                   MAR 7
                 </div>
-                <h3 className="font-spartan font-semibold text-lg mb-2">Bootcamp: Dancers from Other Styles</h3>
-                <p className="text-sm text-text-dark/70 mb-1">14:30 - 17:30 • 3-hour WCS crash course</p>
+                <h3 className="font-spartan font-semibold text-lg mb-2">Fast-Track Intensive</h3>
+                <p className="text-sm text-text-dark/70 mb-1">13:30 - 17:30 • For experienced dancers</p>
                 <p className="text-xs italic mt-2 text-text-dark/60">7 March, Observatory</p>
-                <p className="text-xs mt-3 text-yellow-accent font-semibold">Get ready for the Weekender</p>
+                <p className="text-xs mt-3 text-yellow-accent font-semibold">R400 (R200 with Weekender pass)</p>
               </a>
+            </div>
+
+            {/* Quick Book Buttons */}
+            <div className="flex flex-wrap justify-center gap-4 mt-8">
+              <Link
+                href="/bookweekender"
+                className="bg-pink-accent text-white px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all"
+              >
+                Book Weekender
+              </Link>
+              <Link
+                href="/bookbootcamp"
+                className="bg-purple-accent text-white px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all"
+              >
+                Book Bootcamp
+              </Link>
             </div>
           </div>
         </section>
@@ -424,47 +440,64 @@ export default function WhatsOn() {
               Bootcamps (Get ready for the Weekender)
             </h2>
             <p className="text-lg md:text-xl text-center mb-8 max-w-[720px] mx-auto text-text-dark/80">
-              Two 3-hour bootcamps in one day — a morning session for absolute beginners, and an afternoon crash-course for dancers
-              from other styles.
+              Two focused bootcamps on the same day — a morning session for absolute beginners, and an afternoon intensive for dancers from other styles.
             </p>
 
             <div className="grid md:grid-cols-2 gap-6 mb-10">
-              {/* Morning Bootcamp */}
+              {/* Beginner Bootcamp */}
               <div className="bg-white/60 rounded-xl p-6 border-2 border-purple-accent/20">
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div>
-                    <h3 className="font-spartan font-semibold text-xl">Morning Bootcamp: Absolute Beginners</h3>
-                    <p className="text-sm text-text-dark/70 mt-1">Little to no prior dance experience</p>
+                    <h3 className="font-spartan font-semibold text-xl">Beginner Bootcamp</h3>
+                    <p className="text-sm text-text-dark/70 mt-1">Brand new to West Coast Swing? Perfect.</p>
                   </div>
                   <span className="shrink-0 inline-block bg-purple-accent text-white px-3 py-1 rounded-full font-semibold text-xs">
                     3 hours
                   </span>
                 </div>
-                <ul className="space-y-2 text-sm text-text-dark/80">
+                <p className="text-sm text-text-dark/80 mb-3">
+                  This is your one-stop shop for the core WCS basics. Build confidence, learn the foundations, and walk into the WCS Weekender Level 1 Track feeling ready!
+                </p>
+                <ul className="space-y-2 text-sm text-text-dark/80 mb-4">
                   <li>✓ Learn the core WCS patterns (enough to start social dancing)</li>
                   <li>✓ Connection basics: frame, elasticity, and timing</li>
                   <li>✓ Simple technique fixes that make everything feel easier</li>
                   <li>✓ Get confident for the Weekender</li>
                 </ul>
+                <Link
+                  href="/bookbootcamp?type=beginner"
+                  className="inline-block bg-purple-accent text-white px-6 py-2 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all text-sm"
+                >
+                  Book Now
+                </Link>
               </div>
 
-              {/* Afternoon Bootcamp */}
+              {/* Fast-Track Intensive */}
               <div className="bg-white/60 rounded-xl p-6 border-2 border-yellow-accent/30">
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div>
-                    <h3 className="font-spartan font-semibold text-xl">Afternoon Bootcamp: Dancers from Other Styles</h3>
-                    <p className="text-sm text-text-dark/70 mt-1">For experienced dancers new to West Coast Swing</p>
+                    <h3 className="font-spartan font-semibold text-xl">Fast-Track Intensive</h3>
+                    <p className="text-sm text-text-dark/70 mt-1">Already dance another partner style?</p>
                   </div>
                   <span className="shrink-0 inline-block bg-yellow-accent text-text-dark px-3 py-1 rounded-full font-semibold text-xs">
-                    3 hours
+                    4 hours
                   </span>
                 </div>
-                <ul className="space-y-2 text-sm text-text-dark/80">
+                <p className="text-sm text-text-dark/80 mb-3">
+                  Fast-track your way into West Coast Swing. This focused intensive translates your existing skills into WCS foundations, slot awareness, and elasticity. Arrive at the weekender ready to learn, not just keep up.
+                </p>
+                <ul className="space-y-2 text-sm text-text-dark/80 mb-4">
                   <li>✓ Translate your existing dance skills into WCS fundamentals</li>
-                  <li>✓ Slot, leverage/compression, and “WCS feel” (without starting from zero)</li>
+                  <li>✓ Slot, leverage/compression, and "WCS feel" (without starting from zero)</li>
                   <li>✓ Essential patterns + variations to dance comfortably at socials</li>
                   <li>✓ Get ready for the Weekender</li>
                 </ul>
+                <Link
+                  href="/bookbootcamp?type=fasttrack"
+                  className="inline-block bg-yellow-accent text-text-dark px-6 py-2 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all text-sm"
+                >
+                  Book Now
+                </Link>
               </div>
             </div>
 
@@ -473,23 +506,23 @@ export default function WhatsOn() {
               <div className="grid sm:grid-cols-2 gap-6 text-base md:text-lg">
                 <div>
                   <p className="font-semibold mb-1">📅 When</p>
-                  <p>Tentative <span className="font-semibold">Saturday 7 March 2026</span></p>
+                  <p><span className="font-semibold">Saturday 7 March 2026</span></p>
                 </div>
                 <div>
                   <p className="font-semibold mb-1">📍 Where</p>
-                  <p>Observatory Community Centre, Cape Town </p>
+                  <p>OBS Community Hall, Observatory</p>
                 </div>
                 <div>
                   <p className="font-semibold mb-1">⏱️ Times</p>
-                  <p><b>Beginner Bootcamp </b> 11:00 - 14:00 </p>
-                  <p><b>Dancers from Other Styles:</b> 14:30 - 17:30 </p>
+                  <p><b>Beginner Bootcamp:</b> 11:00 - 14:00</p>
+                  <p><b>Fast-Track Intensive:</b> 13:30 - 17:30</p>
                 </div>
                 <div>
                   <p className="font-semibold mb-1">💰 Cost</p>
-                  <p>TBA</p>
+                  <p>R400 per person</p>
+                  <p className="text-purple-accent font-semibold">R200 with a full WCS Weekender pass</p>
                 </div>
               </div>
-          
             </div>
           </div>
         </section>
