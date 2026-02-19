@@ -5,18 +5,38 @@ import { useSearchParams } from 'next/navigation';
 import Header from "@/components/Header";
 import { getOrCreateSessionId } from '@/lib/sessionId';
 
-type Step = 'start' | 'verify-name' | 'select-type' | 'single-form' | 'couple-form' | 'processing' | 'waitlist-success' | 'party-sold-out';
+type Step = 'start' | 'verify-name' | 'select-type' | 'single-form' | 'couple-form' | 'processing' | 'waitlist-success' | 'party-sold-out' | 'existing-order' | 'already-paid';
 type Role = 'L' | 'F';
 type Level = 1 | 2;
 type PassType = 'weekend' | 'day' | 'party';
 type DaySelection = 'saturday' | 'sunday';
 
+// Existing registration data type
+interface ExistingRegistration {
+  name: string;
+  surname: string;
+  emailMasked: string;
+  role: string;
+  level: number;
+  passType: string;
+  priceTier: string;
+  amountCents: number;
+  paymentStatus: string;
+  registrationStatus: string;
+  orderId: string;
+  workshopDay: string | null;
+  partyAddOn: boolean | null;
+  bootcampType: string | null;
+}
+
 // Component to handle URL params (must be wrapped in Suspense)
 function UrlParamHandler({ 
   onPassType, 
+  onOrderId,
   sessionId 
 }: { 
-  onPassType: (pass: PassType) => void; 
+  onPassType: (pass: PassType) => void;
+  onOrderId: (orderId: string) => void;
   sessionId: string;
 }) {
   const searchParams = useSearchParams();
@@ -25,12 +45,20 @@ function UrlParamHandler({
   useEffect(() => {
     if (autoStarted.current || !sessionId) return;
     
+    // Check for order-id first (existing registration payment)
+    const orderIdParam = searchParams.get('order-id');
+    if (orderIdParam) {
+      autoStarted.current = true;
+      onOrderId(orderIdParam);
+      return;
+    }
+    
     const passParam = searchParams.get('pass');
     if (passParam && ['weekend', 'day', 'party'].includes(passParam)) {
       autoStarted.current = true;
       onPassType(passParam as PassType);
     }
-  }, [sessionId, searchParams, onPassType]);
+  }, [sessionId, searchParams, onPassType, onOrderId]);
   
   return null;
 }
@@ -137,6 +165,10 @@ export default function BookWeekender() {
   // Party pass sold out status
   const [partyPassSoldOut, setPartyPassSoldOut] = useState(false);
   
+  // Existing order state
+  const [existingOrder, setExistingOrder] = useState<ExistingRegistration | null>(null);
+  const [existingOrderId, setExistingOrderId] = useState<string>('');
+  
   useEffect(() => {
     setSessionId(getOrCreateSessionId());
     // Check if registration is open
@@ -149,6 +181,72 @@ export default function BookWeekender() {
       .then(data => setPartyPassSoldOut(data.soldOut))
       .catch(console.error);
   }, []);
+
+  // Handle order-id URL parameter for existing registration payment
+  const handleOrderId = async (orderId: string) => {
+    setExistingOrderId(orderId);
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch(`/api/weekender/waitlist-details?orderId=${encodeURIComponent(orderId)}`);
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Could not find registration');
+        setStep('start');
+        return;
+      }
+
+      const registration = data.registration;
+
+      // Check if already paid (both payment_status and registration_status are 'complete')
+      if (registration.paymentStatus === 'complete' && registration.registrationStatus === 'complete') {
+        setStep('already-paid');
+        return;
+      }
+
+      // Store registration data and show existing order UI
+      setExistingOrder(registration);
+      setStep('existing-order');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setStep('start');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle payment for existing registration
+  const handlePayExisting = async () => {
+    if (!existingOrderId) return;
+    
+    setLoading(true);
+    setError('');
+    setStep('processing');
+
+    try {
+      const response = await fetch('/api/weekender/pay-existing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId: existingOrderId, sessionId })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setStep('existing-order');
+        throw new Error(data.error || 'Failed to start payment');
+      }
+
+      // Redirect to Yoco payment
+      window.location.href = data.checkoutUrl;
+    } catch (err) {
+      setStep('existing-order');
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+      setLoading(false);
+    }
+  };
 
   const handleStartRegistration = async (selectedPassType: PassType) => {
     if (!registrationOpen) {
@@ -493,7 +591,7 @@ export default function BookWeekender() {
   return (
     <>
       <Suspense fallback={null}>
-        <UrlParamHandler onPassType={handleStartRegistration} sessionId={sessionId} />
+        <UrlParamHandler onPassType={handleStartRegistration} onOrderId={handleOrderId} sessionId={sessionId} />
       </Suspense>
       <Header />
       <main className="min-h-screen bg-cloud-dancer">
@@ -1105,6 +1203,92 @@ export default function BookWeekender() {
                   <p className="text-sm text-text-dark/60">Reference number</p>
                   <p className="font-mono font-semibold text-lg">{waitlistReference}</p>
                 </div>
+                <a
+                  href="/weekender"
+                  className="inline-block bg-yellow-accent text-text-dark px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all"
+                >
+                  Return to Weekender
+                </a>
+                <p className="text-sm text-text-dark/60 mt-6">
+                  Questions? Email <a href="mailto:weekender@wcscapetown.co.za" className="text-pink-accent hover:text-yellow-accent underline">weekender@wcscapetown.co.za</a>
+                </p>
+              </div>
+            )}
+
+            {/* Step: Existing Order - Pay for existing registration */}
+            {step === 'existing-order' && existingOrder && (
+              <div className="bg-white rounded-xl p-8 shadow-lg">
+                <h2 className="font-spartan font-semibold text-2xl mb-2 text-center">Complete Your Payment</h2>
+                <p className="text-center text-text-dark/60 mb-6">Review your registration details below</p>
+                
+                <div className="bg-cloud-dancer rounded-lg p-4 mb-6 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-text-dark/60">Name</span>
+                    <span className="font-semibold">{existingOrder.name} {existingOrder.surname}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-text-dark/60">Pass Type</span>
+                    <span className="font-semibold capitalize">{existingOrder.passType.replace('_', ' ')}</span>
+                  </div>
+                  {existingOrder.role && (
+                    <div className="flex justify-between">
+                      <span className="text-text-dark/60">Role</span>
+                      <span className="font-semibold">{existingOrder.role === 'L' ? 'Lead' : 'Follow'}</span>
+                    </div>
+                  )}
+                  {existingOrder.level > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-text-dark/60">Level</span>
+                      <span className="font-semibold">Level {existingOrder.level}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-text-dark/60">Reference</span>
+                    <span className="font-mono text-sm">{existingOrder.orderId}</span>
+                  </div>
+                </div>
+                
+                <div className="border-t border-text-dark/10 pt-4 mb-6">
+                  <div className="flex justify-between items-center">
+                    <span className="font-semibold">Amount Due</span>
+                    <span className="text-2xl font-bold">R{(existingOrder.amountCents / 100).toLocaleString()}</span>
+                  </div>
+                  <p className="text-sm text-text-dark/60 mt-1">
+                    Price tier: {existingOrder.priceTier.replace('-', ' ')}
+                  </p>
+                </div>
+                
+                {error && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+                    {error}
+                  </div>
+                )}
+                
+                <button
+                  onClick={handlePayExisting}
+                  disabled={loading}
+                  className="w-full bg-yellow-accent text-text-dark px-8 py-4 rounded-lg font-semibold text-lg hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {loading ? 'Processing...' : 'Go to Payment'}
+                </button>
+                
+                <p className="text-sm text-text-dark/60 mt-6 text-center">
+                  Questions? Email <a href="mailto:weekender@wcscapetown.co.za" className="text-pink-accent hover:text-yellow-accent underline">weekender@wcscapetown.co.za</a>
+                </p>
+              </div>
+            )}
+
+            {/* Step: Already Paid */}
+            {step === 'already-paid' && (
+              <div className="bg-white rounded-xl p-8 shadow-lg text-center">
+                <div className="text-6xl mb-4">✅</div>
+                <h2 className="font-spartan font-semibold text-2xl mb-4">Order Payment Already Completed</h2>
+                <p className="text-text-dark/80 mb-6">
+                  This registration has already been paid for.
+                </p>
+                <p className="text-text-dark/70 mb-6">
+                  If this is a mistake, please contact us.
+                </p>
                 <a
                   href="/weekender"
                   className="inline-block bg-yellow-accent text-text-dark px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all"

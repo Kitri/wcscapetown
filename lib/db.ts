@@ -820,3 +820,64 @@ export async function validateWeekenderByOrderId(orderId: string): Promise<{ val
   }
   return { valid: false, registrationId: null };
 }
+
+// Get registration details by order ID (uses registration_details view for masked email)
+export async function getRegistrationByOrderId(orderId: string): Promise<{
+  name: string;
+  surname: string;
+  emailMasked: string;
+  role: string;
+  level: number;
+  passType: string;
+  priceTier: string;
+  amountCents: number;
+  paymentStatus: string;
+  registrationStatus: string;
+  orderId: string;
+  workshopDay: string | null;
+  partyAddOn: boolean | null;
+  bootcampType: string | null;
+} | null> {
+  const sql = getDb();
+  
+  const result = await sql`
+    SELECT 
+      name,
+      surname,
+      email_masked,
+      role,
+      level,
+      pass_type,
+      price_tier,
+      amount_cents,
+      payment_status,
+      registration_status,
+      order_id,
+      workshop_day,
+      party_add_on,
+      bootcamp_type
+    FROM registration_details
+    WHERE order_id = ${orderId.trim()}
+    LIMIT 1
+  `;
+  
+  if (result.length === 0) return null;
+  
+  const row = result[0];
+  return {
+    name: row.name,
+    surname: row.surname,
+    emailMasked: row.email_masked,
+    role: row.role,
+    level: row.level,
+    passType: row.pass_type,
+    priceTier: row.price_tier,
+    amountCents: row.amount_cents,
+    paymentStatus: row.payment_status,
+    registrationStatus: row.registration_status,
+    orderId: row.order_id,
+    workshopDay: row.workshop_day,
+    partyAddOn: row.party_add_on,
+    bootcampType: row.bootcamp_type,
+  };
+}
