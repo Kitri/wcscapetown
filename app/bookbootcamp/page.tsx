@@ -322,7 +322,7 @@ export default function BookBootcamp() {
                   }`}
                 >
                   <div className="font-semibold text-sm">Fast-Track Intensive</div>
-                  <div className="text-xs text-text-dark/60 mt-1">13:30 - 17:30</div>
+                  <div className="text-xs text-text-dark/60 mt-1">14:30 - 17:30</div>
                 </button>
               </div>
             </div>
