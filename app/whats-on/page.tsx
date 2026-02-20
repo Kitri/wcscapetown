@@ -104,7 +104,7 @@ export default function WhatsOn() {
                   MAR 7
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">Fast-Track Intensive</h3>
-                <p className="text-sm text-text-dark/70 mb-1">13:30 - 17:30 • For experienced dancers</p>
+                <p className="text-sm text-text-dark/70 mb-1">14:30 - 17:30 • For experienced dancers</p>
                 <p className="text-xs italic mt-2 text-text-dark/60">7 March, Observatory</p>
                 <p className="text-xs mt-3 text-yellow-accent font-semibold">R400 (R200 with Weekender pass)</p>
               </a>
