@@ -13,12 +13,22 @@ type Registration = {
   registration_status: string;
   price_tier: string;
   pass_type: string;
+  created_at: string;
+  workshop_day: string | null;
+  party_add_on: boolean | null;
 };
 
 type RoleBalanceItem = {
   level: number;
   role: string;
   count: string;
+};
+
+type AggregateByDayItem = {
+  day: string;
+  level: number;
+  role: string;
+  count: number;
 };
 
 type SortKey = keyof Registration;
@@ -32,11 +42,12 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
 
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [roleBalance, setRoleBalance] = useState<RoleBalanceItem[]>([]);
+  const [aggregateByDay, setAggregateByDay] = useState<AggregateByDayItem[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError] = useState("");
 
-  const [sortKey, setSortKey] = useState<SortKey>("name");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [sortKey, setSortKey] = useState<SortKey>("created_at");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   // Fetch data when authed
   useEffect(() => {
@@ -50,20 +61,23 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
     setDataError("");
 
     try {
-      const [regRes, balanceRes] = await Promise.all([
+      const [regRes, balanceRes, dayRes] = await Promise.all([
         fetch("/api/admin/weekender-registrations"),
         fetch("/api/admin/role-balance"),
+        fetch("/api/admin/aggregate-by-day"),
       ]);
 
-      if (!regRes.ok || !balanceRes.ok) {
+      if (!regRes.ok || !balanceRes.ok || !dayRes.ok) {
         throw new Error("Failed to fetch data");
       }
 
       const regData = await regRes.json();
       const balanceData = await balanceRes.json();
+      const dayData = await dayRes.json();
 
       setRegistrations(regData.registrations || []);
       setRoleBalance(balanceData.roleBalance || []);
+      setAggregateByDay(dayData.aggregateByDay || []);
     } catch (err) {
       setDataError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
@@ -142,6 +156,51 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
     return { level1, level2 };
   }, [roleBalance]);
 
+  // Calculate waitlist status - which roles are on waitlist and how many opposite roles needed
+  const waitlistStatus = useMemo(() => {
+    const { level1, level2 } = roleBalanceByLevel;
+    const statuses: { level: number; roleOnWaitlist: string; needed: number; neededRole: string }[] = [];
+
+    // Level 1 - check if imbalanced
+    const l1Diff = level1.lead - level1.follow;
+    if (l1Diff > 0) {
+      // More leads than follows - follows can join, leads waitlisted
+      statuses.push({ level: 1, roleOnWaitlist: "Lead", needed: l1Diff, neededRole: "Follow" });
+    } else if (l1Diff < 0) {
+      // More follows than leads - leads can join, follows waitlisted
+      statuses.push({ level: 1, roleOnWaitlist: "Follow", needed: Math.abs(l1Diff), neededRole: "Lead" });
+    }
+
+    // Level 2 - check if imbalanced
+    const l2Diff = level2.lead - level2.follow;
+    if (l2Diff > 0) {
+      statuses.push({ level: 2, roleOnWaitlist: "Lead", needed: l2Diff, neededRole: "Follow" });
+    } else if (l2Diff < 0) {
+      statuses.push({ level: 2, roleOnWaitlist: "Follow", needed: Math.abs(l2Diff), neededRole: "Lead" });
+    }
+
+    return statuses;
+  }, [roleBalanceByLevel]);
+
+  // Calculate per-day role balance
+  const roleBalanceByDay = useMemo(() => {
+    const saturday = { level1: { lead: 0, follow: 0 }, level2: { lead: 0, follow: 0 } };
+    const sunday = { level1: { lead: 0, follow: 0 }, level2: { lead: 0, follow: 0 } };
+
+    aggregateByDay.forEach((item) => {
+      const dayData = item.day === "Saturday" ? saturday : sunday;
+      const levelData = item.level === 1 ? dayData.level1 : dayData.level2;
+      const count = typeof item.count === 'string' ? parseInt(item.count, 10) : item.count;
+      if (item.role === "L") {
+        levelData.lead += count;
+      } else {
+        levelData.follow += count;
+      }
+    });
+
+    return { saturday, sunday };
+  }, [aggregateByDay]);
+
   const formatRole = (role: string) => {
     if (role === "L") return "Lead";
     if (role === "F") return "Follow";
@@ -202,6 +261,25 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
         <div className="flex justify-between text-xs text-text-dark/60 mt-1">
           <span>{leadPercent.toFixed(0)}% Lead</span>
           <span>{followPercent.toFixed(0)}% Follow</span>
+        </div>
+      </div>
+    );
+  };
+
+  // Compact bar for per-day balance
+  const CompactBalanceBar = ({ label, lead, follow }: { label: string; lead: number; follow: number }) => {
+    const total = lead + follow;
+    if (total === 0) return <div className="text-xs text-text-dark/40">{label}: No data</div>;
+    const leadPercent = (lead / total) * 100;
+    return (
+      <div className="mb-2">
+        <div className="flex justify-between text-xs mb-0.5">
+          <span className="font-medium">{label}</span>
+          <span className="text-text-dark/50">{lead}L / {follow}F</span>
+        </div>
+        <div className="flex h-4 rounded overflow-hidden border border-text-dark/10">
+          <div className="bg-purple-accent" style={{ width: `${leadPercent}%` }} />
+          <div className="bg-pink-accent flex-1" />
         </div>
       </div>
     );
@@ -311,6 +389,54 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
           )}
         </section>
 
+        {/* Per-Day Balance & Waitlist Status Row */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          {/* Saturday */}
+          <section className="bg-white rounded-xl p-4 shadow-sm">
+            <h2 className="font-spartan font-semibold text-sm mb-2">Saturday</h2>
+            {dataLoading ? (
+              <p className="text-text-dark/60 text-xs">Loading...</p>
+            ) : (
+              <>
+                <CompactBalanceBar label="L1" lead={roleBalanceByDay.saturday.level1.lead} follow={roleBalanceByDay.saturday.level1.follow} />
+                <CompactBalanceBar label="L2" lead={roleBalanceByDay.saturday.level2.lead} follow={roleBalanceByDay.saturday.level2.follow} />
+              </>
+            )}
+          </section>
+
+          {/* Sunday */}
+          <section className="bg-white rounded-xl p-4 shadow-sm">
+            <h2 className="font-spartan font-semibold text-sm mb-2">Sunday</h2>
+            {dataLoading ? (
+              <p className="text-text-dark/60 text-xs">Loading...</p>
+            ) : (
+              <>
+                <CompactBalanceBar label="L1" lead={roleBalanceByDay.sunday.level1.lead} follow={roleBalanceByDay.sunday.level1.follow} />
+                <CompactBalanceBar label="L2" lead={roleBalanceByDay.sunday.level2.lead} follow={roleBalanceByDay.sunday.level2.follow} />
+              </>
+            )}
+          </section>
+
+          {/* Waitlist Status */}
+          <section className="bg-white rounded-xl p-4 shadow-sm">
+            <h2 className="font-spartan font-semibold text-sm mb-2">Waitlist</h2>
+            {dataLoading ? (
+              <p className="text-text-dark/60 text-xs">Loading...</p>
+            ) : waitlistStatus.length === 0 ? (
+              <p className="text-green-600 text-xs font-medium">✓ Balanced</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {waitlistStatus.map((status, idx) => (
+                  <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                    <span className="text-yellow-600">⏳</span>
+                    L{status.level} {status.roleOnWaitlist}s: +{status.needed} {status.neededRole}
+                  </span>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+
         {/* Registrations Table */}
         <section className="bg-white rounded-xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
@@ -335,6 +461,7 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
               <table className="w-full text-sm">
                 <thead className="bg-cloud-dancer">
                   <tr>
+                    <SortHeader label="Created" sortKeyName="created_at" />
                     <SortHeader label="Name" sortKeyName="name" />
                     <SortHeader label="Surname" sortKeyName="surname" />
                     <SortHeader label="Level" sortKeyName="level" />
@@ -343,6 +470,8 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
                     <SortHeader label="Status" sortKeyName="registration_status" />
                     <SortHeader label="Tier" sortKeyName="price_tier" />
                     <SortHeader label="Pass" sortKeyName="pass_type" />
+                    <SortHeader label="Day" sortKeyName="workshop_day" />
+                    <SortHeader label="Party" sortKeyName="party_add_on" />
                   </tr>
                 </thead>
                 <tbody>
@@ -351,6 +480,9 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
                       key={idx}
                       className="border-t border-text-dark/10 hover:bg-cloud-dancer/50"
                     >
+                      <td className="px-3 py-2 text-xs text-text-dark/60">
+                        {reg.created_at ? new Date(reg.created_at).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'}
+                      </td>
                       <td className="px-3 py-2">{reg.name}</td>
                       <td className="px-3 py-2">{reg.surname}</td>
                       <td className="px-3 py-2">{reg.level}</td>
@@ -371,6 +503,8 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
                       </td>
                       <td className="px-3 py-2">{reg.price_tier}</td>
                       <td className="px-3 py-2">{reg.pass_type}</td>
+                      <td className="px-3 py-2">{reg.workshop_day || '-'}</td>
+                      <td className="px-3 py-2">{reg.party_add_on ? 'Yes' : '-'}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -14,26 +14,15 @@ export async function GET() {
     const sql = getDb();
     
     const result = await sql`
-      SELECT 
-        name,
-        surname,
-        level,
-        role,
-        registration_type,
-        registration_status,
-        price_tier,
-        pass_type,
-        created_at,
-        workshop_day,
-        party_add_on
-      FROM registration_admin_view
+      SELECT day, level, role, count
+      FROM aggregate_by_day
     `;
 
-    return NextResponse.json({ registrations: result });
+    return NextResponse.json({ aggregateByDay: result });
   } catch (error) {
-    console.error('Error fetching registrations:', error);
+    console.error('Error fetching aggregate by day:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch registrations' },
+      { error: 'Failed to fetch aggregate by day' },
       { status: 500 }
     );
   }
