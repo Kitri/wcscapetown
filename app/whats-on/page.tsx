@@ -515,7 +515,7 @@ export default function WhatsOn() {
                 <div>
                   <p className="font-semibold mb-1">⏱️ Times</p>
                   <p><b>Beginner Bootcamp:</b> 11:00 - 14:00</p>
-                  <p><b>Fast-Track Intensive:</b> 13:30 - 17:30</p>
+                  <p><b>Fast-Track Intensive:</b> 14:30 - 17:30</p>
                 </div>
                 <div>
                   <p className="font-semibold mb-1">💰 Cost</p>
