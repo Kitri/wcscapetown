@@ -88,7 +88,7 @@ export default function WhatsOn() {
               </a>
 
               {/* Beginner Bootcamp */}
-              <a href="#bootcamps" className="group border-2 border-purple-accent/30 hover:border-purple-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
+              <a href="#beginner-bootcamp-info" className="group border-2 border-purple-accent/30 hover:border-purple-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-purple-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
                   MAR 7 
                 </div>
@@ -99,7 +99,7 @@ export default function WhatsOn() {
               </a>
 
               {/* Fast-Track Intensive */}
-              <a href="#bootcamps" className="group border-2 border-yellow-accent/30 hover:border-yellow-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
+              <a href="#fasttrack-bootcamp-info" className="group border-2 border-yellow-accent/30 hover:border-yellow-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-yellow-accent text-text-dark px-4 py-2 rounded-full font-semibold text-xs mb-3">
                   MAR 7
                 </div>
@@ -445,7 +445,7 @@ export default function WhatsOn() {
 
             <div className="grid md:grid-cols-2 gap-6 mb-10">
               {/* Beginner Bootcamp */}
-              <div className="bg-white/60 rounded-xl p-6 border-2 border-purple-accent/20">
+              <div id="beginner-bootcamp-info" className="bg-white/60 rounded-xl p-6 border-2 border-purple-accent/20 scroll-mt-4">
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div>
                     <h3 className="font-spartan font-semibold text-xl">Beginner Bootcamp</h3>
@@ -473,14 +473,14 @@ export default function WhatsOn() {
               </div>
 
               {/* Fast-Track Intensive */}
-              <div className="bg-white/60 rounded-xl p-6 border-2 border-yellow-accent/30">
+              <div id="fasttrack-bootcamp-info" className="bg-white/60 rounded-xl p-6 border-2 border-yellow-accent/30 scroll-mt-4">
                 <div className="flex items-start justify-between gap-4 mb-3">
                   <div>
                     <h3 className="font-spartan font-semibold text-xl">Fast-Track Intensive</h3>
                     <p className="text-sm text-text-dark/70 mt-1">Already dance another partner style?</p>
                   </div>
                   <span className="shrink-0 inline-block bg-yellow-accent text-text-dark px-3 py-1 rounded-full font-semibold text-xs">
-                    4 hours
+                    3 hours
                   </span>
                 </div>
                 <p className="text-sm text-text-dark/80 mb-3">

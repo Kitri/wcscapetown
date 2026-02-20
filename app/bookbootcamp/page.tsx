@@ -643,6 +643,68 @@ export default function BookBootcamp() {
             )}
           </div>
         </section>
+
+        {/* Bootcamp Info Section */}
+        <section className="px-[5%] py-8 bg-white">
+          <div className="max-w-[900px] mx-auto">
+            <h2 className="font-spartan font-semibold text-xl text-center mb-6">Bootcamp Details</h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Beginner Bootcamp */}
+              <div className={`rounded-xl p-6 border-2 transition-all ${
+                bootcampType === 'beginner' 
+                  ? 'border-purple-accent bg-purple-accent/5' 
+                  : 'border-text-dark/10 bg-white/60'
+              }`}>
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <div>
+                    <h3 className="font-spartan font-semibold text-xl">Beginner Bootcamp</h3>
+                    <p className="text-sm text-text-dark/70 mt-1">Brand new to West Coast Swing? Perfect.</p>
+                  </div>
+                  <span className="shrink-0 inline-block bg-purple-accent text-white px-3 py-1 rounded-full font-semibold text-xs">
+                    3 hours
+                  </span>
+                </div>
+                <p className="text-sm text-text-dark/80 mb-3">
+                  This is your one-stop shop for the core WCS basics. Build confidence, learn the foundations, and walk into the WCS Weekender Level 1 Track feeling ready!
+                </p>
+                <ul className="space-y-1 text-sm text-text-dark/80 mb-4">
+                  <li>✓ Learn the core WCS patterns</li>
+                  <li>✓ Connection basics: frame, elasticity, timing</li>
+                  <li>✓ Simple technique fixes</li>
+                  <li>✓ Get confident for the Weekender</li>
+                </ul>
+                <p className="text-xs text-text-dark/60">11:00 - 14:00</p>
+              </div>
+
+              {/* Fast-Track Intensive */}
+              <div className={`rounded-xl p-6 border-2 transition-all ${
+                bootcampType === 'fasttrack' 
+                  ? 'border-yellow-accent bg-yellow-accent/5' 
+                  : 'border-text-dark/10 bg-white/60'
+              }`}>
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <div>
+                    <h3 className="font-spartan font-semibold text-xl">Fast-Track Intensive</h3>
+                    <p className="text-sm text-text-dark/70 mt-1">Already dance another partner style?</p>
+                  </div>
+                  <span className="shrink-0 inline-block bg-yellow-accent text-text-dark px-3 py-1 rounded-full font-semibold text-xs">
+                    3 hours
+                  </span>
+                </div>
+                <p className="text-sm text-text-dark/80 mb-3">
+                  Fast-track your way into West Coast Swing. This focused intensive translates your existing skills into WCS foundations, slot awareness, and elasticity.
+                </p>
+                <ul className="space-y-1 text-sm text-text-dark/80 mb-4">
+                  <li>✓ Translate existing dance skills into WCS</li>
+                  <li>✓ Slot, leverage/compression, "WCS feel"</li>
+                  <li>✓ Essential patterns + variations</li>
+                  <li>✓ Get ready for the Weekender</li>
+                </ul>
+                <p className="text-xs text-text-dark/60">14:30 - 17:30</p>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
     </>
   );
