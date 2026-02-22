@@ -368,6 +368,105 @@ export async function expireRegistrationsByOrder(orderId: string): Promise<void>
   `;
 }
 
+// Update payment status by order_id (for webhook callbacks)
+export async function updateRegistrationPaymentStatusByOrder(
+  orderId: string,
+  status: Registration['payment_status']
+): Promise<void> {
+  const sql = getDb();
+  
+  await sql`
+    UPDATE registrations 
+    SET payment_status = ${status}
+    WHERE order_id = ${orderId}
+  `;
+}
+
+// Save Yoco API result to database
+export async function saveYocoApiResult(params: {
+  requestTimestamp: Date;
+  requestAmount: number;
+  registrationId: number;
+  responseStatus: number;
+  paymentId?: string | null;
+  responseId: string; // checkoutId
+  processingMode?: string | null;
+}): Promise<number> {
+  const sql = getDb();
+  
+  const result = await sql`
+    INSERT INTO yoco_api_results (
+      request_timestamp,
+      request_amount,
+      registration_id,
+      response_status,
+      payment_id,
+      response_id,
+      processing_mode
+    )
+    VALUES (
+      ${params.requestTimestamp},
+      ${params.requestAmount},
+      ${params.registrationId},
+      ${params.responseStatus},
+      ${params.paymentId || null},
+      ${params.responseId},
+      ${params.processingMode || null}
+    )
+    RETURNING id
+  `;
+  
+  return result[0].id;
+}
+
+// Update Yoco payment_id when webhook arrives (correlate by checkoutId which is stored as response_id)
+export async function updateYocoPaymentId(
+  checkoutId: string,
+  paymentId: string,
+  amount?: number | null,
+  apiCreatedDate?: string | null
+): Promise<void> {
+  const sql = getDb();
+  
+  await sql`
+    UPDATE yoco_api_results
+    SET 
+      payment_id = ${paymentId},
+      amount = COALESCE(${amount ?? null}, amount),
+      api_created_date = COALESCE(${apiCreatedDate ?? null}, api_created_date)
+    WHERE response_id = ${checkoutId}
+    AND payment_id IS NULL
+  `;
+}
+
+// Get orderId from checkoutId (response_id) via yoco_api_results -> registrations
+export async function getOrderIdByCheckoutId(checkoutId: string): Promise<string | null> {
+  const sql = getDb();
+  
+  const result = await sql`
+    SELECT r.order_id
+    FROM yoco_api_results y
+    INNER JOIN registrations r ON y.registration_id = r.id
+    WHERE y.response_id = ${checkoutId}
+    LIMIT 1
+  `;
+  
+  return result.length > 0 ? result[0].order_id : null;
+}
+
+// Get registration ID by order_id
+export async function getRegistrationIdByOrderId(orderId: string): Promise<number | null> {
+  const sql = getDb();
+  
+  const result = await sql`
+    SELECT id FROM registrations
+    WHERE order_id = ${orderId}
+    LIMIT 1
+  `;
+  
+  return result.length > 0 ? result[0].id : null;
+}
+
 // Count total completed registrations
 export async function countCompletedRegistrations(): Promise<number> {
   const sql = getDb();

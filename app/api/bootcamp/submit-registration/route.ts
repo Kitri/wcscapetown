@@ -5,6 +5,7 @@ import {
   findOrCreateMember, 
   createBootcampDetails,
   getRegistrationIdByMemberId,
+  saveYocoApiResult,
 } from '@/lib/db';
 import { logApiResponse, logError, logInfo } from '@/lib/blobLogger';
 
@@ -177,8 +178,9 @@ export async function POST(request: NextRequest) {
     }).catch(console.error);
 
     const yocoData = await yocoResponse.json();
+    const requestTimestamp = new Date();
 
-    // Log the API response (non-blocking)
+    // Log the API response to blob (non-blocking)
     logApiResponse(
       'yoco',
       'https://payments.yoco.com/api/checkouts',
@@ -186,6 +188,19 @@ export async function POST(request: NextRequest) {
       yocoResponse.status,
       yocoData
     ).catch(console.error);
+
+    // Save Yoco API result to database (non-blocking)
+    if (yocoData.id) {
+      saveYocoApiResult({
+        requestTimestamp,
+        requestAmount: amountCents,
+        registrationId,
+        responseStatus: yocoResponse.status,
+        paymentId: null, // Will be updated via webhook
+        responseId: yocoData.id, // checkoutId
+        processingMode: yocoData.processingMode || null,
+      }).catch(console.error);
+    }
 
     if (!yocoResponse.ok) {
       logError('bootcamp_registration', 'Yoco API error', {

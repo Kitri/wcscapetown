@@ -8,6 +8,8 @@ import {
   createDayPassDetails,
   createCoupleRegistration,
   getRegistrationIdByMemberId,
+  saveYocoApiResult,
+  getRegistrationIdByOrderId,
 } from '@/lib/db';
 import { logApiResponse, logError, logInfo, getNextOrderNumber } from '@/lib/blobLogger';
 
@@ -343,8 +345,9 @@ export async function POST(request: NextRequest) {
     });
 
     const yocoData = await yocoResponse.json();
+    const requestTimestamp = new Date();
 
-    // Log the API response (non-blocking)
+    // Log the API response to blob (non-blocking)
     logApiResponse(
       'yoco',
       'https://payments.yoco.com/api/checkouts',
@@ -352,6 +355,24 @@ export async function POST(request: NextRequest) {
       yocoResponse.status,
       yocoData
     ).catch(console.error);
+
+    // Save Yoco API result to database (non-blocking)
+    // Get the primary registration ID for this order and persist
+    if (yocoData.id) {
+      getRegistrationIdByOrderId(orderId).then(registrationId => {
+        if (registrationId) {
+          saveYocoApiResult({
+            requestTimestamp,
+            requestAmount: amountCents,
+            registrationId,
+            responseStatus: yocoResponse.status,
+            paymentId: null, // Will be updated via webhook
+            responseId: yocoData.id, // checkoutId
+            processingMode: yocoData.processingMode || null,
+          }).catch(console.error);
+        }
+      }).catch(console.error);
+    }
 
     if (!yocoResponse.ok) {
       logError('weekender_registration', 'Yoco API error', {

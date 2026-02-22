@@ -1,152 +1,209 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { kv } from '@vercel/kv';
+import crypto from 'crypto';
+import { getOrderMemberIds } from '@/lib/redis';
+import { completeRegistration, updateRegistrationPaymentStatusByOrder, updateYocoPaymentId, getOrderIdByCheckoutId } from '@/lib/db';
+import { logApiResponse } from '@/lib/blobLogger';
 
-interface YocoWebhookPayload {
+// ─── Signature verification ───────────────────────────────────────────────────
+
+function verifySignature(
+  rawBody: string,
+  webhookId: string,
+  webhookTimestamp: string,
+  webhookSignature: string
+): boolean {
+  const secret = process.env.YOCO_WEBHOOK_SECRET;
+  if (!secret) {
+    console.error('YOCO_WEBHOOK_SECRET not configured');
+    return false;
+  }
+
+  const secretBytes = Buffer.from(secret.replace('whsec_', ''), 'base64');
+  const signedContent = `${webhookId}.${webhookTimestamp}.${rawBody}`;
+
+  const expectedSignature = crypto
+    .createHmac('sha256', secretBytes)
+    .update(signedContent)
+    .digest('base64');
+
+  // Header may contain multiple space-separated signatures (e.g. "v1,abc123 v1,xyz456")
+  // Strip the "v1," version prefix from each and check for a match
+  for (const sig of webhookSignature.split(' ')) {
+    const actual = sig.split(',').slice(1).join(',');
+    try {
+      const a = Buffer.from(expectedSignature);
+      const b = Buffer.from(actual);
+      if (a.length === b.length && crypto.timingSafeEqual(a, b)) return true;
+    } catch {
+      // length mismatch — not a match
+    }
+  }
+
+  return false;
+}
+
+// ─── Route handler ────────────────────────────────────────────────────────────
+
+export async function POST(request: NextRequest) {
+  const rawBody = await request.text(); // must read raw — not request.json()
+  const webhookId = request.headers.get('webhook-id') ?? '';
+  const webhookTime = request.headers.get('webhook-timestamp') ?? '';
+  const webhookSig = request.headers.get('webhook-signature') ?? '';
+
+  // Reject if any required headers are missing
+  if (!webhookId || !webhookTime || !webhookSig) {
+    console.warn('Yoco webhook missing headers');
+    return NextResponse.json({ error: 'Missing headers' }, { status: 400 });
+  }
+
+  // Reject events older than 3 minutes (prevents replay attacks)
+  const ageSeconds = Math.abs(Math.floor(Date.now() / 1000) - parseInt(webhookTime, 10));
+  if (ageSeconds > 180) {
+    console.warn('Yoco webhook expired', { ageSeconds });
+    return NextResponse.json({ error: 'Request expired' }, { status: 400 });
+  }
+
+  // Reject if signature doesn't match
+  if (!verifySignature(rawBody, webhookId, webhookTime, webhookSig)) {
+    console.warn('Yoco webhook invalid signature');
+    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+  }
+
+  // Parse and handle the event
+  const event = JSON.parse(rawBody);
+
+  try {
+    await handleEvent(event);
+  } catch (err) {
+    console.error('Yoco webhook handler error:', err);
+    // Returning 500 tells Yoco to retry — only do this for transient errors
+    return NextResponse.json({ error: 'Handler failed' }, { status: 500 });
+  }
+
+  // Always return 200 to acknowledge receipt
+  return NextResponse.json({ received: true });
+}
+
+// ─── Event handler ────────────────────────────────────────────────────────────
+
+interface YocoEvent {
   id: string;
   type: string;
-  createdDate: string;
+  createdDate?: string;
   payload: {
-    id: string;
+    id: string; // Yoco payment ID
     status: string;
     amount: number;
     currency: string;
+    createdDate?: string;
     metadata?: {
-      reference?: string;
-      name?: string;
-      testPayment?: string;
-      createdAt?: string;
+      orderId?: string;
+      checkoutId?: string;
+      customerId?: string;
+      customerEmail?: string;
+      source?: string;
+      bootcampType?: string;
     };
   };
 }
 
-interface PaymentData {
-  reference: string;
-  name: string;
-  amount: number;
-  currency: string;
-  status: string;
-  checkoutId: string;
-  createdAt: string;
-  paymentId?: string;
-  paidAt?: string;
-  failedAt?: string;
-  yocoResponse?: unknown;
-  webhookPayload?: unknown;
-}
+async function handleEvent(event: YocoEvent) {
+  console.log(`Yoco event received: ${event.type} [${event.id}]`);
 
-export async function POST(request: NextRequest) {
-  try {
-    // 1. Parse webhook payload
-    const payload: YocoWebhookPayload = await request.json();
+  // Log webhook event to blob storage (non-blocking)
+  logApiResponse(
+    'yoco_webhook',
+    '/api/webhooks/yoco',
+    { eventType: event.type, eventId: event.id },
+    200,
+    event
+  ).catch(console.error);
 
-    console.log('📥 Webhook received:', {
-      type: payload.type,
-      paymentId: payload.payload?.id,
-      timestamp: new Date().toISOString()
-    });
+  switch (event.type) {
+    case 'payment.succeeded': {
+      const checkoutId = event.payload.metadata?.checkoutId;
+      const paymentId = event.payload.id; // This is the Yoco payment ID
+      const amount = event.payload.amount;
+      const apiCreatedDate = event.payload.createdDate;
 
-    // 2. Handle different event types
-    if (payload.type === 'payment.succeeded') {
-      const reference = payload.payload.metadata?.reference;
-      const paymentId = payload.payload.id;
-      const amount = payload.payload.amount;
-
-      if (!reference) {
-        console.error('No reference in webhook payload');
-        return NextResponse.json({ received: true });
+      if (!checkoutId) {
+        console.warn('No checkoutId in webhook metadata', { eventId: event.id });
+        return;
       }
 
-      // 3. Update payment status in KV
-      try {
-        const existingPayment = await kv.get<PaymentData>(`payment:${reference}`);
+      console.log('Processing payment.succeeded', { checkoutId, paymentId, amount });
 
-        if (existingPayment) {
-          await kv.set(`payment:${reference}`, {
-            ...existingPayment,
-            status: 'paid',
-            paymentId,
-            paidAt: new Date().toISOString(),
-            webhookPayload: payload // Store webhook for traceability
-          });
-
-          // Remove expiry since payment is complete
-          await kv.persist(`payment:${reference}`);
-
-          console.log('✅ Payment succeeded:', {
-            reference,
-            amount,
-            paymentId,
-            name: existingPayment.name
-          });
-
-          // TODO: Send confirmation email here
-          // await sendConfirmationEmail(existingPayment.name, existingPayment.email);
-
-        } else {
-          console.warn('Payment not found in KV:', reference);
-        }
-      } catch (kvError) {
-        console.error('KV update error:', kvError);
+      // Update payment_id, amount, and api_created_date in yoco_api_results
+      if (paymentId) {
+        await updateYocoPaymentId(checkoutId, paymentId, amount, apiCreatedDate || null);
       }
 
-    } else if (payload.type === 'payment.failed') {
-      const reference = payload.payload.metadata?.reference;
-
-      if (reference) {
-        try {
-          const existingPayment = await kv.get<PaymentData>(`payment:${reference}`);
-
-          if (existingPayment) {
-            await kv.set(`payment:${reference}`, {
-              ...existingPayment,
-              status: 'failed',
-              failedAt: new Date().toISOString(),
-              webhookPayload: payload
-            });
-          }
-        } catch (kvError) {
-          console.error('KV update error:', kvError);
-        }
-
-        console.log('❌ Payment failed:', reference);
+      // Get orderId from yoco_api_results via checkoutId to find member IDs
+      const orderId = await getOrderIdByCheckoutId(checkoutId);
+      if (!orderId) {
+        console.warn('No orderId found for checkout', { checkoutId });
+        return;
       }
 
-    } else if (payload.type === 'payment.refunded') {
-      const reference = payload.payload.metadata?.reference;
+      // Get member IDs from Redis using orderId
+      const memberIds = await getOrderMemberIds(orderId);
 
-      if (reference) {
-        try {
-          const existingPayment = await kv.get<PaymentData>(`payment:${reference}`);
-
-          if (existingPayment) {
-            await kv.set(`payment:${reference}`, {
-              ...existingPayment,
-              status: 'refunded',
-              refundedAt: new Date().toISOString(),
-              webhookPayload: payload
-            });
-          }
-        } catch (kvError) {
-          console.error('KV update error:', kvError);
-        }
-
-        console.log('💰 Payment refunded:', reference);
+      if (memberIds.length === 0) {
+        console.warn('No member IDs found for order', { orderId });
+        return;
       }
 
-    } else {
-      console.log('Unhandled webhook type:', payload.type);
+      // Complete each member's registration
+      await Promise.all(memberIds.map(memberId => completeRegistration(memberId)));
+
+      console.log('✅ Payment succeeded - registrations completed', {
+        checkoutId,
+        orderId,
+        paymentId,
+        memberIds,
+        amount: amount / 100, // Convert from cents
+      });
+      break;
     }
 
-    // 4. Always return 200 to acknowledge receipt
-    // If we don't return 200, Yoco will retry the webhook
-    return NextResponse.json({ received: true });
+    case 'payment.failed': {
+      const checkoutId = event.payload.metadata?.checkoutId;
 
-  } catch (error) {
-    console.error('Webhook processing error:', error);
+      if (!checkoutId) {
+        console.warn('No checkoutId in failed payment webhook', { eventId: event.id });
+        return;
+      }
 
-    // Still return 200 to prevent retries
-    // Log the error for investigation
-    return NextResponse.json({ received: true, error: 'Processing failed' });
+      // Get orderId from checkoutId
+      const orderId = await getOrderIdByCheckoutId(checkoutId);
+      if (!orderId) {
+        console.warn('No orderId found for failed checkout', { checkoutId });
+        return;
+      }
+
+      console.log('Processing payment.failed', { checkoutId, orderId });
+
+      // Mark registrations as failed
+      await updateRegistrationPaymentStatusByOrder(orderId, 'failed');
+
+      console.log('❌ Payment failed - registrations marked as failed', { checkoutId, orderId });
+      break;
+    }
+
+    case 'payment.cancelled': {
+      const checkoutId = event.payload.metadata?.checkoutId;
+
+      if (checkoutId) {
+        console.log('Payment cancelled', { checkoutId });
+        // Don't update status — user might retry
+      }
+      break;
+    }
+
+    default:
+      // Ignore other event types — return 200 so Yoco doesn't retry
+      console.log('Unhandled event type:', event.type);
+      break;
   }
 }
 
