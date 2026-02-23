@@ -30,6 +30,7 @@ export default function Header() {
           <Link href="/" className="text-text-dark hover:text-yellow-accent transition-colors">Home</Link>
           <Link href="/whats-on" className="text-text-dark hover:text-pink-accent transition-colors">What&apos;s On</Link>
           <Link href="/weekender" className="text-text-dark hover:text-yellow-accent transition-colors">March Weekender</Link>
+          <Link href="/tshirts" className="text-text-dark hover:text-pink-accent transition-colors">T-shirts</Link>
           <Link href="/about-us" className="text-text-dark hover:text-yellow-accent transition-colors">About Us</Link>
           <Link href="/community-culture" className="text-text-dark hover:text-pink-accent transition-colors">Community Culture</Link>
           <Link href="/contact" className="text-text-dark hover:text-pink-accent transition-colors">Contact</Link>
@@ -77,6 +78,13 @@ export default function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               March Weekender
+            </Link>
+            <Link 
+              href="/tshirts" 
+              className="text-text-dark hover:text-pink-accent transition-colors text-lg"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              T-shirts
             </Link>
             <Link 
               href="/about-us" 

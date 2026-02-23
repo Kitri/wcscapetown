@@ -91,15 +91,21 @@ npm run start
 The development server will be available at `http://localhost:3000`
 
 ### Environment Variables
-Currently no environment variables needed. For future database integration:
+Google Sheets integration requires environment variables (for local dev, put these in `.env.local`; for production, set them in your hosting provider):
 
 ```bash
-# .env.local (create this file)
-POSTGRES_URL=your_database_url
-# or
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_key
+# Google Sheets service account
+GOOGLE_SERVICE_ACCOUNT_EMAIL=...
+GOOGLE_PRIVATE_KEY=...
+
+# Google Sheet IDs
+SHEET_ID_POLL_RESPONSES=...
+SHEET_ID_SKILLS_SIGNUPS=...
+SHEET_ID_MAP_VOTES=...
+SHEET_ID_TSHIRT_SURVEY=1qWaA1WonbOieb6_jieWUY4fhpvEZ9wreuDYXOVyMJ3g
 ```
+
+(Older / optional database integration notes may still apply if you add Postgres/Supabase later.)
 
 ## 📊 Data Collection
 
