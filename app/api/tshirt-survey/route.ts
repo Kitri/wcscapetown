@@ -3,6 +3,8 @@ import { appendToSheet } from "@/lib/googleSheets";
 
 type ShirtTypeKey = "ladies_active" | "polycotton_ladies" | "unisex";
 
+type FabricKey = "polyester_2025" | "cotton_blend";
+
 type RequestBody = {
   timestamp: string;
   submissionId: string;
@@ -13,6 +15,7 @@ type RequestBody = {
   items: Array<{
     typeKey: ShirtTypeKey;
     colorKey: string;
+    fabricKey?: FabricKey | null;
     size: string;
     quantity: number;
   }>;
@@ -50,11 +53,16 @@ export async function POST(request: Request) {
 
     // One row per item, with a shared submissionId so you can group items together.
     // Columns (recommended):
-    // Timestamp | Submission ID | Name | Email | Session ID | Type | Color | Size | Qty | Notes
+    // Timestamp | Submission ID | Name | Email | Session ID | Type | Color | Fabric | Size | Qty | Notes
     const rows: (string | number)[][] = body.items.map((item) => {
       const qty = Number(item.quantity);
       if (!Number.isFinite(qty) || qty < 1) {
         throw new Error("Invalid quantity");
+      }
+
+      const fabric = isNonEmptyString(item.fabricKey) ? item.fabricKey : "";
+      if (item.typeKey === "unisex" && !fabric) {
+        throw new Error("Missing fabric choice for unisex item");
       }
 
       return [
@@ -65,13 +73,14 @@ export async function POST(request: Request) {
         sessionId,
         item.typeKey,
         item.colorKey,
+        fabric,
         item.size,
         qty,
         notes,
       ];
     });
 
-    await appendToSheet(sheetId, "Sheet1!A:J", rows);
+    await appendToSheet(sheetId, "Sheet1!A:K", rows);
 
     return NextResponse.json({ success: true });
   } catch (error) {

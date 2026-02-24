@@ -6,6 +6,8 @@ import { getOrCreateSessionId } from "@/lib/sessionId";
 
 type ShirtTypeKey = "ladies_active" | "polycotton_ladies" | "unisex";
 
+type FabricKey = "polyester_2025" | "cotton_blend";
+
 type ShirtColor = {
   key: string;
   label: string;
@@ -32,11 +34,33 @@ type ShirtType = {
   };
 };
 
-type VariantSelection = {
-  typeKey: ShirtTypeKey;
+type NonUnisexSelection = {
+  typeKey: Exclude<ShirtTypeKey, "unisex">;
   colorKey: string;
   quantitiesBySize: Record<string, number>;
 };
+
+type UnisexSelection = {
+  typeKey: "unisex";
+  colorKey: string;
+  activeFabricKey: FabricKey;
+  quantitiesByFabricBySize: Record<FabricKey, Record<string, number>>;
+};
+
+type VariantSelection = NonUnisexSelection | UnisexSelection;
+
+type PlannedItem = {
+  typeKey: ShirtTypeKey;
+  colorKey: string;
+  fabricKey: FabricKey | null;
+  size: string;
+  quantity: number;
+};
+
+const UNISEX_FABRICS: Array<{ key: FabricKey; label: string }> = [
+  { key: "polyester_2025", label: "Polyester" },
+  { key: "cotton_blend", label: "Cotton / Cotton blend" },
+];
 
 const SHIRT_TYPES: ShirtType[] = [
   {
@@ -147,7 +171,7 @@ const SHIRT_TYPES: ShirtType[] = [
     key: "unisex",
     title: "Unisex t-shirt",
     fitLabel: "Unisex fit (same as last year)",
-    material: "110g/m² • 100% Polyester Single Jersey Knit",
+    material: "",
     sizes: ["S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL"],
     colors: [
       {
@@ -308,17 +332,40 @@ export default function TShirtSurveyClient() {
 
   const variantId = (typeKey: ShirtTypeKey, colorKey: string) => `${typeKey}:${colorKey}`;
 
-  const plannedItems = useMemo(() => {
-    return Object.values(selections).flatMap((sel) => {
-      return Object.entries(sel.quantitiesBySize)
-        .filter(([, qty]) => Number.isFinite(qty) && qty > 0)
-        .map(([size, qty]) => ({
+  const plannedItems = useMemo<PlannedItem[]>(() => {
+    const result: PlannedItem[] = [];
+
+    for (const sel of Object.values(selections)) {
+      if (sel.typeKey === "unisex") {
+        for (const fabric of UNISEX_FABRICS) {
+          const bySize = sel.quantitiesByFabricBySize[fabric.key] ?? {};
+          for (const [size, qty] of Object.entries(bySize)) {
+            if (!Number.isFinite(qty) || qty <= 0) continue;
+            result.push({
+              typeKey: sel.typeKey,
+              colorKey: sel.colorKey,
+              fabricKey: fabric.key,
+              size,
+              quantity: Math.floor(qty),
+            });
+          }
+        }
+        continue;
+      }
+
+      for (const [size, qty] of Object.entries(sel.quantitiesBySize)) {
+        if (!Number.isFinite(qty) || qty <= 0) continue;
+        result.push({
           typeKey: sel.typeKey,
           colorKey: sel.colorKey,
+          fabricKey: null,
           size,
           quantity: Math.floor(qty),
-        }));
-    });
+        });
+      }
+    }
+
+    return result;
   }, [selections]);
 
   const toggleVariant = (typeKey: ShirtTypeKey, colorKey: string) => {
@@ -329,19 +376,85 @@ export default function TShirtSurveyClient() {
         delete next[key];
         return next;
       }
-      return { ...prev, [key]: { typeKey, colorKey, quantitiesBySize: {} } };
+
+      if (typeKey === "unisex") {
+        const empty: UnisexSelection = {
+          typeKey,
+          colorKey,
+          activeFabricKey: "polyester_2025",
+          quantitiesByFabricBySize: {
+            polyester_2025: {},
+            cotton_blend: {},
+          },
+        };
+        return { ...prev, [key]: empty };
+      }
+
+      const nonUnisex: NonUnisexSelection = {
+        typeKey,
+        colorKey,
+        quantitiesBySize: {},
+      };
+      return { ...prev, [key]: nonUnisex };
     });
   };
 
-  const toggleSizeForVariant = (typeKey: ShirtTypeKey, colorKey: string, size: string) => {
+  const setActiveFabricForVariant = (typeKey: ShirtTypeKey, colorKey: string, fabricKey: FabricKey) => {
+    const key = variantId(typeKey, colorKey);
+
+    setSelections((prev) => {
+      const existing = prev[key];
+      if (!existing || existing.typeKey !== "unisex") return prev;
+
+      return {
+        ...prev,
+        [key]: {
+          ...existing,
+          activeFabricKey: fabricKey,
+        },
+      };
+    });
+  };
+
+  const toggleSizeForVariant = (
+    typeKey: ShirtTypeKey,
+    colorKey: string,
+    size: string,
+    fabricKey?: FabricKey
+  ) => {
     const key = variantId(typeKey, colorKey);
 
     setSelections((prev) => {
       const existing = prev[key];
       if (!existing) return prev;
 
-      const nextQtyBySize = { ...existing.quantitiesBySize };
+      if (existing.typeKey === "unisex") {
+        if (!fabricKey) return prev;
 
+        const nextByFabric = {
+          ...existing.quantitiesByFabricBySize,
+          [fabricKey]: { ...(existing.quantitiesByFabricBySize[fabricKey] ?? {}) },
+        };
+
+        const nextBySize = { ...nextByFabric[fabricKey] };
+        if (Number.isFinite(nextBySize[size]) && nextBySize[size] > 0) {
+          delete nextBySize[size];
+        } else {
+          nextBySize[size] = 1;
+        }
+
+        nextByFabric[fabricKey] = nextBySize;
+
+        return {
+          ...prev,
+          [key]: {
+            ...existing,
+            quantitiesByFabricBySize: nextByFabric,
+          },
+        };
+      }
+
+      const nextQtyBySize = { ...existing.quantitiesBySize };
       if (Number.isFinite(nextQtyBySize[size]) && nextQtyBySize[size] > 0) {
         delete nextQtyBySize[size];
       } else {
@@ -358,7 +471,13 @@ export default function TShirtSurveyClient() {
     });
   };
 
-  const setSizeQty = (typeKey: ShirtTypeKey, colorKey: string, size: string, quantity: number) => {
+  const setSizeQty = (
+    typeKey: ShirtTypeKey,
+    colorKey: string,
+    size: string,
+    quantity: number,
+    fabricKey?: FabricKey
+  ) => {
     const key = variantId(typeKey, colorKey);
 
     setSelections((prev) => {
@@ -366,6 +485,24 @@ export default function TShirtSurveyClient() {
       if (!existing) return prev;
 
       const nextQty = Math.max(1, Math.floor(Number(quantity) || 1));
+
+      if (existing.typeKey === "unisex") {
+        if (!fabricKey) return prev;
+
+        return {
+          ...prev,
+          [key]: {
+            ...existing,
+            quantitiesByFabricBySize: {
+              ...existing.quantitiesByFabricBySize,
+              [fabricKey]: {
+                ...(existing.quantitiesByFabricBySize[fabricKey] ?? {}),
+                [size]: nextQty,
+              },
+            },
+          },
+        };
+      }
 
       return {
         ...prev,
@@ -380,12 +517,38 @@ export default function TShirtSurveyClient() {
     });
   };
 
-  const clearSizesForVariant = (typeKey: ShirtTypeKey, colorKey: string) => {
+  const clearSizesForVariant = (typeKey: ShirtTypeKey, colorKey: string, fabricKey?: FabricKey) => {
     const key = variantId(typeKey, colorKey);
 
     setSelections((prev) => {
       const existing = prev[key];
       if (!existing) return prev;
+
+      if (existing.typeKey === "unisex") {
+        if (fabricKey) {
+          return {
+            ...prev,
+            [key]: {
+              ...existing,
+              quantitiesByFabricBySize: {
+                ...existing.quantitiesByFabricBySize,
+                [fabricKey]: {},
+              },
+            },
+          };
+        }
+
+        return {
+          ...prev,
+          [key]: {
+            ...existing,
+            quantitiesByFabricBySize: {
+              polyester_2025: {},
+              cotton_blend: {},
+            },
+          },
+        };
+      }
 
       return {
         ...prev,
@@ -431,6 +594,7 @@ export default function TShirtSurveyClient() {
       items: plannedItems.map((i) => ({
         typeKey: i.typeKey,
         colorKey: i.colorKey,
+        fabricKey: i.fabricKey,
         size: i.size,
         quantity: i.quantity,
       })),
@@ -514,14 +678,13 @@ export default function TShirtSurveyClient() {
                     <h3 className="font-spartan font-semibold text-xl md:text-2xl">
                       {type.title}
                     </h3>
-                    <p className="text-sm text-text-dark/70 mt-1">
-                      {type.fitLabel} • {type.material}
-                    </p>
                     {type.key === "unisex" ? (
-                      <p className="text-xs text-text-dark/60 mt-1">
-                        Unisex image shows both front and back.
+                      <p className="text-sm text-text-dark/70 mt-1">Image shows both front and back</p>
+                    ) : (
+                      <p className="text-sm text-text-dark/70 mt-1">
+                        {type.fitLabel} • {type.material}
                       </p>
-                    ) : null}
+                    )}
                   </div>
 
                   <details className="bg-cloud-dancer rounded-xl p-4 border-2 border-text-dark/10">
@@ -549,7 +712,8 @@ export default function TShirtSurveyClient() {
                     const key = variantId(type.key, color.key);
                     const selected = selections[key];
                     const availableSizes = getAvailableSizes(type.key, color.key);
-                    const chosenSizes = selected ? Object.keys(selected.quantitiesBySize) : [];
+                    const nonUnisexChosenSizes =
+                      selected && selected.typeKey !== "unisex" ? Object.keys(selected.quantitiesBySize) : [];
 
                     return (
                       <div
@@ -595,65 +759,180 @@ export default function TShirtSurveyClient() {
 
                         {selected ? (
                           <div className="mt-4">
-                            <p className="text-sm font-semibold">Sizes</p>
-                            <div className="flex flex-wrap gap-2 mt-2">
-                              {availableSizes.map((s) => {
-                                const qty = selected.quantitiesBySize[s];
-                                const isSelected = Number.isFinite(qty) && qty > 0;
-
-                                return (
-                                  <button
-                                    key={s}
-                                    type="button"
-                                    onClick={() => toggleSizeForVariant(type.key, color.key, s)}
-                                    className={`px-3 py-2 rounded-lg border-2 text-sm font-semibold transition-all ${
-                                      isSelected
-                                        ? "bg-pink-accent/15 border-pink-accent text-text-dark"
-                                        : "bg-white border-text-dark/10 hover:border-pink-accent/60"
-                                    }`}
-                                  >
-                                    {s}
-                                    {isSelected ? ` ×${qty}` : ""}
-                                  </button>
-                                );
-                              })}
-                            </div>
-
-                            {chosenSizes.length ? (
-                              <div className="mt-4 space-y-2">
-                                {chosenSizes.map((s) => (
-                                  <div key={s} className="flex items-center gap-3">
-                                    <div className="w-10 font-semibold text-sm">{s}</div>
-                                    <input
-                                      type="number"
-                                      min={1}
-                                      step={1}
-                                      value={selected.quantitiesBySize[s]}
-                                      onChange={(e) => setSizeQty(type.key, color.key, s, Number(e.target.value))}
-                                      className="w-24 px-3 py-2 rounded-lg border-2 border-text-dark/10 focus:border-yellow-accent focus:outline-none bg-white"
-                                    />
-                                    <button
-                                      type="button"
-                                      onClick={() => toggleSizeForVariant(type.key, color.key, s)}
-                                      className="text-sm underline text-text-dark/60 hover:text-pink-accent"
-                                    >
-                                      Remove
-                                    </button>
+                            {selected.typeKey === "unisex" ? (
+                              <div className="space-y-4">
+                                <div>
+                                  <p className="text-sm font-semibold">Fabric</p>
+                                  <div className="flex flex-wrap gap-2 mt-2">
+                                    {UNISEX_FABRICS.map((f) => (
+                                      <button
+                                        key={f.key}
+                                        type="button"
+                                        onClick={() => setActiveFabricForVariant(type.key, color.key, f.key)}
+                                        className={`px-3 py-2 rounded-lg border-2 text-sm font-semibold transition-all ${
+                                          selected.activeFabricKey === f.key
+                                            ? "bg-pink-accent/15 border-pink-accent text-text-dark"
+                                            : "bg-white border-text-dark/10 hover:border-pink-accent/60"
+                                        }`}
+                                      >
+                                        {f.label}
+                                      </button>
+                                    ))}
                                   </div>
-                                ))}
+                                  <p className="text-xs text-text-dark/60 mt-2">
+                                    Polyester = same sport-style fabric as 2025 unisex t-shirts.
+                                  </p>
 
-                                <button
-                                  type="button"
-                                  onClick={() => clearSizesForVariant(type.key, color.key)}
-                                  className="text-xs underline text-text-dark/60 hover:text-pink-accent"
-                                >
-                                  Clear sizes
-                                </button>
+                                </div>
+
+                                <div>
+                                  <div className="flex items-start justify-between gap-3">
+                                    <p className="text-sm font-semibold">Size</p>
+                                    {Object.keys(
+                                      selected.quantitiesByFabricBySize[selected.activeFabricKey] ?? {}
+                                    ).length ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => clearSizesForVariant(type.key, color.key, selected.activeFabricKey)}
+                                        className="text-xs underline text-text-dark/60 hover:text-pink-accent"
+                                      >
+                                        Clear sizes
+                                      </button>
+                                    ) : null}
+                                  </div>
+
+                                  {(() => {
+                                    const fabricKey = selected.activeFabricKey;
+                                    const bySize = selected.quantitiesByFabricBySize[fabricKey] ?? {};
+                                    const chosenSizes = Object.keys(bySize);
+
+                                    return (
+                                      <>
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                          {availableSizes.map((s) => {
+                                            const qty = bySize[s];
+                                            const isSelected = Number.isFinite(qty) && qty > 0;
+
+                                            return (
+                                              <button
+                                                key={s}
+                                                type="button"
+                                                onClick={() => toggleSizeForVariant(type.key, color.key, s, fabricKey)}
+                                                className={`px-3 py-2 rounded-lg border-2 text-sm font-semibold transition-all ${
+                                                  isSelected
+                                                    ? "bg-pink-accent/15 border-pink-accent text-text-dark"
+                                                    : "bg-white border-text-dark/10 hover:border-pink-accent/60"
+                                                }`}
+                                              >
+                                                {s}
+                                                {isSelected ? ` ×${qty}` : ""}
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+
+                                        {chosenSizes.length ? (
+                                          <div className="mt-4 space-y-2">
+                                            {chosenSizes.map((s) => (
+                                              <div key={s} className="flex items-center gap-3">
+                                                <div className="w-10 font-semibold text-sm">{s}</div>
+                                                <input
+                                                  type="number"
+                                                  min={1}
+                                                  step={1}
+                                                  value={bySize[s]}
+                                                  onChange={(e) =>
+                                                    setSizeQty(type.key, color.key, s, Number(e.target.value), fabricKey)
+                                                  }
+                                                  className="w-24 px-3 py-2 rounded-lg border-2 border-text-dark/10 focus:border-yellow-accent focus:outline-none bg-white"
+                                                />
+                                                <button
+                                                  type="button"
+                                                  onClick={() => toggleSizeForVariant(type.key, color.key, s, fabricKey)}
+                                                  className="text-sm underline text-text-dark/60 hover:text-pink-accent"
+                                                >
+                                                  Remove
+                                                </button>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <p className="text-xs text-text-dark/60 mt-3">
+                                            Choose at least one size.
+                                          </p>
+                                        )}
+                                      </>
+                                    );
+                                  })()}
+                                </div>
+
+                                <p className="text-xs text-text-dark/60">
+                                  If you want both fabrics in the same colour, switch fabric and select sizes there too.
+                                </p>
                               </div>
                             ) : (
-                              <p className="text-xs text-text-dark/60 mt-3">
-                                Choose at least one size to add this shirt to your planned order.
-                              </p>
+                              <>
+                                <p className="text-sm font-semibold">Sizes</p>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {availableSizes.map((s) => {
+                                    const qty = selected.quantitiesBySize[s];
+                                    const isSelected = Number.isFinite(qty) && qty > 0;
+
+                                    return (
+                                      <button
+                                        key={s}
+                                        type="button"
+                                        onClick={() => toggleSizeForVariant(type.key, color.key, s)}
+                                        className={`px-3 py-2 rounded-lg border-2 text-sm font-semibold transition-all ${
+                                          isSelected
+                                            ? "bg-pink-accent/15 border-pink-accent text-text-dark"
+                                            : "bg-white border-text-dark/10 hover:border-pink-accent/60"
+                                        }`}
+                                      >
+                                        {s}
+                                        {isSelected ? ` ×${qty}` : ""}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+
+                                {nonUnisexChosenSizes.length ? (
+                                  <div className="mt-4 space-y-2">
+                                    {nonUnisexChosenSizes.map((s) => (
+                                      <div key={s} className="flex items-center gap-3">
+                                        <div className="w-10 font-semibold text-sm">{s}</div>
+                                        <input
+                                          type="number"
+                                          min={1}
+                                          step={1}
+                                          value={selected.quantitiesBySize[s]}
+                                          onChange={(e) => setSizeQty(type.key, color.key, s, Number(e.target.value))}
+                                          className="w-24 px-3 py-2 rounded-lg border-2 border-text-dark/10 focus:border-yellow-accent focus:outline-none bg-white"
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleSizeForVariant(type.key, color.key, s)}
+                                          className="text-sm underline text-text-dark/60 hover:text-pink-accent"
+                                        >
+                                          Remove
+                                        </button>
+                                      </div>
+                                    ))}
+
+                                    <button
+                                      type="button"
+                                      onClick={() => clearSizesForVariant(type.key, color.key)}
+                                      className="text-xs underline text-text-dark/60 hover:text-pink-accent"
+                                    >
+                                      Clear sizes
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <p className="text-xs text-text-dark/60 mt-3">
+                                    Choose at least one size to add this shirt to your planned order.
+                                  </p>
+                                )}
+                              </>
                             )}
                           </div>
                         ) : null}
@@ -661,41 +940,44 @@ export default function TShirtSurveyClient() {
                     );
                   })}
                 </div>
+
+                {type.key === "polycotton_ladies" ? (
+                  <div className="mt-10 max-w-[800px] mx-auto text-sm text-text-dark/70">
+                    <details className="bg-cloud-dancer rounded-xl p-5 border-2 border-text-dark/10">
+                      <summary className="cursor-pointer select-none font-semibold">
+                        Reference: last year&apos;s ladies cut t-shirt size chart
+                      </summary>
+                      <div className="mt-4 overflow-x-auto">
+                        <table className="w-full text-sm border border-text-dark/10 bg-white">
+                          <thead className="bg-cloud-dancer">
+                            <tr>
+                              <th className="text-left px-3 py-2 font-semibold">Size</th>
+                              {["XS", "S", "M", "L", "XL", "2XL", "3XL"].map((s) => (
+                                <th key={s} className="px-3 py-2 text-center font-semibold">
+                                  {s}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="border-t border-text-dark/10">
+                              <td className="px-3 py-2 font-medium text-text-dark/80 whitespace-nowrap">1/2 Chest (cm)</td>
+                              {[38, 41.5, 45, 48.5, 52, 55.5, 59].map((v, idx) => (
+                                <td key={idx} className="px-3 py-2 text-center">
+                                  {v}
+                                </td>
+                              ))}
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </details>
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
 
-          <div className="mt-10 max-w-[800px] mx-auto text-sm text-text-dark/70">
-            <details className="bg-cloud-dancer rounded-xl p-5 border-2 border-text-dark/10">
-              <summary className="cursor-pointer select-none font-semibold">
-                Reference: last year&apos;s ladies cut t-shirt size chart
-              </summary>
-              <div className="mt-4 overflow-x-auto">
-                <table className="w-full text-sm border border-text-dark/10 bg-white">
-                  <thead className="bg-cloud-dancer">
-                    <tr>
-                      <th className="text-left px-3 py-2 font-semibold">Size</th>
-                      {["XS", "S", "M", "L", "XL", "2XL", "3XL"].map((s) => (
-                        <th key={s} className="px-3 py-2 text-center font-semibold">
-                          {s}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-t border-text-dark/10">
-                      <td className="px-3 py-2 font-medium text-text-dark/80 whitespace-nowrap">1/2 Chest (cm)</td>
-                      {[38, 41.5, 45, 48.5, 52, 55.5, 59].map((v, idx) => (
-                        <td key={idx} className="px-3 py-2 text-center">
-                          {v}
-                        </td>
-                      ))}
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </details>
-          </div>
         </div>
       </section>
 
@@ -752,14 +1034,22 @@ export default function TShirtSurveyClient() {
                   {plannedItems.map((i, idx) => {
                     const t = getTypeByKey(i.typeKey);
                     const c = getColorByKey(i.typeKey, i.colorKey);
+                    const fabricLabel = i.fabricKey
+                      ? UNISEX_FABRICS.find((f) => f.key === i.fabricKey)?.label
+                      : null;
+
                     return (
-                      <li key={`${i.typeKey}-${i.colorKey}-${i.size}-${idx}`} className="flex items-center justify-between gap-4">
+                      <li
+                        key={`${i.typeKey}-${i.colorKey}-${i.fabricKey ?? ""}-${i.size}-${idx}`}
+                        className="flex items-center justify-between gap-4"
+                      >
                         <span>
-                          <span className="font-semibold">{t.title}</span> — {c.label} — {i.size} × {i.quantity}
+                          <span className="font-semibold">{t.title}</span> — {c.label}
+                          {fabricLabel ? ` — ${fabricLabel}` : ""} — {i.size} × {i.quantity}
                         </span>
                         <button
                           type="button"
-                          onClick={() => toggleSizeForVariant(i.typeKey, i.colorKey, i.size)}
+                          onClick={() => toggleSizeForVariant(i.typeKey, i.colorKey, i.size, i.fabricKey ?? undefined)}
                           className="text-xs underline text-text-dark/60 hover:text-pink-accent"
                         >
                           Remove
