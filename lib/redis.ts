@@ -164,7 +164,7 @@ export async function checkTicketAvailability(
   const queue = await getTicketQueue();
   
   // Count total spots from completed registrations
-  let completedSpots = completedMemberIds.length;
+  const completedSpots = completedMemberIds.length;
   
   // If all 10 "now" spots are complete
   if (completedSpots >= NOW_TICKET_LIMIT) {

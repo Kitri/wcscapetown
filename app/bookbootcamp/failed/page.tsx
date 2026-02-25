@@ -28,7 +28,7 @@ export default function BootcampFailed() {
               </p>
               <div className="space-y-3">
                 <Link
-                  href="/bookbootcamp"
+                  href="/bookbootcamp?tab=booking"
                   className="block w-full bg-yellow-accent text-text-dark px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all"
                 >
                   Try Again

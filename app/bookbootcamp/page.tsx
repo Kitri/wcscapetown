@@ -9,6 +9,7 @@ import { getOrCreateSessionId } from '@/lib/sessionId';
 type BootcampType = 'beginner' | 'fasttrack';
 type Role = 'L' | 'F';
 type Step = 'form' | 'processing' | 'success';
+type Tab = 'booking' | 'info';
 
 const WCS_EXPERIENCE_OPTIONS = [
   'Never',
@@ -35,25 +36,32 @@ const DANCE_STYLES = [
 ];
 
 // Component to handle URL params
-function UrlParamHandler({ 
-  onBootcampType 
-}: { 
+function UrlParamHandler({
+  onBootcampType,
+  onTab,
+}: {
   onBootcampType: (type: BootcampType) => void;
+  onTab: (tab: Tab) => void;
 }) {
   const searchParams = useSearchParams();
   const initializedRef = useRef(false);
-  
+
   useEffect(() => {
     // Only run once on mount
     if (initializedRef.current) return;
-    
+    initializedRef.current = true;
+
     const typeParam = searchParams.get('type');
     if (typeParam && ['beginner', 'fasttrack'].includes(typeParam)) {
-      initializedRef.current = true;
       onBootcampType(typeParam as BootcampType);
     }
-  }, [searchParams, onBootcampType]);
-  
+
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['booking', 'info'].includes(tabParam)) {
+      onTab(tabParam as Tab);
+    }
+  }, [searchParams, onBootcampType, onTab]);
+
   return null;
 }
 
@@ -65,6 +73,8 @@ export default function BookBootcamp() {
   
   // Bootcamp type
   const [bootcampType, setBootcampType] = useState<BootcampType>('beginner');
+
+  const [tab, setTab] = useState<Tab>('info');
   
   // Common fields
   const [name, setName] = useState('');
@@ -102,6 +112,10 @@ export default function BookBootcamp() {
   // Set bootcamp type from URL param (no reset)
   const setBootcampTypeFromUrl = useCallback((type: BootcampType) => {
     setBootcampType(type);
+  }, []);
+
+  const setTabFromUrl = useCallback((nextTab: Tab) => {
+    setTab(nextTab);
   }, []);
 
   // User manually switches bootcamp type (reset type-specific fields)
@@ -274,21 +288,61 @@ export default function BookBootcamp() {
   return (
     <>
       <Suspense fallback={null}>
-        <UrlParamHandler onBootcampType={setBootcampTypeFromUrl} />
+        <UrlParamHandler onBootcampType={setBootcampTypeFromUrl} onTab={setTabFromUrl} />
       </Suspense>
       <Header />
       <main className="min-h-screen bg-cloud-dancer">
         <section className="bg-black text-white py-12">
           <div className="px-[5%] text-center">
             <h1 className="font-spartan font-semibold text-[28px] md:text-[40px] mb-2">
-              Book Your Bootcamp
+              Bootcamps
             </h1>
             <p className="text-lg text-white/80">Saturday 7 March 2026 • OBS Community Hall</p>
+            <p className="text-base md:text-lg text-white/80 mt-4 max-w-[900px] mx-auto">
+              The perfect place to start your WCS journey — just in time for our{' '}
+              <Link href="/weekender" className="text-yellow-accent underline font-semibold">
+                March Weekender
+              </Link>{' '}
+              with international pros.
+            </p>
           </div>
         </section>
 
-        <section className="px-[5%] py-12">
-          <div className="max-w-lg mx-auto">
+        {/* Tabs */}
+        <section className="sticky top-[90px] z-[900] bg-black text-white border-b border-white/10">
+          <div className="px-[5%] py-4 max-w-[900px] mx-auto">
+            <div className="flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setTab('booking')}
+                className={`rounded-full px-7 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold border-2 transition-colors ${
+                  tab === 'booking'
+                    ? 'bg-white/15 border-yellow-accent text-white'
+                    : 'bg-white/10 border-pink-accent/80 text-white/90 hover:bg-white/15 hover:border-yellow-accent'
+                }`}
+                aria-pressed={tab === 'booking'}
+              >
+                Book
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab('info')}
+                className={`rounded-full px-7 md:px-10 py-3 md:py-4 text-base md:text-lg font-semibold border-2 transition-colors ${
+                  tab === 'info'
+                    ? 'bg-white/15 border-yellow-accent text-white'
+                    : 'bg-white/10 border-pink-accent/80 text-white/90 hover:bg-white/15 hover:border-yellow-accent'
+                }`}
+                aria-pressed={tab === 'info'}
+              >
+                Info
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {tab === 'booking' && (
+          <section className="px-[5%] py-12">
+            <div className="max-w-lg mx-auto">
             {/* Error Message */}
             {error && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
@@ -454,7 +508,7 @@ export default function BookBootcamp() {
                       <div className="mt-3 p-3 bg-yellow-accent/20 rounded-lg border border-yellow-accent/50">
                         <p className="text-sm">
                           <strong>Did you know?</strong> There&apos;s a{' '}
-                          <Link href="/bookbootcamp?type=fasttrack" className="text-yellow-accent underline font-semibold">
+                          <Link href="/bookbootcamp?tab=booking&type=fasttrack" className="text-yellow-accent underline font-semibold">
                             Fast-Track Intensive
                           </Link>{' '}
                           designed specifically for dancers with partner dance experience. It may be a better fit for you!
@@ -643,68 +697,117 @@ export default function BookBootcamp() {
             )}
           </div>
         </section>
+        )}
 
-        {/* Bootcamp Info Section */}
-        <section className="px-[5%] py-8 bg-white">
-          <div className="max-w-[900px] mx-auto">
-            <h2 className="font-spartan font-semibold text-xl text-center mb-6">Bootcamp Details</h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              {/* Beginner Bootcamp */}
-              <div className={`rounded-xl p-6 border-2 transition-all ${
-                bootcampType === 'beginner' 
-                  ? 'border-purple-accent bg-purple-accent/5' 
-                  : 'border-text-dark/10 bg-white/60'
-              }`}>
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <div>
-                    <h3 className="font-spartan font-semibold text-xl">Beginner Bootcamp</h3>
-                    <p className="text-sm text-text-dark/70 mt-1">Brand new to West Coast Swing? Perfect.</p>
+        {tab === 'info' && (
+          <section className="px-[5%] py-12 bg-white">
+            <div className="max-w-[900px] mx-auto">
+              <h2 className="font-spartan font-semibold text-[26px] md:text-[32px] text-center mb-4">
+                Bootcamp Details
+              </h2>
+              <p className="text-center text-text-dark/70 mb-10 max-w-[760px] mx-auto">
+                Build confidence in the fundamentals, and walk into the March Weekender ready to get the most out of world-class teaching.
+              </p>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Beginner Bootcamp */}
+                <div
+                  className={`rounded-xl p-6 border-2 transition-all ${
+                    bootcampType === 'beginner'
+                      ? 'border-purple-accent bg-purple-accent/5'
+                      : 'border-text-dark/10 bg-white/60'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div>
+                      <h3 className="font-spartan font-semibold text-xl">Beginner Bootcamp</h3>
+                      <p className="text-sm text-text-dark/70 mt-1">Brand new to West Coast Swing? Perfect.</p>
+                    </div>
+                    <span className="shrink-0 inline-block bg-purple-accent text-white px-3 py-1 rounded-full font-semibold text-xs">
+                      3 hours
+                    </span>
                   </div>
-                  <span className="shrink-0 inline-block bg-purple-accent text-white px-3 py-1 rounded-full font-semibold text-xs">
-                    3 hours
-                  </span>
+                  <p className="text-sm text-text-dark/80 mb-3">
+                    This is your one-stop shop for the core WCS basics. Build confidence, learn the foundations, and walk into the WCS Weekender Level 1 Track feeling ready.
+                  </p>
+                  <ul className="space-y-1 text-sm text-text-dark/80 mb-4">
+                    <li>✓ Learn the 5 basics and core foundations</li>
+                    <li>✓ Connection basics: frame, elasticity, timing</li>
+                    <li>✓ Simple WCS technique to get you on the social dance floor</li>
+                    <li>✓ Get ready for the Weekender</li>
+                  </ul>
+                  <p className="text-xs text-text-dark/60">11:00 - 14:00</p>
                 </div>
-                <p className="text-sm text-text-dark/80 mb-3">
-                  This is your one-stop shop for the core WCS basics. Build confidence, learn the foundations, and walk into the WCS Weekender Level 1 Track feeling ready!
-                </p>
-                <ul className="space-y-1 text-sm text-text-dark/80 mb-4">
-                  <li>✓ Learn the core WCS patterns</li>
-                  <li>✓ Connection basics: frame, elasticity, timing</li>
-                  <li>✓ Simple technique fixes</li>
-                  <li>✓ Get confident for the Weekender</li>
-                </ul>
-                <p className="text-xs text-text-dark/60">11:00 - 14:00</p>
+
+                {/* Fast-Track Intensive */}
+                <div
+                  className={`rounded-xl p-6 border-2 transition-all ${
+                    bootcampType === 'fasttrack'
+                      ? 'border-yellow-accent bg-yellow-accent/5'
+                      : 'border-text-dark/10 bg-white/60'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4 mb-3">
+                    <div>
+                    <h3 className="font-spartan font-semibold text-xl">Fast-Track Intensive</h3>
+                    </div>
+                    <span className="shrink-0 inline-block bg-yellow-accent text-text-dark px-3 py-1 rounded-full font-semibold text-xs">
+                      3 hours
+                    </span>
+                  </div>
+                  <p className="text-sm text-text-dark/80 mb-3">
+                    If you already know the basics of partnered dancing (Salsa, Bachata, Kizomba, Sokkie, Lindy Hop, Ballroom, Latin American, etc.), this 3-hour fast-track intensive translates your foundations into the slot, elasticity, and “WCS feel” — so you can arrive at the Weekender ready to focus on nuance, not just keeping up.
+                  </p>
+                  <ul className="space-y-1 text-sm text-text-dark/80 mb-4">
+                    <li>✓ Translate existing dance skills into WCS</li>
+                    <li>✓ Learn the techniques and concepts unique to WCS and get the “WCS feel”</li>
+                    <li>✓ Foundational moves + variations (without starting from zero)</li>
+                    <li>✓ Get ready for the weekender (so you can focus on nuance, not just keeping up)</li>
+                  </ul>
+                  <p className="text-xs text-text-dark/60">14:30 - 17:30</p>
+                </div>
               </div>
 
-              {/* Fast-Track Intensive */}
-              <div className={`rounded-xl p-6 border-2 transition-all ${
-                bootcampType === 'fasttrack' 
-                  ? 'border-yellow-accent bg-yellow-accent/5' 
-                  : 'border-text-dark/10 bg-white/60'
-              }`}>
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <div>
-                    <h3 className="font-spartan font-semibold text-xl">Fast-Track Intensive</h3>
-                    <p className="text-sm text-text-dark/70 mt-1">Already dance another partner style?</p>
-                  </div>
-                  <span className="shrink-0 inline-block bg-yellow-accent text-text-dark px-3 py-1 rounded-full font-semibold text-xs">
-                    3 hours
-                  </span>
+              <div className="mt-10 bg-cloud-dancer rounded-xl p-6 md:p-8 border-2 border-text-dark/10">
+                <h3 className="font-spartan font-semibold text-2xl mb-4">
+                  Worried about joining the Weekender because you&apos;re new to WCS — but you really want to learn from 4 international pros?
+                </h3>
+                <div className="space-y-4 text-text-dark/80">
+                  <p>
+                    You&apos;re in exactly the right place. Learning from pros who teach this dance for a living is one of the fastest ways to build the fundamentals properly — connection,
+                    communication, and musicality — not just “more moves”.
+                  </p>
+                  <p>
+                    Our goal is to create and grow a strong WCS community in Cape Town. There&apos;s no better way to do that than spending a full weekend learning and social dancing with other westies here.
+                    If you want a feel for the culture you&apos;re joining, here&apos;s what we&apos;re about:{' '}
+                    <Link href="/community-culture" className="text-pink-accent hover:text-yellow-accent underline font-semibold">
+                      Community Culture
+                    </Link>
+                    .
+                  </p>
+                  <p>
+                    That&apos;s also why we have a <span className="font-semibold">Level 1</span> and <span className="font-semibold">Level 2</span> track. Level 1&apos;s only entry requirement is knowing the 5 basics.
+                    The weekend builds up as it goes, and because we&apos;re a smaller group, the pros can get to know us and adjust the classes to the actual level in the room (not just deliver a fixed script) — they meet us where we&apos;re at, which helps ensure everyone learns something.
+                  </p>
+                  <p>
+                    Want to feel extra prepared before the Weekender? Build confidence with a bootcamp first:{' '}
+                    <Link href="/bookbootcamp?tab=booking" className="text-pink-accent hover:text-yellow-accent underline font-semibold">
+                      Book a bootcamp
+                    </Link>
+                    .
+                  </p>
+                  <p>
+                    And if you&apos;re unsure which track is right for you, our teachers are here to help you prepare — please reach out at{' '}
+                    <a href="mailto:community@wcscapetown.co.za" className="text-pink-accent hover:text-yellow-accent underline font-semibold">
+                      community@wcscapetown.co.za
+                    </a>
+                    .
+                  </p>
                 </div>
-                <p className="text-sm text-text-dark/80 mb-3">
-                  Fast-track your way into West Coast Swing. This focused intensive translates your existing skills into WCS foundations, slot awareness, and elasticity.
-                </p>
-                <ul className="space-y-1 text-sm text-text-dark/80 mb-4">
-                  <li>✓ Translate existing dance skills into WCS</li>
-                  <li>✓ Slot, leverage/compression, "WCS feel"</li>
-                  <li>✓ Essential patterns + variations</li>
-                  <li>✓ Get ready for the Weekender</li>
-                </ul>
-                <p className="text-xs text-text-dark/60">14:30 - 17:30</p>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
       </main>
     </>
   );

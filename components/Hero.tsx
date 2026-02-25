@@ -144,8 +144,8 @@ export default function Hero() {
         </div>
 
         {/* CTA Buttons */}
-        <div className="w-full max-w-[520px] mx-auto">
-          <div className="grid grid-cols-2 gap-3">
+        <div className="w-full max-w-[720px] mx-auto">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             <Link
               href="/whats-on"
               className="bg-yellow-accent text-text-dark px-6 py-4 rounded-lg font-medium text-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-yellow-accent/30 text-center"
@@ -157,6 +157,12 @@ export default function Hero() {
               className="bg-pink-accent text-white px-6 py-4 rounded-lg font-medium text-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-pink-accent/30 text-center"
             >
               Weekender
+            </Link>
+            <Link
+              href="/bookbootcamp"
+              className="col-span-2 md:col-span-1 bg-purple-accent text-white px-6 py-4 rounded-lg font-medium text-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-accent/30 text-center"
+            >
+              Bootcamps
             </Link>
           </div>
         </div>

@@ -102,6 +102,14 @@ export default async function Weekender({
             >
               🌟 Book Your Pass Now 🌟
             </Link>
+            <div className="mt-4">
+              <Link
+                href="/weekender?tab=passes#new-to-wcs"
+                className="text-sm md:text-base text-white/80 hover:text-yellow-accent underline"
+              >
+                Unsure if it&apos;s worth it as a WCS newcomer? →
+              </Link>
+            </div>
           </div>
 
         </section>
@@ -447,7 +455,7 @@ export default async function Weekender({
                       <PriceCell price={2400} isSoldOut={soldOut.aiTogWeekend} />
                     </div>
                     <p className="text-xs text-text-dark/60 mt-1">
-                      "Ai-tog, I should&apos;ve bought earlier" • on the day
+                      “Ai-tog, I should&apos;ve bought earlier” • on the day
                     </p>
                     
                     <Link
@@ -503,7 +511,7 @@ export default async function Weekender({
                       <PriceCell price={1400} isSoldOut={soldOut.aiTogDay} />
                     </div>
                     <p className="text-xs text-text-dark/60 mt-1">
-                      "Ai-tog, I should&apos;ve bought earlier" • on the day
+                      “Ai-tog, I should&apos;ve bought earlier” • on the day
                     </p>
                     
                     <Link
@@ -951,7 +959,7 @@ export default async function Weekender({
                       You know the basics of West Coast Swing, but you still don&apos;t feel confident when social dancing. In addition to improving your basics, you want to learn the West Coast Swing fundamentals and be able to dance with any partner.
                     </p>
                     <p className="text-sm text-text-dark/70 italic">
-                      All welcome — from never danced to busy learning the dance
+                      Entry requirement: comfortable with the 5 basics (sugar push, left side pass, underarm turn, sugar tuck, basic whip).
                     </p>
                   </div>
 
@@ -967,6 +975,44 @@ export default async function Weekender({
                       </p>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              <div id="new-to-wcs" className="bg-cloud-dancer rounded-xl p-6 md:p-8 scroll-mt-28">
+                <h3 className="font-spartan font-semibold text-2xl mb-4">
+                  Worried about joining the Weekender because you&apos;re new to WCS — but you really want to learn from 4 international pros?
+                </h3>
+                <div className="space-y-4 text-text-dark/80">
+                  <p>
+                    You&apos;re in exactly the right place. Learning from pros who teach this dance for a living is one of the fastest ways to build the fundamentals properly — connection,
+                    communication, and musicality — not just “more moves”.
+                  </p>
+                  <p>
+                    Our goal is to create and grow a strong WCS community in Cape Town. There&apos;s no better way to do that than spending a full weekend learning and social dancing with other westies here.
+                    If you want a feel for the culture you&apos;re joining, here&apos;s what we&apos;re about:{' '}
+                    <Link href="/community-culture" className="text-pink-accent hover:text-yellow-accent underline font-semibold">
+                      Community Culture
+                    </Link>
+                    .
+                  </p>
+                  <p>
+                    That&apos;s also why we have a <span className="font-semibold">Level 1</span> and <span className="font-semibold">Level 2</span> track. Level 1&apos;s only entry requirement is knowing the 5 basics.
+                    The weekend builds up as it goes, and because we&apos;re a smaller group, the pros can get to know us and adjust the classes to the actual level in the room (not just deliver a fixed script) — they meet us where we&apos;re at, which helps ensure everyone learns something.
+                  </p>
+                  <p>
+                    Want to feel extra prepared before the Weekender? Build confidence with a bootcamp first:{' '}
+                    <Link href="/bookbootcamp?tab=info" className="text-pink-accent hover:text-yellow-accent underline font-semibold">
+                      Bootcamps
+                    </Link>
+                    .
+                  </p>
+                  <p>
+                    And if you&apos;re unsure which track is right for you, our teachers are here to help you prepare — please reach out at{' '}
+                    <a href="mailto:community@wcscapetown.co.za" className="text-pink-accent hover:text-yellow-accent underline font-semibold">
+                      community@wcscapetown.co.za
+                    </a>
+                    .
+                  </p>
                 </div>
               </div>
             </div>

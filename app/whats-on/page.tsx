@@ -119,7 +119,7 @@ export default function WhatsOn() {
                 Book Weekender
               </Link>
               <Link
-                href="/bookbootcamp"
+                href="/bookbootcamp?tab=booking"
                 className="bg-purple-accent text-white px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all"
               >
                 Book Bootcamp
@@ -459,13 +459,13 @@ export default function WhatsOn() {
                   This is your one-stop shop for the core WCS basics. Build confidence, learn the foundations, and walk into the WCS Weekender Level 1 Track feeling ready!
                 </p>
                 <ul className="space-y-2 text-sm text-text-dark/80 mb-4">
-                  <li>✓ Learn the core WCS patterns (enough to start social dancing)</li>
+                  <li>✓ Learn the 5 basics and core foundations</li>
                   <li>✓ Connection basics: frame, elasticity, and timing</li>
-                  <li>✓ Simple technique fixes that make everything feel easier</li>
-                  <li>✓ Get confident for the Weekender</li>
+                  <li>✓ Simple WCS technique to get you on the social dance floor</li>
+                  <li>✓ Get ready for the Weekender</li>
                 </ul>
                 <Link
-                  href="/bookbootcamp?type=beginner"
+                  href="/bookbootcamp?tab=booking&type=beginner"
                   className="inline-block bg-purple-accent text-white px-6 py-2 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all text-sm"
                 >
                   Book Now
@@ -488,12 +488,12 @@ export default function WhatsOn() {
                 </p>
                 <ul className="space-y-2 text-sm text-text-dark/80 mb-4">
                   <li>✓ Translate your existing dance skills into WCS fundamentals</li>
-                  <li>✓ Slot, leverage/compression, and "WCS feel" (without starting from zero)</li>
-                  <li>✓ Essential patterns + variations to dance comfortably at socials</li>
-                  <li>✓ Get ready for the Weekender</li>
+                  <li>✓ Learn the techniques and concepts unique to WCS and get the “WCS feel”</li>
+                  <li>✓ Foundational moves + variations (without starting from zero)</li>
+                  <li>✓ Get ready for the weekender (so you can focus on nuance, not just keeping up)</li>
                 </ul>
                 <Link
-                  href="/bookbootcamp?type=fasttrack"
+                  href="/bookbootcamp?tab=booking&type=fasttrack"
                   className="inline-block bg-yellow-accent text-text-dark px-6 py-2 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all text-sm"
                 >
                   Book Now

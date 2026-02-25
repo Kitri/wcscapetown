@@ -78,12 +78,19 @@ export default function WeekenderPoll() {
         <div className="mt-4">
           <div className="mt-6">
             <Link
-              href="/weekender"
+              href="/bookweekender"
               className="inline-block bg-pink-accent text-white px-10 py-4 rounded-lg font-medium text-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-pink-accent/30"
             >
-              View Weekender page
+              Book now
             </Link>
           </div>
+
+          <p className="text-sm text-text-dark/80 mt-4 max-w-[640px] mx-auto">
+            Feel like you&apos;re too low level to get value from the Weekender? Build confidence with a bootcamp first →{" "}
+            <Link href="/bookbootcamp" className="text-pink-accent hover:text-yellow-accent underline font-semibold">
+              Bootcamps
+            </Link>
+          </p>
 
           <p className="text-xs text-text-dark/60 mt-6 max-w-[600px] mx-auto">
             Details may change slightly — the Weekender page is always the latest info.
