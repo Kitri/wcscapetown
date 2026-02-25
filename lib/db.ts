@@ -176,14 +176,15 @@ export async function getMemberIdsBySession(sessionId: string): Promise<number[]
   return result.map(r => r.member_id);
 }
 
-// Complete a registration by member_id (both payment and registration status)
-export async function completeRegistration(memberId: number): Promise<void> {
+// Complete a registration by member_id AND order_id (both payment and registration status)
+export async function completeRegistration(memberId: number, orderId: string): Promise<void> {
   const sql = getDb();
   
   await sql`
     UPDATE registrations 
     SET payment_status = 'complete', registration_status = 'complete'
     WHERE member_id = ${memberId}
+    AND order_id = ${orderId}
   `;
 }
 

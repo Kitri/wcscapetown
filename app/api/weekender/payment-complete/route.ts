@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
       completedAt: new Date().toISOString(),
     }).catch(console.error);
 
-    // Complete each member's registration
-    await Promise.all(memberIds.map(memberId => completeRegistration(memberId)));
+    // Complete each member's registration for this specific order
+    await Promise.all(memberIds.map(memberId => completeRegistration(memberId, reference)));
 
     logInfo('weekender_payment', 'Payment complete', { sessionId, reference }).catch(console.error);
 

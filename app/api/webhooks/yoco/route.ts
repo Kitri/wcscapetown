@@ -153,8 +153,8 @@ async function handleEvent(event: YocoEvent) {
         return;
       }
 
-      // Complete each member's registration
-      await Promise.all(memberIds.map(memberId => completeRegistration(memberId)));
+      // Complete each member's registration for this specific order
+      await Promise.all(memberIds.map(memberId => completeRegistration(memberId, orderId)));
 
       console.log('✅ Payment succeeded - registrations completed', {
         checkoutId,
