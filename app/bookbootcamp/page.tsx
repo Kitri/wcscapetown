@@ -759,10 +759,10 @@ export default function BookBootcamp() {
                     If you already know the basics of partnered dancing (Salsa, Bachata, Kizomba, Sokkie, Lindy Hop, Ballroom, Latin American, etc.), this 3-hour fast-track intensive translates your foundations into the slot, elasticity, and “WCS feel” — so you can arrive at the Weekender ready to focus on nuance, not just keeping up.
                   </p>
                   <ul className="space-y-1 text-sm text-text-dark/80 mb-4">
-                    <li>✓ Translate existing dance skills into WCS</li>
+                    <li>✓ Translate your existing dance skills into WCS fundamentals</li>
                     <li>✓ Learn the techniques and concepts unique to WCS and get the “WCS feel”</li>
-                    <li>✓ Foundational moves + variations (without starting from zero)</li>
-                    <li>✓ Get ready for the weekender (so you can focus on nuance, not just keeping up)</li>
+                    <li>✓ Foundational moves + practical drills</li>
+                    <li>✓ Weekender-ready: focus on refinement, not just keeping up</li>
                   </ul>
                   <p className="text-xs text-text-dark/60">14:30 - 17:30</p>
                 </div>

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { League_Spartan, Inter } from "next/font/google";
 import "./globals.css";
-import { Analytics } from "@vercel/analytics/next"
+import { Analytics } from "@vercel/analytics/next";
 
 const leagueSpartan = League_Spartan({
   variable: "--font-league-spartan",
@@ -34,7 +35,22 @@ export default function RootLayout({
       <body
         className={`${leagueSpartan.variable} ${inter.variable} antialiased bg-cloud-dancer text-text-dark`}
       >
+        {/* Google tag (gtag.js) */}
+        <Script
+          async
+          src="https://www.googletagmanager.com/gtag/js?id=G-MK4PC9HQSE"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+
+gtag('config', 'G-MK4PC9HQSE');`}
+        </Script>
+
         {children}
+        <Analytics />
       </body>
     </html>
   );

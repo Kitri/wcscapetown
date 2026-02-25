@@ -489,8 +489,8 @@ export default function WhatsOn() {
                 <ul className="space-y-2 text-sm text-text-dark/80 mb-4">
                   <li>✓ Translate your existing dance skills into WCS fundamentals</li>
                   <li>✓ Learn the techniques and concepts unique to WCS and get the “WCS feel”</li>
-                  <li>✓ Foundational moves + variations (without starting from zero)</li>
-                  <li>✓ Get ready for the weekender (so you can focus on nuance, not just keeping up)</li>
+                  <li>✓ Foundational moves + practical drills</li>
+                  <li>✓ Weekender-ready: focus on refinement, not just keeping up</li>
                 </ul>
                 <Link
                   href="/bookbootcamp?tab=booking&type=fasttrack"
