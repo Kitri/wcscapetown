@@ -658,10 +658,11 @@ export async function getWaitlistCount(role: 'L' | 'F', level: number): Promise<
 
 // Check if a role needs to go on waitlist for weekend pass
 // Rules:
-// Level 1: Two conditions:
-//   - Before 10 total: cap at 7 for either role (to prevent 90%+ imbalance)
+// Level 1 & 2 Followers: Controlled by admin settings (manual release)
+// Level 1 Leads: Two conditions:
+//   - Before 10 total: cap at 7 to prevent extreme imbalance
 //   - From 10 total: 80/20 ratio applies
-// Level 2: 80/20 ratio (active immediately)
+// Level 2 Leads: 80/20 ratio (active immediately)
 // Both levels: If there are people on the waitlist for this role, new registrations also go to waitlist
 export async function shouldWaitlistRole(
   role: 'L' | 'F',
@@ -671,6 +672,23 @@ export async function shouldWaitlistRole(
   const waitlistCount = await getWaitlistCount(role, level);
   const total = leads + followers;
   const levelLabel = `Level ${level}`;
+  
+  // Check admin settings for follower waitlist control
+  if (role === 'F') {
+    const settings = await getWaitlistSettings();
+    const isOpen = level === 1 ? settings.level1FollowersOpen : settings.level2FollowersOpen;
+    
+    // If waitlist is closed (not open), all followers go to waitlist
+    if (!isOpen) {
+      return {
+        shouldWaitlist: true,
+        leads,
+        followers,
+        waitlistCount,
+        message: `For role balancing purposes, ${levelLabel} followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+      };
+    }
+  }
   
   // First check: if there are people on the waitlist for this role, new registrations also go to waitlist
   if (waitlistCount > 0) {
@@ -683,19 +701,12 @@ export async function shouldWaitlistRole(
     };
   }
   
-  // Level 1: Two conditions for waitlist
+  // Level 1: Leads use two-tier waitlist logic
   if (level === 1) {
-    // Condition 1: Before 10 total, cap either role at 7 to prevent extreme imbalance
+    // Followers handled by settings check above
+    
+    // Leads: Condition 1 - Before 10 total, cap at 7 to prevent extreme imbalance
     if (total < 10) {
-      if (role === 'F' && followers >= 7) {
-        return {
-          shouldWaitlist: true,
-          leads,
-          followers,
-          waitlistCount,
-          message: `For role balancing purposes, ${levelLabel} followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
-        };
-      }
       if (role === 'L' && leads >= 7) {
         return {
           shouldWaitlist: true,
@@ -705,10 +716,26 @@ export async function shouldWaitlistRole(
           message: `For role balancing purposes, ${levelLabel} leads are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
         };
       }
+      // Followers can proceed if settings allow (checked above)
       return { shouldWaitlist: false, leads, followers, waitlistCount, message: '' };
     }
     
-    // Condition 2: From 10 total, apply 80/20 ratio
+    // Leads: Condition 2 - From 10 total, apply 80/20 ratio
+    if (role === 'L') {
+      const newLeads = leads + 1;
+      const ratio = followers / newLeads;
+      if (ratio < 0.8) {
+        return {
+          shouldWaitlist: true,
+          leads,
+          followers,
+          waitlistCount,
+          message: `For role balancing purposes, ${levelLabel} leads are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+        };
+      }
+    }
+    
+    // Followers: Apply 80/20 ratio if settings allow registration
     if (role === 'F') {
       const newFollowers = followers + 1;
       const ratio = leads / newFollowers;
@@ -723,6 +750,13 @@ export async function shouldWaitlistRole(
       }
     }
     
+    return { shouldWaitlist: false, leads, followers, waitlistCount, message: '' };
+  }
+  
+  // Level 2: 80/20 ratio for leads, followers controlled by settings
+  if (level === 2) {
+    // Followers handled by settings check above
+    
     if (role === 'L') {
       const newLeads = leads + 1;
       const ratio = followers / newLeads;
@@ -737,33 +771,17 @@ export async function shouldWaitlistRole(
       }
     }
     
-    return { shouldWaitlist: false, leads, followers, waitlistCount, message: '' };
-  }
-  
-  // Level 2: All followers go on waitlist (manual release only)
-  // Level 2 leads: Ratio 80/20
-  if (level === 2) {
+    // Followers: Apply 80/20 ratio if settings allow registration
     if (role === 'F') {
-      // All Level 2 followers go to waitlist regardless of ratio
-      return {
-        shouldWaitlist: true,
-        leads,
-        followers,
-        waitlistCount,
-        message: `For role balancing purposes, ${levelLabel} followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
-      };
-    }
-    
-    if (role === 'L') {
-      const newLeads = leads + 1;
-      const ratio = followers / newLeads;
+      const newFollowers = followers + 1;
+      const ratio = leads / newFollowers;
       if (ratio < 0.8) {
         return {
           shouldWaitlist: true,
           leads,
           followers,
           waitlistCount,
-          message: `For role balancing purposes, ${levelLabel} leads are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+          message: `For role balancing purposes, ${levelLabel} followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
         };
       }
     }
@@ -977,4 +995,110 @@ export async function getRegistrationByOrderId(orderId: string): Promise<{
     partyAddOn: row.party_add_on,
     bootcampType: row.bootcamp_type,
   };
+}
+
+// ========== WAITLIST SETTINGS ==========
+
+// Get waitlist settings for a specific level and role
+export async function getWaitlistSettings(): Promise<{
+  level1FollowersOpen: boolean;
+  level2FollowersOpen: boolean;
+}> {
+  const sql = getDb();
+  
+  // Ensure settings table exists
+  await sql`
+    CREATE TABLE IF NOT EXISTS waitlist_settings (
+      id SERIAL PRIMARY KEY,
+      level1_followers_open BOOLEAN DEFAULT false,
+      level2_followers_open BOOLEAN DEFAULT false,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `;
+  
+  // Get or create default settings
+  const result = await sql`
+    SELECT level1_followers_open, level2_followers_open
+    FROM waitlist_settings
+    ORDER BY id DESC
+    LIMIT 1
+  `;
+  
+  if (result.length === 0) {
+    // Initialize with default settings (closed)
+    await sql`
+      INSERT INTO waitlist_settings (level1_followers_open, level2_followers_open)
+      VALUES (false, false)
+    `;
+    return { level1FollowersOpen: false, level2FollowersOpen: false };
+  }
+  
+  return {
+    level1FollowersOpen: result[0].level1_followers_open,
+    level2FollowersOpen: result[0].level2_followers_open,
+  };
+}
+
+// Update waitlist settings
+export async function updateWaitlistSettings(settings: {
+  level1FollowersOpen?: boolean;
+  level2FollowersOpen?: boolean;
+}): Promise<void> {
+  const sql = getDb();
+  
+  // Ensure settings table exists
+  await sql`
+    CREATE TABLE IF NOT EXISTS waitlist_settings (
+      id SERIAL PRIMARY KEY,
+      level1_followers_open BOOLEAN DEFAULT false,
+      level2_followers_open BOOLEAN DEFAULT false,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    )
+  `;
+  
+  // Get current settings
+  const current = await sql`
+    SELECT id, level1_followers_open, level2_followers_open
+    FROM waitlist_settings
+    ORDER BY id DESC
+    LIMIT 1
+  `;
+  
+  if (current.length === 0) {
+    // Insert new settings
+    await sql`
+      INSERT INTO waitlist_settings (
+        level1_followers_open,
+        level2_followers_open,
+        updated_at
+      )
+      VALUES (
+        ${settings.level1FollowersOpen ?? false},
+        ${settings.level2FollowersOpen ?? false},
+        now() AT TIME ZONE 'Africa/Johannesburg'
+      )
+    `;
+  } else {
+    // Update existing settings
+    const id = current[0].id;
+    const updates: string[] = [];
+    const values: any[] = [];
+    
+    if (settings.level1FollowersOpen !== undefined) {
+      await sql`
+        UPDATE waitlist_settings
+        SET level1_followers_open = ${settings.level1FollowersOpen},
+            updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
+        WHERE id = ${id}
+      `;
+    }
+    if (settings.level2FollowersOpen !== undefined) {
+      await sql`
+        UPDATE waitlist_settings
+        SET level2_followers_open = ${settings.level2FollowersOpen},
+            updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
+        WHERE id = ${id}
+      `;
+    }
+  }
 }

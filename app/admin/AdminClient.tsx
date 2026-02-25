@@ -58,6 +58,12 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
   const [aggregateByDay, setAggregateByDay] = useState<AggregateByDayItem[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError] = useState("");
+  
+  const [waitlistSettings, setWaitlistSettings] = useState<{
+    level1FollowersOpen: boolean;
+    level2FollowersOpen: boolean;
+  }>({ level1FollowersOpen: false, level2FollowersOpen: false });
+  const [settingsLoading, setSettingsLoading] = useState(false);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>("weekender");
   const [sortKey, setSortKey] = useState<SortKey>("created_at");
@@ -77,11 +83,12 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
     setDataError("");
 
     try {
-      const [regRes, balanceRes, dayRes, bootcampRes] = await Promise.all([
+      const [regRes, balanceRes, dayRes, bootcampRes, settingsRes] = await Promise.all([
         fetch("/api/admin/weekender-registrations"),
         fetch("/api/admin/role-balance"),
         fetch("/api/admin/aggregate-by-day"),
         fetch("/api/admin/bootcamp-registrations"),
+        fetch("/api/admin/waitlist-settings"),
       ]);
 
       if (!regRes.ok || !balanceRes.ok || !dayRes.ok || !bootcampRes.ok) {
@@ -97,10 +104,42 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
       setRoleBalance(balanceData.roleBalance || []);
       setAggregateByDay(dayData.aggregateByDay || []);
       setBootcampRegistrations(bootcampData.registrations || []);
+      
+      if (settingsRes.ok) {
+        const settingsData = await settingsRes.json();
+        setWaitlistSettings(settingsData);
+      }
     } catch (err) {
       setDataError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
       setDataLoading(false);
+    }
+  };
+  
+  const toggleWaitlist = async (level: 1 | 2) => {
+    setSettingsLoading(true);
+    try {
+      const key = level === 1 ? "level1FollowersOpen" : "level2FollowersOpen";
+      const newValue = !waitlistSettings[key];
+      
+      const res = await fetch("/api/admin/waitlist-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          [key]: newValue,
+        }),
+      });
+      
+      if (!res.ok) {
+        throw new Error("Failed to update settings");
+      }
+      
+      const updatedSettings = await res.json();
+      setWaitlistSettings(updatedSettings);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to update waitlist settings");
+    } finally {
+      setSettingsLoading(false);
     }
   };
 
@@ -446,6 +485,63 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
               />
             </div>
           )}
+        </section>
+
+        {/* Waitlist Controls Section */}
+        <section className="bg-white rounded-xl p-6 shadow-sm mb-8">
+          <h2 className="font-spartan font-semibold text-xl mb-4">
+            Waitlist Controls
+          </h2>
+          <p className="text-sm text-text-dark/60 mb-4">
+            Control when followers can register from the waitlist. When closed, all followers for that level are automatically waitlisted.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Level 1 Followers */}
+            <div className="border border-text-dark/10 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-base">Level 1 Followers</h3>
+                <button
+                  onClick={() => toggleWaitlist(1)}
+                  disabled={settingsLoading}
+                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all disabled:opacity-50 ${
+                    waitlistSettings.level1FollowersOpen
+                      ? "bg-green-500 text-white hover:bg-green-600"
+                      : "bg-gray-300 text-gray-700 hover:bg-gray-400"
+                  }`}
+                >
+                  {waitlistSettings.level1FollowersOpen ? "Open" : "Closed"}
+                </button>
+              </div>
+              <p className="text-xs text-text-dark/60">
+                {waitlistSettings.level1FollowersOpen
+                  ? "Level 1 followers can register normally (subject to ratio rules)."
+                  : "All Level 1 followers are automatically waitlisted."}
+              </p>
+            </div>
+
+            {/* Level 2 Followers */}
+            <div className="border border-text-dark/10 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-base">Level 2 Followers</h3>
+                <button
+                  onClick={() => toggleWaitlist(2)}
+                  disabled={settingsLoading}
+                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all disabled:opacity-50 ${
+                    waitlistSettings.level2FollowersOpen
+                      ? "bg-green-500 text-white hover:bg-green-600"
+                      : "bg-gray-300 text-gray-700 hover:bg-gray-400"
+                  }`}
+                >
+                  {waitlistSettings.level2FollowersOpen ? "Open" : "Closed"}
+                </button>
+              </div>
+              <p className="text-xs text-text-dark/60">
+                {waitlistSettings.level2FollowersOpen
+                  ? "Level 2 followers can register normally (subject to ratio rules)."
+                  : "All Level 2 followers are automatically waitlisted."}
+              </p>
+            </div>
+          </div>
         </section>
 
         {/* Per-Day Balance & Waitlist Status Row */}
