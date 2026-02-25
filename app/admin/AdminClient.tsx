@@ -41,6 +41,21 @@ type AggregateByDayItem = {
   count: number;
 };
 
+type NonCompleteItem = {
+  registration_status: string;
+  level: number;
+  role: string;
+  pass_type: string;
+  count: string | number;
+};
+
+type PricingTierItem = {
+  pass_type: string;
+  price_tier: string;
+  registration_status: string;
+  count: string | number;
+};
+
 type SortKey = keyof Registration;
 type BootcampSortKey = keyof BootcampRegistration;
 type SortDirection = "asc" | "desc";
@@ -56,20 +71,20 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
   const [bootcampRegistrations, setBootcampRegistrations] = useState<BootcampRegistration[]>([]);
   const [roleBalance, setRoleBalance] = useState<RoleBalanceItem[]>([]);
   const [aggregateByDay, setAggregateByDay] = useState<AggregateByDayItem[]>([]);
+  const [nonComplete, setNonComplete] = useState<NonCompleteItem[]>([]);
+  const [pricingTiers, setPricingTiers] = useState<PricingTierItem[]>([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError] = useState("");
   
-  const [waitlistSettings, setWaitlistSettings] = useState<{
-    level1FollowersOpen: boolean;
-    level2FollowersOpen: boolean;
-  }>({ level1FollowersOpen: false, level2FollowersOpen: false });
-  const [settingsLoading, setSettingsLoading] = useState(false);
 
   const [activeTab, setActiveTab] = useState<ActiveTab>("weekender");
   const [sortKey, setSortKey] = useState<SortKey>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [bootcampSortKey, setBootcampSortKey] = useState<BootcampSortKey>("created_at");
   const [bootcampSortDirection, setBootcampSortDirection] = useState<SortDirection>("desc");
+  
+  // Collapsible sections state
+  const [showAnalytics, setShowAnalytics] = useState(true);
 
   // Fetch data when authed
   useEffect(() => {
@@ -83,15 +98,16 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
     setDataError("");
 
     try {
-      const [regRes, balanceRes, dayRes, bootcampRes, settingsRes] = await Promise.all([
+      const [regRes, balanceRes, dayRes, bootcampRes, nonCompleteRes, tiersRes] = await Promise.all([
         fetch("/api/admin/weekender-registrations"),
         fetch("/api/admin/role-balance"),
         fetch("/api/admin/aggregate-by-day"),
         fetch("/api/admin/bootcamp-registrations"),
-        fetch("/api/admin/waitlist-settings"),
+        fetch("/api/admin/non-complete-breakdown"),
+        fetch("/api/admin/pricing-tiers"),
       ]);
 
-      if (!regRes.ok || !balanceRes.ok || !dayRes.ok || !bootcampRes.ok) {
+      if (!regRes.ok || !balanceRes.ok || !dayRes.ok || !bootcampRes.ok || !nonCompleteRes.ok || !tiersRes.ok) {
         throw new Error("Failed to fetch data");
       }
 
@@ -99,47 +115,19 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
       const balanceData = await balanceRes.json();
       const dayData = await dayRes.json();
       const bootcampData = await bootcampRes.json();
+      const nonCompleteData = await nonCompleteRes.json();
+      const tiersData = await tiersRes.json();
 
       setRegistrations(regData.registrations || []);
       setRoleBalance(balanceData.roleBalance || []);
       setAggregateByDay(dayData.aggregateByDay || []);
       setBootcampRegistrations(bootcampData.registrations || []);
-      
-      if (settingsRes.ok) {
-        const settingsData = await settingsRes.json();
-        setWaitlistSettings(settingsData);
-      }
+      setNonComplete(nonCompleteData.breakdown || []);
+      setPricingTiers(tiersData.tiers || []);
     } catch (err) {
       setDataError(err instanceof Error ? err.message : "Failed to load data");
     } finally {
       setDataLoading(false);
-    }
-  };
-  
-  const toggleWaitlist = async (level: 1 | 2) => {
-    setSettingsLoading(true);
-    try {
-      const key = level === 1 ? "level1FollowersOpen" : "level2FollowersOpen";
-      const newValue = !waitlistSettings[key];
-      
-      const res = await fetch("/api/admin/waitlist-settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          [key]: newValue,
-        }),
-      });
-      
-      if (!res.ok) {
-        throw new Error("Failed to update settings");
-      }
-      
-      const updatedSettings = await res.json();
-      setWaitlistSettings(updatedSettings);
-    } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to update waitlist settings");
-    } finally {
-      setSettingsLoading(false);
     }
   };
 
@@ -463,6 +451,19 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
           </div>
         )}
 
+        {/* Analytics Toggle Button */}
+        <div className="mb-6">
+          <button
+            onClick={() => setShowAnalytics(!showAnalytics)}
+            className="flex items-center gap-2 text-sm font-semibold text-text-dark hover:text-pink-accent transition-colors"
+          >
+            <span>{showAnalytics ? '▼' : '▶'}</span>
+            <span>{showAnalytics ? 'Hide' : 'Show'} Analytics</span>
+          </button>
+        </div>
+
+        {showAnalytics && (
+          <>
         {/* Role Balance Section */}
         <section className="bg-white rounded-xl p-6 shadow-sm mb-8">
           <h2 className="font-spartan font-semibold text-xl mb-4">
@@ -487,110 +488,107 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
           )}
         </section>
 
-        {/* Waitlist Controls Section */}
-        <section className="bg-white rounded-xl p-6 shadow-sm mb-8">
-          <h2 className="font-spartan font-semibold text-xl mb-4">
-            Waitlist Controls
+        {/* Pricing Tiers Section */}
+        <section className="bg-white rounded-xl p-4 shadow-sm mb-8">
+          <h2 className="font-spartan font-semibold text-base mb-3">
+            Pricing Tiers
           </h2>
-          <p className="text-sm text-text-dark/60 mb-4">
-            Control when followers can register from the waitlist. When closed, all followers for that level are automatically waitlisted.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Level 1 Followers */}
-            <div className="border border-text-dark/10 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-base">Level 1 Followers</h3>
-                <button
-                  onClick={() => toggleWaitlist(1)}
-                  disabled={settingsLoading}
-                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all disabled:opacity-50 ${
-                    waitlistSettings.level1FollowersOpen
-                      ? "bg-green-500 text-white hover:bg-green-600"
-                      : "bg-gray-300 text-gray-700 hover:bg-gray-400"
-                  }`}
-                >
-                  {waitlistSettings.level1FollowersOpen ? "Open" : "Closed"}
-                </button>
-              </div>
-              <p className="text-xs text-text-dark/60">
-                {waitlistSettings.level1FollowersOpen
-                  ? "Level 1 followers can register normally (subject to ratio rules)."
-                  : "All Level 1 followers are automatically waitlisted."}
-              </p>
-            </div>
 
-            {/* Level 2 Followers */}
-            <div className="border border-text-dark/10 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-base">Level 2 Followers</h3>
-                <button
-                  onClick={() => toggleWaitlist(2)}
-                  disabled={settingsLoading}
-                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all disabled:opacity-50 ${
-                    waitlistSettings.level2FollowersOpen
-                      ? "bg-green-500 text-white hover:bg-green-600"
-                      : "bg-gray-300 text-gray-700 hover:bg-gray-400"
-                  }`}
-                >
-                  {waitlistSettings.level2FollowersOpen ? "Open" : "Closed"}
-                </button>
-              </div>
-              <p className="text-xs text-text-dark/60">
-                {waitlistSettings.level2FollowersOpen
-                  ? "Level 2 followers can register normally (subject to ratio rules)."
-                  : "All Level 2 followers are automatically waitlisted."}
-              </p>
+          {dataLoading ? (
+            <p className="text-text-dark/60 text-xs">Loading...</p>
+          ) : pricingTiers.length === 0 ? (
+            <p className="text-text-dark/60 text-xs">No pricing data available.</p>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {['weekend', 'day', 'party', 'bootcamp'].map(passType => {
+                const passData = pricingTiers.filter(t => t.pass_type === passType);
+                if (passData.length === 0) return null;
+                const total = passData.reduce((sum, t) => sum + Number(t.count), 0);
+                
+                return (
+                  <div key={passType} className="border border-text-dark/10 rounded-lg p-3 bg-cloud-dancer/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold text-xs uppercase text-text-dark">{passType}</span>
+                      <span className="text-xs font-bold text-pink-accent">{total}</span>
+                    </div>
+                    <div className="space-y-1">
+                      {passData.map((tier, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-xs text-text-dark/70">
+                          <span className="uppercase text-[10px]">{tier.price_tier}</span>
+                          <span className="font-semibold text-text-dark">{tier.count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          </div>
+          )}
         </section>
 
         {/* Per-Day Balance & Waitlist Status Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          {/* Saturday */}
+          {/* Level 1 */}
           <section className="bg-white rounded-xl p-4 shadow-sm">
-            <h2 className="font-spartan font-semibold text-sm mb-2">Saturday</h2>
+            <h2 className="font-spartan font-semibold text-sm mb-2">Level 1</h2>
             {dataLoading ? (
               <p className="text-text-dark/60 text-xs">Loading...</p>
             ) : (
               <>
-                <CompactBalanceBar label="L1" lead={roleBalanceByDay.saturday.level1.lead} follow={roleBalanceByDay.saturday.level1.follow} />
-                <CompactBalanceBar label="L2" lead={roleBalanceByDay.saturday.level2.lead} follow={roleBalanceByDay.saturday.level2.follow} />
+                <CompactBalanceBar label="Saturday" lead={roleBalanceByDay.saturday.level1.lead} follow={roleBalanceByDay.saturday.level1.follow} />
+                <CompactBalanceBar label="Sunday" lead={roleBalanceByDay.sunday.level1.lead} follow={roleBalanceByDay.sunday.level1.follow} />
               </>
             )}
           </section>
 
-          {/* Sunday */}
+          {/* Level 2 */}
           <section className="bg-white rounded-xl p-4 shadow-sm">
-            <h2 className="font-spartan font-semibold text-sm mb-2">Sunday</h2>
+            <h2 className="font-spartan font-semibold text-sm mb-2">Level 2</h2>
             {dataLoading ? (
               <p className="text-text-dark/60 text-xs">Loading...</p>
             ) : (
               <>
-                <CompactBalanceBar label="L1" lead={roleBalanceByDay.sunday.level1.lead} follow={roleBalanceByDay.sunday.level1.follow} />
-                <CompactBalanceBar label="L2" lead={roleBalanceByDay.sunday.level2.lead} follow={roleBalanceByDay.sunday.level2.follow} />
+                <CompactBalanceBar label="Saturday" lead={roleBalanceByDay.saturday.level2.lead} follow={roleBalanceByDay.saturday.level2.follow} />
+                <CompactBalanceBar label="Sunday" lead={roleBalanceByDay.sunday.level2.lead} follow={roleBalanceByDay.sunday.level2.follow} />
               </>
             )}
           </section>
 
-          {/* Waitlist Status */}
+          {/* Non-Complete Breakdown */}
           <section className="bg-white rounded-xl p-4 shadow-sm">
-            <h2 className="font-spartan font-semibold text-sm mb-2">Waitlist</h2>
+            <h2 className="font-spartan font-semibold text-sm mb-2">Incomplete Registrations</h2>
             {dataLoading ? (
               <p className="text-text-dark/60 text-xs">Loading...</p>
-            ) : waitlistStatus.length === 0 ? (
-              <p className="text-green-600 text-xs font-medium">✓ Balanced</p>
+            ) : nonComplete.length === 0 ? (
+              <p className="text-green-600 text-xs font-medium">✓ All complete</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                {waitlistStatus.map((status, idx) => (
-                  <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-50 border border-yellow-200 rounded text-xs">
-                    <span className="text-yellow-600">⏳</span>
-                    L{status.level} {status.roleOnWaitlist}s: +{status.needed} {status.neededRole}
-                  </span>
-                ))}
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {nonComplete.map((item, idx) => {
+                  const statusColor = 
+                    item.registration_status === 'waitlist' ? 'bg-yellow-50 border-yellow-200 text-yellow-700' :
+                    item.registration_status === 'pending' ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                    'bg-gray-50 border-gray-200 text-gray-700';
+                  
+                  return (
+                    <div key={idx} className={`flex items-center justify-between px-2 py-1 border rounded text-xs ${statusColor}`}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold capitalize">{item.registration_status}</span>
+                        <span className="opacity-60">|</span>
+                        <span>L{item.level}</span>
+                        <span>{item.role === 'L' ? 'Lead' : 'Follow'}</span>
+                        <span className="opacity-60">|</span>
+                        <span className="capitalize">{item.pass_type}</span>
+                      </div>
+                      <span className="font-semibold">{item.count}</span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </section>
         </div>
+        </>
+        )}
 
         {/* Registrations Section with Tabs */}
         <section className="bg-white rounded-xl shadow-sm">

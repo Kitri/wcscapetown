@@ -656,27 +656,37 @@ export async function getWaitlistCount(role: 'L' | 'F', level: number): Promise<
   return Number(result[0].count);
 }
 
-// Check if a role needs to go on waitlist for weekend pass
-// Rules:
-// Level 1 & 2 Followers: Controlled by admin settings (manual release)
-// Level 1 Leads: Two conditions:
-//   - Before 10 total: cap at 7 to prevent extreme imbalance
-//   - From 10 total: 80/20 ratio applies
-// Level 2 Leads: 80/20 ratio (active immediately)
-// Both levels: If there are people on the waitlist for this role, new registrations also go to waitlist
+// Check if a role needs to go on waitlist
+// Rules: Only followers are waitlisted, controlled by database settings per pass type
+// Leads are never automatically waitlisted
 export async function shouldWaitlistRole(
   role: 'L' | 'F',
-  level: number
+  level: number,
+  passType: 'weekend' | 'day' = 'weekend'
 ): Promise<{ shouldWaitlist: boolean; leads: number; followers: number; waitlistCount: number; message: string }> {
-  const { leads, followers } = await getWeekendRoleCounts(level);
-  const waitlistCount = await getWaitlistCount(role, level);
-  const total = leads + followers;
-  const levelLabel = `Level ${level}`;
+  // Get counts based on pass type
+  const { leads, followers } = passType === 'day' 
+    ? await getDayPassRoleCounts(level)
+    : await getWeekendRoleCounts(level);
   
-  // Check admin settings for follower waitlist control
+  const waitlistCount = passType === 'day'
+    ? await getDayPassWaitlistCount(role, level)
+    : await getWaitlistCount(role, level);
+  
+  const levelLabel = `Level ${level}`;
+  const passLabel = passType === 'day' ? 'day pass' : 'weekend pass';
+  
+  // Only check followers - leads are never waitlisted
   if (role === 'F') {
     const settings = await getWaitlistSettings();
-    const isOpen = level === 1 ? settings.level1FollowersOpen : settings.level2FollowersOpen;
+    
+    // Determine which setting to check based on level and pass type
+    let isOpen = false;
+    if (passType === 'weekend') {
+      isOpen = level === 1 ? settings.level1WeekendFollowersOpen : settings.level2WeekendFollowersOpen;
+    } else {
+      isOpen = level === 1 ? settings.level1DayFollowersOpen : settings.level2DayFollowersOpen;
+    }
     
     // If waitlist is closed (not open), all followers go to waitlist
     if (!isOpen) {
@@ -685,108 +695,12 @@ export async function shouldWaitlistRole(
         leads,
         followers,
         waitlistCount,
-        message: `For role balancing purposes, ${levelLabel} followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+        message: `For role balancing purposes, ${levelLabel} ${passLabel} followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
       };
     }
   }
   
-  // First check: if there are people on the waitlist for this role, new registrations also go to waitlist
-  if (waitlistCount > 0) {
-    return {
-      shouldWaitlist: true,
-      leads,
-      followers,
-      waitlistCount,
-      message: `For role balancing purposes, ${levelLabel} ${role === 'F' ? 'followers' : 'leads'} are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
-    };
-  }
-  
-  // Level 1: Leads use two-tier waitlist logic
-  if (level === 1) {
-    // Followers handled by settings check above
-    
-    // Leads: Condition 1 - Before 10 total, cap at 7 to prevent extreme imbalance
-    if (total < 10) {
-      if (role === 'L' && leads >= 7) {
-        return {
-          shouldWaitlist: true,
-          leads,
-          followers,
-          waitlistCount,
-          message: `For role balancing purposes, ${levelLabel} leads are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
-        };
-      }
-      // Followers can proceed if settings allow (checked above)
-      return { shouldWaitlist: false, leads, followers, waitlistCount, message: '' };
-    }
-    
-    // Leads: Condition 2 - From 10 total, apply 80/20 ratio
-    if (role === 'L') {
-      const newLeads = leads + 1;
-      const ratio = followers / newLeads;
-      if (ratio < 0.8) {
-        return {
-          shouldWaitlist: true,
-          leads,
-          followers,
-          waitlistCount,
-          message: `For role balancing purposes, ${levelLabel} leads are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
-        };
-      }
-    }
-    
-    // Followers: Apply 80/20 ratio if settings allow registration
-    if (role === 'F') {
-      const newFollowers = followers + 1;
-      const ratio = leads / newFollowers;
-      if (ratio < 0.8) {
-        return {
-          shouldWaitlist: true,
-          leads,
-          followers,
-          waitlistCount,
-          message: `For role balancing purposes, ${levelLabel} followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
-        };
-      }
-    }
-    
-    return { shouldWaitlist: false, leads, followers, waitlistCount, message: '' };
-  }
-  
-  // Level 2: 80/20 ratio for leads, followers controlled by settings
-  if (level === 2) {
-    // Followers handled by settings check above
-    
-    if (role === 'L') {
-      const newLeads = leads + 1;
-      const ratio = followers / newLeads;
-      if (ratio < 0.8) {
-        return {
-          shouldWaitlist: true,
-          leads,
-          followers,
-          waitlistCount,
-          message: `For role balancing purposes, ${levelLabel} leads are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
-        };
-      }
-    }
-    
-    // Followers: Apply 80/20 ratio if settings allow registration
-    if (role === 'F') {
-      const newFollowers = followers + 1;
-      const ratio = leads / newFollowers;
-      if (ratio < 0.8) {
-        return {
-          shouldWaitlist: true,
-          leads,
-          followers,
-          waitlistCount,
-          message: `For role balancing purposes, ${levelLabel} followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
-        };
-      }
-    }
-  }
-  
+  // No waitlist for this role/level
   return { shouldWaitlist: false, leads, followers, waitlistCount, message: '' };
 }
 
@@ -834,24 +748,13 @@ export async function getDayPassWaitlistCount(role: 'L' | 'F', level: number): P
 }
 
 // Check if a role needs to go on waitlist for day pass
-// Rules: Level 2 followers always go to waitlist (until weekend L2 is balanced)
+// Now uses the unified settings-based approach via shouldWaitlistRole
 export async function shouldWaitlistDayPassRole(
   role: 'L' | 'F',
   level: number
 ): Promise<{ shouldWaitlist: boolean; leads: number; followers: number; waitlistCount: number; message: string }> {
-  // Only apply waitlist to level 2 followers
-  if (level !== 2 || role !== 'F') {
-    return { shouldWaitlist: false, leads: 0, followers: 0, waitlistCount: 0, message: '' };
-  }
-  
-  // All L2 followers go to waitlist for now
-  return {
-    shouldWaitlist: true,
-    leads: 0,
-    followers: 0,
-    waitlistCount: 0,
-    message: `For role balancing purposes, Level 2 day pass followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
-  };
+  // Delegate to shouldWaitlistRole with 'day' pass type
+  return shouldWaitlistRole(role, level, 'day');
 }
 
 // Create or update bootcamp details entry (upsert by registration_id)
@@ -1001,64 +904,105 @@ export async function getRegistrationByOrderId(orderId: string): Promise<{
 
 // Get waitlist settings for a specific level and role
 export async function getWaitlistSettings(): Promise<{
-  level1FollowersOpen: boolean;
-  level2FollowersOpen: boolean;
+  level1WeekendFollowersOpen: boolean;
+  level2WeekendFollowersOpen: boolean;
+  level1DayFollowersOpen: boolean;
+  level2DayFollowersOpen: boolean;
 }> {
   const sql = getDb();
   
-  // Ensure settings table exists
+  // Ensure settings table exists with all columns
   await sql`
     CREATE TABLE IF NOT EXISTS waitlist_settings (
       id SERIAL PRIMARY KEY,
-      level1_followers_open BOOLEAN DEFAULT false,
-      level2_followers_open BOOLEAN DEFAULT false,
+      level1_weekend_followers_open BOOLEAN DEFAULT false,
+      level2_weekend_followers_open BOOLEAN DEFAULT false,
+      level1_day_followers_open BOOLEAN DEFAULT false,
+      level2_day_followers_open BOOLEAN DEFAULT false,
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     )
   `;
   
+  // Check if old columns exist and migrate if needed
+  const checkColumns = await sql`
+    SELECT column_name 
+    FROM information_schema.columns 
+    WHERE table_name = 'waitlist_settings'
+    AND column_name IN ('level1_followers_open', 'level2_followers_open')
+  `;
+  
+  if (checkColumns.length > 0) {
+    // Migrate old columns to new structure
+    await sql`
+      ALTER TABLE waitlist_settings 
+      ADD COLUMN IF NOT EXISTS level1_weekend_followers_open BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS level2_weekend_followers_open BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS level1_day_followers_open BOOLEAN DEFAULT false,
+      ADD COLUMN IF NOT EXISTS level2_day_followers_open BOOLEAN DEFAULT false
+    `;
+    
+    // Copy old values to weekend columns if they exist
+    await sql`
+      UPDATE waitlist_settings
+      SET level1_weekend_followers_open = COALESCE(level1_followers_open, false),
+          level2_weekend_followers_open = COALESCE(level2_followers_open, false)
+      WHERE level1_weekend_followers_open IS NULL OR level2_weekend_followers_open IS NULL
+    `;
+  }
+  
   // Get or create default settings
   const result = await sql`
-    SELECT level1_followers_open, level2_followers_open
+    SELECT 
+      level1_weekend_followers_open,
+      level2_weekend_followers_open,
+      level1_day_followers_open,
+      level2_day_followers_open
     FROM waitlist_settings
     ORDER BY id DESC
     LIMIT 1
   `;
   
   if (result.length === 0) {
-    // Initialize with default settings (closed)
+    // Initialize with default settings (all closed)
     await sql`
-      INSERT INTO waitlist_settings (level1_followers_open, level2_followers_open)
-      VALUES (false, false)
+      INSERT INTO waitlist_settings (
+        level1_weekend_followers_open,
+        level2_weekend_followers_open,
+        level1_day_followers_open,
+        level2_day_followers_open
+      )
+      VALUES (false, false, false, false)
     `;
-    return { level1FollowersOpen: false, level2FollowersOpen: false };
+    return {
+      level1WeekendFollowersOpen: false,
+      level2WeekendFollowersOpen: false,
+      level1DayFollowersOpen: false,
+      level2DayFollowersOpen: false,
+    };
   }
   
   return {
-    level1FollowersOpen: result[0].level1_followers_open,
-    level2FollowersOpen: result[0].level2_followers_open,
+    level1WeekendFollowersOpen: result[0].level1_weekend_followers_open ?? false,
+    level2WeekendFollowersOpen: result[0].level2_weekend_followers_open ?? false,
+    level1DayFollowersOpen: result[0].level1_day_followers_open ?? false,
+    level2DayFollowersOpen: result[0].level2_day_followers_open ?? false,
   };
 }
 
 // Update waitlist settings
 export async function updateWaitlistSettings(settings: {
-  level1FollowersOpen?: boolean;
-  level2FollowersOpen?: boolean;
+  level1WeekendFollowersOpen?: boolean;
+  level2WeekendFollowersOpen?: boolean;
+  level1DayFollowersOpen?: boolean;
+  level2DayFollowersOpen?: boolean;
 }): Promise<void> {
   const sql = getDb();
   
-  // Ensure settings table exists
-  await sql`
-    CREATE TABLE IF NOT EXISTS waitlist_settings (
-      id SERIAL PRIMARY KEY,
-      level1_followers_open BOOLEAN DEFAULT false,
-      level2_followers_open BOOLEAN DEFAULT false,
-      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    )
-  `;
+  // Get current settings (table will be created by getWaitlistSettings if needed)
+  await getWaitlistSettings(); // Ensure table exists
   
-  // Get current settings
   const current = await sql`
-    SELECT id, level1_followers_open, level2_followers_open
+    SELECT id
     FROM waitlist_settings
     ORDER BY id DESC
     LIMIT 1
@@ -1068,37 +1012,73 @@ export async function updateWaitlistSettings(settings: {
     // Insert new settings
     await sql`
       INSERT INTO waitlist_settings (
-        level1_followers_open,
-        level2_followers_open,
+        level1_weekend_followers_open,
+        level2_weekend_followers_open,
+        level1_day_followers_open,
+        level2_day_followers_open,
         updated_at
       )
       VALUES (
-        ${settings.level1FollowersOpen ?? false},
-        ${settings.level2FollowersOpen ?? false},
+        ${settings.level1WeekendFollowersOpen ?? false},
+        ${settings.level2WeekendFollowersOpen ?? false},
+        ${settings.level1DayFollowersOpen ?? false},
+        ${settings.level2DayFollowersOpen ?? false},
         now() AT TIME ZONE 'Africa/Johannesburg'
       )
     `;
   } else {
     // Update existing settings
     const id = current[0].id;
-    const updates: string[] = [];
-    const values: any[] = [];
     
-    if (settings.level1FollowersOpen !== undefined) {
-      await sql`
-        UPDATE waitlist_settings
-        SET level1_followers_open = ${settings.level1FollowersOpen},
-            updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
-        WHERE id = ${id}
-      `;
+    // Build update query for only provided fields
+    const updates: string[] = [];
+    if (settings.level1WeekendFollowersOpen !== undefined) {
+      updates.push(`level1_weekend_followers_open = ${settings.level1WeekendFollowersOpen}`);
     }
-    if (settings.level2FollowersOpen !== undefined) {
-      await sql`
-        UPDATE waitlist_settings
-        SET level2_followers_open = ${settings.level2FollowersOpen},
-            updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
-        WHERE id = ${id}
-      `;
+    if (settings.level2WeekendFollowersOpen !== undefined) {
+      updates.push(`level2_weekend_followers_open = ${settings.level2WeekendFollowersOpen}`);
+    }
+    if (settings.level1DayFollowersOpen !== undefined) {
+      updates.push(`level1_day_followers_open = ${settings.level1DayFollowersOpen}`);
+    }
+    if (settings.level2DayFollowersOpen !== undefined) {
+      updates.push(`level2_day_followers_open = ${settings.level2DayFollowersOpen}`);
+    }
+    
+    if (updates.length > 0) {
+      // Update each field separately to avoid SQL injection issues
+      if (settings.level1WeekendFollowersOpen !== undefined) {
+        await sql`
+          UPDATE waitlist_settings
+          SET level1_weekend_followers_open = ${settings.level1WeekendFollowersOpen},
+              updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
+          WHERE id = ${id}
+        `;
+      }
+      if (settings.level2WeekendFollowersOpen !== undefined) {
+        await sql`
+          UPDATE waitlist_settings
+          SET level2_weekend_followers_open = ${settings.level2WeekendFollowersOpen},
+              updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
+          WHERE id = ${id}
+        `;
+      }
+      if (settings.level1DayFollowersOpen !== undefined) {
+        await sql`
+          UPDATE waitlist_settings
+          SET level1_day_followers_open = ${settings.level1DayFollowersOpen},
+              updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
+          WHERE id = ${id}
+        `;
+      }
+      if (settings.level2DayFollowersOpen !== undefined) {
+        await sql`
+          UPDATE waitlist_settings
+          SET level2_day_followers_open = ${settings.level2DayFollowersOpen},
+              updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
+          WHERE id = ${id}
+        `;
+      }
     }
   }
 }

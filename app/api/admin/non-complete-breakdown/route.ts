@@ -13,23 +13,29 @@ export async function GET() {
   try {
     const sql = getDb();
     
+    // Query non-complete registrations grouped by status, level, role, and pass_type
     const result = await sql`
       SELECT 
-        level, 
-        CASE WHEN role = 'F' THEN 'Follow' ELSE 'Lead' END as role, 
-        count(*) as count
+        registration_status,
+        level,
+        role,
+        pass_type,
+        COUNT(*) as count
       FROM registrations
-      WHERE registration_status = 'complete'
-      AND pass_type = 'weekend'
-      GROUP BY level, role
-      ORDER BY level, role
+      WHERE registration_status != 'complete'
+      GROUP BY registration_status, level, role, pass_type
+      ORDER BY 
+        registration_status,
+        level,
+        CASE WHEN role = 'L' THEN 0 ELSE 1 END,
+        pass_type
     `;
 
-    return NextResponse.json({ roleBalance: result });
+    return NextResponse.json({ breakdown: result });
   } catch (error) {
-    console.error('Error fetching role balance:', error);
+    console.error('Error fetching non-complete breakdown:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch role balance' },
+      { error: 'Failed to fetch non-complete breakdown' },
       { status: 500 }
     );
   }

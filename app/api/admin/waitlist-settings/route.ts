@@ -30,10 +30,20 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { level1FollowersOpen, level2FollowersOpen } = body;
+    const { 
+      level1WeekendFollowersOpen,
+      level2WeekendFollowersOpen,
+      level1DayFollowersOpen,
+      level2DayFollowersOpen,
+    } = body;
 
-    // Validate input
-    if (typeof level1FollowersOpen !== 'boolean' && typeof level2FollowersOpen !== 'boolean') {
+    // Validate input - at least one setting must be provided
+    if (
+      typeof level1WeekendFollowersOpen !== 'boolean' && 
+      typeof level2WeekendFollowersOpen !== 'boolean' &&
+      typeof level1DayFollowersOpen !== 'boolean' &&
+      typeof level2DayFollowersOpen !== 'boolean'
+    ) {
       return NextResponse.json(
         { error: 'At least one setting must be provided' },
         { status: 400 }
@@ -41,8 +51,10 @@ export async function POST(request: NextRequest) {
     }
 
     await updateWaitlistSettings({
-      level1FollowersOpen,
-      level2FollowersOpen,
+      level1WeekendFollowersOpen,
+      level2WeekendFollowersOpen,
+      level1DayFollowersOpen,
+      level2DayFollowersOpen,
     });
 
     const updatedSettings = await getWaitlistSettings();

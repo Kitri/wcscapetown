@@ -295,9 +295,14 @@ export default function BookWeekender() {
         );
       }
       
-      // Pre-fetch waitlist status for day passes (only L2 follower applies)
+      // Pre-fetch waitlist status for day passes (all followers)
       if (selectedPassType === 'day') {
         promises.push(
+          fetch('/api/weekender/check-role-balance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: 'F', level: 1, passType: 'day' })
+          }),
           fetch('/api/weekender/check-role-balance', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -339,10 +344,19 @@ export default function BookWeekender() {
           });
         }
       } else if (selectedPassType === 'day') {
-        const [, dayL2FollowRes] = responses;
-        if (dayL2FollowRes) {
-          const dayL2Follow = await dayL2FollowRes.json();
-          setDayPassWaitlistStatus({ shouldWaitlist: dayL2Follow.shouldWaitlist, message: dayL2Follow.message });
+        const [, dayL1FollowRes, dayL2FollowRes] = responses;
+        if (dayL1FollowRes && dayL2FollowRes) {
+          const [dayL1Follow, dayL2Follow] = await Promise.all([
+            dayL1FollowRes.json(),
+            dayL2FollowRes.json()
+          ]);
+          // Store both levels' waitlist status
+          setWaitlistStatus({
+            '1-L': { shouldWaitlist: false, message: '' },
+            '1-F': { shouldWaitlist: dayL1Follow.shouldWaitlist, message: dayL1Follow.message },
+            '2-L': { shouldWaitlist: false, message: '' },
+            '2-F': { shouldWaitlist: dayL2Follow.shouldWaitlist, message: dayL2Follow.message }
+          });
         }
       }
 
@@ -372,7 +386,7 @@ export default function BookWeekender() {
   // "Now" tier is sold out
   const handleSelectSingle = () => {
     // Immediately apply pre-fetched waitlist status for current role/level
-    if (passType === 'weekend') {
+    if (passType === 'weekend' || passType === 'day') {
       const key = `${level}-${role}` as keyof typeof waitlistStatus;
       if (waitlistStatus[key]) {
         setIsOnWaitlist(waitlistStatus[key]!.shouldWaitlist);
@@ -381,9 +395,6 @@ export default function BookWeekender() {
         setIsOnWaitlist(false);
         setWaitlistMessage('');
       }
-    } else if (passType === 'day' && level === 2 && role === 'F' && dayPassWaitlistStatus) {
-      setIsOnWaitlist(dayPassWaitlistStatus.shouldWaitlist);
-      setWaitlistMessage(dayPassWaitlistStatus.message);
     } else {
       setIsOnWaitlist(false);
       setWaitlistMessage('');
@@ -438,20 +449,11 @@ export default function BookWeekender() {
   // Update waitlist status from pre-fetched data when role/level changes
   useEffect(() => {
     if (step === 'single-form') {
-      if (passType === 'weekend') {
+      if (passType === 'weekend' || passType === 'day') {
         const key = `${level}-${role}` as keyof typeof waitlistStatus;
         if (waitlistStatus[key]) {
           setIsOnWaitlist(waitlistStatus[key]!.shouldWaitlist);
           setWaitlistMessage(waitlistStatus[key]!.message);
-        } else {
-          setIsOnWaitlist(false);
-          setWaitlistMessage('');
-        }
-      } else if (passType === 'day') {
-        // Day pass waitlist only applies to L2 followers
-        if (level === 2 && role === 'F' && dayPassWaitlistStatus) {
-          setIsOnWaitlist(dayPassWaitlistStatus.shouldWaitlist);
-          setWaitlistMessage(dayPassWaitlistStatus.message);
         } else {
           setIsOnWaitlist(false);
           setWaitlistMessage('');
@@ -461,7 +463,7 @@ export default function BookWeekender() {
         setWaitlistMessage('');
       }
     }
-  }, [role, level, step, passType, waitlistStatus, dayPassWaitlistStatus]);
+  }, [role, level, step, passType, waitlistStatus]);
 
   const handleSubmitSingle = async (e: React.FormEvent) => {
     e.preventDefault();
