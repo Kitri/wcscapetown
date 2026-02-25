@@ -740,20 +740,18 @@ export async function shouldWaitlistRole(
     return { shouldWaitlist: false, leads, followers, waitlistCount, message: '' };
   }
   
-  // Level 2: Ratio 80/20 (leads/followers >= 0.8 in either direction)
+  // Level 2: All followers go on waitlist (manual release only)
+  // Level 2 leads: Ratio 80/20
   if (level === 2) {
     if (role === 'F') {
-      const newFollowers = followers + 1;
-      const ratio = leads / newFollowers;
-      if (ratio < 0.8) {
-        return {
-          shouldWaitlist: true,
-          leads,
-          followers,
-          waitlistCount,
-          message: `For role balancing purposes, ${levelLabel} followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
-        };
-      }
+      // All Level 2 followers go to waitlist regardless of ratio
+      return {
+        shouldWaitlist: true,
+        leads,
+        followers,
+        waitlistCount,
+        message: `For role balancing purposes, ${levelLabel} followers are currently on a waitlist. As soon as a spot opens up, we'll let you know.`
+      };
     }
     
     if (role === 'L') {
