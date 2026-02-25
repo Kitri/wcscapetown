@@ -484,7 +484,8 @@ export default function TShirtSurveyClient() {
       const existing = prev[key];
       if (!existing) return prev;
 
-      const nextQty = Math.max(1, Math.floor(Number(quantity) || 1));
+      const raw = Number(quantity);
+      const nextQty = Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : 0;
 
       if (existing.typeKey === "unisex") {
         if (!fabricKey) return prev;
@@ -635,7 +636,7 @@ export default function TShirtSurveyClient() {
             Your planned order helps us decide what to stock for the weekender.
           </p>
           <p className="text-sm text-text-dark/60 mt-4">
-            Note: This isn&apos;t a payment or a guarantee — we&apos;ll do our best to bring enough stock.
+            Note: This isn&apos;t a payment or a guarantee — we&apos;ll do our best to get everyone the shirt they want.
           </p>
         </div>
       </section>
@@ -649,13 +650,13 @@ export default function TShirtSurveyClient() {
         <div className="max-w-[950px] mx-auto text-center">
           <h1 className="font-spartan font-semibold text-[36px] md:text-[52px] mb-3">T-shirt survey</h1>
           <p className="text-lg md:text-xl text-text-dark/80">
-            Help us order the right stock for the weekender — tell us what you&apos;re actually planning to buy.
+            Help us order the right stock for the weekender — tell us what you plan to buy.
           </p>
           <p className="text-sm text-text-dark/70 mt-4">
             Estimated price range: <span className="font-semibold">R160 – R200</span>. T-shirts will be on sale at the weekender.
           </p>
           <p className="text-sm text-text-dark/70 mt-1">
-            No XS available on any of the options.
+            Sadly, no XS available on any of the options.
           </p>
         </div>
       </section>
@@ -840,10 +841,16 @@ export default function TShirtSurveyClient() {
                                                   type="number"
                                                   min={1}
                                                   step={1}
-                                                  value={bySize[s]}
+                                                  value={bySize[s] || ""}
                                                   onChange={(e) =>
                                                     setSizeQty(type.key, color.key, s, Number(e.target.value), fabricKey)
                                                   }
+                                                  onBlur={(e) => {
+                                                    const val = Number(e.target.value);
+                                                    if (!Number.isFinite(val) || val < 1) {
+                                                      setSizeQty(type.key, color.key, s, 1, fabricKey);
+                                                    }
+                                                  }}
                                                   className="w-24 px-3 py-2 rounded-lg border-2 border-text-dark/10 focus:border-yellow-accent focus:outline-none bg-white"
                                                 />
                                                 <button
@@ -905,8 +912,14 @@ export default function TShirtSurveyClient() {
                                           type="number"
                                           min={1}
                                           step={1}
-                                          value={selected.quantitiesBySize[s]}
+                                          value={selected.quantitiesBySize[s] || ""}
                                           onChange={(e) => setSizeQty(type.key, color.key, s, Number(e.target.value))}
+                                          onBlur={(e) => {
+                                            const val = Number(e.target.value);
+                                            if (!Number.isFinite(val) || val < 1) {
+                                              setSizeQty(type.key, color.key, s, 1);
+                                            }
+                                          }}
                                           className="w-24 px-3 py-2 rounded-lg border-2 border-text-dark/10 focus:border-yellow-accent focus:outline-none bg-white"
                                         />
                                         <button
