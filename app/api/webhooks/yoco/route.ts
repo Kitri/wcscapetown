@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { getOrderMemberIds } from '@/lib/redis';
-import { completeRegistration, updateRegistrationPaymentStatusByOrder, updateYocoPaymentId, getOrderIdByCheckoutId } from '@/lib/db';
+import { completeRegistration, updateRegistrationPaymentStatusByOrder, updateYocoPaymentId, getOrderIdByCheckoutId, getRegistrationIdsByOrderId } from '@/lib/db';
 import { logApiResponse } from '@/lib/blobLogger';
 
 // ─── Signature verification ───────────────────────────────────────────────────
@@ -138,29 +137,30 @@ async function handleEvent(event: YocoEvent) {
         await updateYocoPaymentId(checkoutId, paymentId, amount, apiCreatedDate || null);
       }
 
-      // Get orderId from yoco_api_results via checkoutId to find member IDs
+      // Get orderId from yoco_api_results via checkoutId
       const orderId = await getOrderIdByCheckoutId(checkoutId);
       if (!orderId) {
         console.warn('No orderId found for checkout', { checkoutId });
         return;
       }
 
-      // Get member IDs from Redis using orderId
-      const memberIds = await getOrderMemberIds(orderId);
+      // Get registration IDs directly from database using orderId
+      const registrationIds = await getRegistrationIdsByOrderId(orderId);
 
-      if (memberIds.length === 0) {
-        console.warn('No member IDs found for order', { orderId });
+      if (registrationIds.length === 0) {
+        console.warn('No registrations found for order', { orderId });
         return;
       }
 
-      // Complete each member's registration for this specific order
-      await Promise.all(memberIds.map(memberId => completeRegistration(memberId, orderId)));
+      // Complete each registration by registration_id (precise, no cross-pass-type updates)
+      await Promise.all(registrationIds.map(registrationId => completeRegistration(registrationId)));
 
       console.log('✅ Payment succeeded - registrations completed', {
         checkoutId,
         orderId,
         paymentId,
-        memberIds,
+        registrationIds,
+        registrationCount: registrationIds.length,
         amount: amount / 100, // Convert from cents
       });
       break;

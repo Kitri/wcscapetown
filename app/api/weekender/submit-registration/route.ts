@@ -99,13 +99,14 @@ export async function POST(request: NextRequest) {
       amountCents = (isSingle ? passInfo.single : passInfo.couple) + fridayAddon;
     }
 
-    // Generate order ID first (needed for db and Redis)
-    const orderId = await getNextOrderNumber();
-
     let primaryMemberId: number;
     let allMemberIds: number[] = [];
+    let paymentOrderId: string; // The order ID to use for Yoco payment
     
     if (isSingle) {
+      // Generate single order ID for single registration
+      paymentOrderId = await getNextOrderNumber();
+      const orderId = paymentOrderId; // Alias for consistency in single flow
       // Step 1: Find or create member
       primaryMemberId = await findOrCreateMember({
         name: registration.name,
@@ -153,7 +154,13 @@ export async function POST(request: NextRequest) {
       }
       allMemberIds = [primaryMemberId];
     } else {
-      // Couple registration
+      // Couple registration - generate separate order IDs for each member
+      const [leaderOrderId, followerOrderId] = await Promise.all([
+        getNextOrderNumber(),
+        getNextOrderNumber(),
+      ]);
+      paymentOrderId = leaderOrderId; // Use leader's order ID for Yoco payment
+      
       // Step 1: Find or create both members
       const [leaderId, followerId] = await Promise.all([
         findOrCreateMember({
@@ -192,11 +199,11 @@ export async function POST(request: NextRequest) {
         }, { status: 409 });
       }
       
-      // Handle leader registration
+      // Handle leader registration with their order ID
       let leaderRegistrationId: number | null = null;
       if (leaderReg) {
         // Existing record (pending or expired) - update it
-        await updateRegistrationForRetry(leaderId, sessionId, orderId, registration.email, passType, amountCents / 2);
+        await updateRegistrationForRetry(leaderId, sessionId, leaderOrderId, registration.email, passType, amountCents / 2);
         leaderRegistrationId = await getRegistrationIdByMemberId(leaderId);
       } else {
         leaderRegistrationId = await createRegistration({
@@ -205,7 +212,7 @@ export async function POST(request: NextRequest) {
           role: 'L',
           level: registration.leader.level,
           booking_session_id: sessionId,
-          order_id: orderId,
+          order_id: leaderOrderId,
           pass_type: passType,
           pricing_tier: priceTier,
           amount_cents: amountCents / 2,
@@ -215,11 +222,11 @@ export async function POST(request: NextRequest) {
         });
       }
       
-      // Handle follower registration
+      // Handle follower registration with their order ID
       let followerRegistrationId: number | null = null;
       if (followerReg) {
         // Existing record (pending or expired) - update it
-        await updateRegistrationForRetry(followerId, sessionId, orderId, registration.email, passType, amountCents / 2);
+        await updateRegistrationForRetry(followerId, sessionId, followerOrderId, registration.email, passType, amountCents / 2);
         followerRegistrationId = await getRegistrationIdByMemberId(followerId);
       } else {
         followerRegistrationId = await createRegistration({
@@ -228,7 +235,7 @@ export async function POST(request: NextRequest) {
           role: 'F',
           level: registration.follower.level,
           booking_session_id: sessionId,
-          order_id: orderId,
+          order_id: followerOrderId,
           pass_type: passType,
           pricing_tier: priceTier,
           amount_cents: amountCents / 2,
@@ -255,27 +262,27 @@ export async function POST(request: NextRequest) {
       allMemberIds = [leaderId, followerId];
     }
 
-    // Store member_ids in Redis keyed by orderId (for payment callback lookup)
-    await setOrderMemberIds(orderId, allMemberIds);
+    // Store member_ids in Redis keyed by paymentOrderId (for payment callback lookup)
+    await setOrderMemberIds(paymentOrderId, allMemberIds);
 
     // For waitlist registrations, return early without creating Yoco checkout
     if (isWaitlist) {
       logWeekenderEvent(sessionId, 'waitlist_registration', {
         registrationType: registration.type,
         priceTier,
-        orderId,
+        orderId: paymentOrderId,
         memberIds: allMemberIds,
       }).catch(console.error);
 
       logInfo('weekender_registration', 'Waitlist registration complete', {
         sessionId,
-        orderId,
+        orderId: paymentOrderId,
         registrationType: registration.type,
       }).catch(console.error);
 
       return NextResponse.json({
         success: true,
-        reference: orderId,
+        reference: paymentOrderId,
         isWaitlist: true,
       });
     }
@@ -285,7 +292,7 @@ export async function POST(request: NextRequest) {
       registrationType: registration.type,
       amountCents,
       priceTier,
-      orderId,
+      orderId: paymentOrderId,
       memberIds: allMemberIds,
     }).catch(console.error);
     const customerEmail = isSingle ? registration.email : registration.email;
@@ -306,11 +313,11 @@ export async function POST(request: NextRequest) {
     const yocoRequestBody = {
       amount: amountCents,
       currency: 'ZAR',
-      successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/success?ref=${orderId}&session=${sessionId}`,
-      cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/cancelled?ref=${orderId}&session=${sessionId}`,
-      failureUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/failed?ref=${orderId}&session=${sessionId}`,
+      successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/success?ref=${paymentOrderId}&session=${sessionId}`,
+      cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/cancelled?ref=${paymentOrderId}&session=${sessionId}`,
+      failureUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/bookweekender/failed?ref=${paymentOrderId}&session=${sessionId}`,
       metadata: {
-        orderId: `${orderId}`,
+        orderId: `${paymentOrderId}`,
         customerId: `MEMBER-${primaryMemberId}`,
         customerEmail,
         source: 'web_checkout',
@@ -330,7 +337,7 @@ export async function POST(request: NextRequest) {
     // Log the request (non-blocking)
     logInfo('weekender_registration', 'Creating Yoco checkout', {
       sessionId,
-      orderId,
+      orderId: paymentOrderId,
       registrationType: registration.type,
       amountCents,
     }).catch(console.error);
@@ -359,7 +366,7 @@ export async function POST(request: NextRequest) {
     // Save Yoco API result to database (non-blocking)
     // Get the primary registration ID for this order and persist
     if (yocoData.id) {
-      getRegistrationIdByOrderId(orderId).then(registrationId => {
+      getRegistrationIdByOrderId(paymentOrderId).then(registrationId => {
         if (registrationId) {
           saveYocoApiResult({
             requestTimestamp,
@@ -377,7 +384,7 @@ export async function POST(request: NextRequest) {
     if (!yocoResponse.ok) {
       logError('weekender_registration', 'Yoco API error', {
         sessionId,
-        orderId,
+        orderId: paymentOrderId,
         status: yocoResponse.status,
         response: yocoData,
       }).catch(console.error);
@@ -389,14 +396,14 @@ export async function POST(request: NextRequest) {
 
     logInfo('weekender_registration', 'Payment checkout created', {
       sessionId,
-      orderId,
+      orderId: paymentOrderId,
       checkoutId: yocoData.id,
     }).catch(console.error);
 
     return NextResponse.json({
       success: true,
       checkoutUrl: yocoData.redirectUrl,
-      reference: orderId,
+      reference: paymentOrderId,
     });
 
   } catch (error) {

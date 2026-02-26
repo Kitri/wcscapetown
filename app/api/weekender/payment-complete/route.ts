@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { logWeekenderEvent, getOrderMemberIds } from '@/lib/redis';
-import { completeRegistration } from '@/lib/db';
+import { logWeekenderEvent } from '@/lib/redis';
+import { completeRegistration, getRegistrationIdsByOrderId } from '@/lib/db';
 import { logInfo, logError } from '@/lib/blobLogger';
 
 export async function POST(request: NextRequest) {
@@ -15,18 +15,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get member_ids from Redis using orderId (reference)
-    const memberIds = await getOrderMemberIds(reference);
+    // Get registration IDs from database using orderId (reference)
+    const registrationIds = await getRegistrationIdsByOrderId(reference);
     
     // Log payment complete event in Redis (non-blocking)
     logWeekenderEvent(sessionId || reference, 'payment_complete', {
       reference,
-      memberIds,
+      registrationIds,
       completedAt: new Date().toISOString(),
     }).catch(console.error);
 
-    // Complete each member's registration for this specific order
-    await Promise.all(memberIds.map(memberId => completeRegistration(memberId, reference)));
+    // Complete each registration by registration_id
+    await Promise.all(registrationIds.map(registrationId => completeRegistration(registrationId)));
 
     logInfo('weekender_payment', 'Payment complete', { sessionId, reference }).catch(console.error);
 

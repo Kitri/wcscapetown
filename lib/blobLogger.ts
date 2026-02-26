@@ -110,13 +110,36 @@ function sanitizeForLogging(data: Record<string, unknown>): Record<string, unkno
 
 /**
  * Get the next order number for Yoco orderId
+ * Checks database to ensure uniqueness, modifies if duplicate found
  */
 export async function getNextOrderNumber(): Promise<string> {
-  // For now, use timestamp-based order number
-  // In production, you might want to use a database sequence
+  const { getDb } = await import('./db');
+  const sql = getDb();
+  
   const now = new Date();
   const year = now.getFullYear();
-  const orderNum = now.getTime().toString().slice(-6); // Last 6 digits of timestamp
+  let orderNum = now.getTime().toString().slice(-6); // Last 6 digits of timestamp
   
-  return `WKN-${year}-${orderNum.padStart(6, '0')}`;
+  let orderId = `WKN-${year}-${orderNum.padStart(6, '0')}`;
+  
+  // Check if this order_id already exists
+  const existing = await sql`
+    SELECT order_id FROM registrations WHERE order_id = ${orderId} LIMIT 1
+  `;
+  
+  // If duplicate found, increment the last digit until we find a unique one
+  let attempts = 0;
+  while (existing.length > 0 && attempts < 10) {
+    orderNum = (parseInt(orderNum) + 1).toString();
+    orderId = `WKN-${year}-${orderNum.padStart(6, '0')}`;
+    
+    const check = await sql`
+      SELECT order_id FROM registrations WHERE order_id = ${orderId} LIMIT 1
+    `;
+    
+    if (check.length === 0) break;
+    attempts++;
+  }
+  
+  return orderId;
 }
