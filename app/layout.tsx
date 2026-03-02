@@ -3,6 +3,7 @@ import Script from "next/script";
 import { League_Spartan, Inter } from "next/font/google";
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const leagueSpartan = League_Spartan({
   variable: "--font-league-spartan",
@@ -51,6 +52,7 @@ gtag('config', 'G-MK4PC9HQSE');`}
 
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
