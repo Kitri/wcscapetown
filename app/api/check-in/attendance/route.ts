@@ -1,11 +1,44 @@
 import { NextResponse } from "next/server";
-import { appendToSheet } from "@/lib/googleSheets";
-import { formatZaDateISO, parseZaDateISO } from "@/lib/zaDate";
+import { appendToSheet, getSheetValues } from "@/lib/googleSheets";
+import { formatZaDateISO, formatZaMonthYear, parseZaDateISO } from "@/lib/zaDate";
 import {
   CHECKIN_EVENT_NAME,
   CHECKIN_SPREADSHEET_ID,
 } from "@/lib/server/checkinConfig";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
+
+function parseMemberId(raw: string): number {
+  const digits = raw.replace(/[^0-9]/g, "");
+  if (!digits) return NaN;
+  const id = Number(digits);
+  return Number.isFinite(id) ? id : NaN;
+}
+
+async function lookupMemberFullName(member_id: number): Promise<string> {
+  // Only need id + first_name + surname
+  const rows = await getSheetValues(CHECKIN_SPREADSHEET_ID, "All_members!A:C");
+  for (const row of rows) {
+    const firstCell = (row[0] ?? "").trim().toLowerCase();
+    if (!firstCell || firstCell === "member_id") continue;
+
+    const id = parseMemberId(row[0] ?? "");
+    if (!Number.isFinite(id) || id !== member_id) continue;
+
+    const firstName = (row[1] ?? "").trim();
+    const surname = (row[2] ?? "").trim();
+    return `${firstName} ${surname}`.trim();
+  }
+
+  return "";
+}
+
+function isMonthlyType(type: string): boolean {
+  return (type ?? "").trim().toLowerCase().includes("monthly");
+}
+
+function normalizeBoolCell(v: boolean): string {
+  return v ? "TRUE" : "";
+}
 
 type Payload = {
   member_id?: number;
@@ -69,7 +102,93 @@ export async function POST(request: Request) {
       ],
     ]);
 
-    return NextResponse.json({ ok: true });
+    // If they PAID for a monthly pass, add them to Free Entry for the month.
+    // (Do not do this when they are just signing in with existing free entry.)
+    const paidForMonthly =
+      isMonthlyType(type) &&
+      paid_amount > 0 &&
+      (paid_via === "Cash" || paid_via === "Yoco") &&
+      !free_entry_reason;
+
+    let free_entry_added = false;
+    let free_entry_error: string | undefined;
+
+    if (paidForMonthly) {
+      try {
+        const eventLower = event.toLowerCase();
+        const isMonday =
+          eventLower.includes("monday") && eventLower.includes("plumstead");
+        const isTuesday =
+          eventLower.includes("tuesday") && eventLower.includes("pinelands");
+
+        // Only add monthly passes for Monday/Tuesday events.
+        if (!isMonday && !isTuesday) {
+          free_entry_error = "Monthly free entry is only supported for Monday or Tuesday events.";
+        } else {
+          const monthYear = formatZaMonthYear(date ?? undefined);
+          const fullName = await lookupMemberFullName(member_id);
+
+          // Avoid duplicates: if the row already exists for this month + event, don't add again.
+          const existing = await getSheetValues(
+            CHECKIN_SPREADSHEET_ID,
+            "'Free Entry'!A:I"
+          );
+
+          let alreadyExists = false;
+          for (const row of existing) {
+            const firstCell = (row[0] ?? "").trim().toLowerCase();
+            if (!firstCell || firstCell === "member_id") continue;
+
+            const id = parseMemberId(row[0] ?? "");
+            if (!Number.isFinite(id) || id !== member_id) continue;
+
+            const entryType = (row[2] ?? "").trim().toLowerCase();
+            const applicable = (row[3] ?? "").trim();
+
+            const mondayCell = (row[6] ?? "").trim().toLowerCase();
+            const tuesdayCell = (row[7] ?? "").trim().toLowerCase();
+            const monday =
+              mondayCell === "true" || mondayCell === "yes" || mondayCell === "1";
+            const tuesday =
+              tuesdayCell === "true" ||
+              tuesdayCell === "yes" ||
+              tuesdayCell === "1";
+
+            if (
+              entryType === "monthly" &&
+              applicable === monthYear &&
+              monday === isMonday &&
+              tuesday === isTuesday
+            ) {
+              alreadyExists = true;
+              break;
+            }
+          }
+
+          if (!alreadyExists) {
+            await appendToSheet(CHECKIN_SPREADSHEET_ID, "'Free Entry'!A:I", [
+              [
+                member_id,
+                fullName,
+                "monthly",
+                monthYear,
+                "Member has paid for the month, they can just sign in",
+                "monthly",
+                normalizeBoolCell(isMonday),
+                normalizeBoolCell(isTuesday),
+                "", // Social column
+              ],
+            ]);
+            free_entry_added = true;
+          }
+        }
+      } catch (e) {
+        console.error("Monthly free entry append error:", e);
+        free_entry_error = e instanceof Error ? e.message : "Failed";
+      }
+    }
+
+    return NextResponse.json({ ok: true, free_entry_added, free_entry_error });
   } catch (error) {
     console.error("Attendance append error:", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });

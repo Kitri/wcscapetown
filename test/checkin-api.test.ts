@@ -286,7 +286,7 @@ describe("POST /api/check-in/attendance", () => {
 
     const res = await POST(jsonRequest("http://localhost/api/check-in/attendance", payload));
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true });
+    expect(await res.json()).toMatchObject({ ok: true });
 
     expect(mockAppendToSheet).toHaveBeenCalledTimes(1);
     const [spreadsheetId, range, rows] = mockAppendToSheet.mock.calls[0];

@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import Link from "next/link";
 
 export default function TShirtsPage() {
   return (
@@ -20,12 +21,12 @@ export default function TShirtsPage() {
             Thank you to everyone who participated! The t-shirt poll is now closed and we are processing the results.
           </p>
 
-          <a
+          <Link
             href="/"
             className="inline-block bg-yellow-accent text-text-dark px-8 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all"
           >
             Back to Home
-          </a>
+          </Link>
         </div>
       </main>
     </>

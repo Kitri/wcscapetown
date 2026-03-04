@@ -60,7 +60,8 @@ function parseMemberId(raw: string): number {
 function matchesApplicableDate(
   applicable: string,
   todayISO: string,
-  ctx: { monthYear: string; isMonday: boolean }
+  ctx: { monthYear: string; isMonday: boolean },
+  opts: { hasEventFilters: boolean }
 ): number {
   // returns priority (higher is better), or 0 if no match
   const v = applicable.trim();
@@ -71,8 +72,13 @@ function matchesApplicableDate(
     return v === todayISO ? 3 : 0;
   }
 
-  // Month-year (e.g. "February 2026") applies only on Mondays of that month
+  // Month-year (e.g. "February 2026")
+  // - If this row has event filters (Monday/Tues/Social columns), let the event filters decide the day.
+  // - If it has NO event filters, keep the legacy behavior: apply only on Mondays.
   if (/^[A-Za-z]+\s+\d{4}$/.test(v)) {
+    if (opts.hasEventFilters) {
+      return v === ctx.monthYear ? 2 : 0;
+    }
     return v === ctx.monthYear && ctx.isMonday ? 2 : 0;
   }
 
@@ -138,7 +144,14 @@ export async function GET(request: Request) {
       // Check event filter if an event is specified
       if (eventParam && !matchesEvent(row, eventParam)) continue;
 
-      const priority = matchesApplicableDate(applicable_date ?? "", todayISO, ctx);
+      const hasEventFilters =
+        parseBoolean(row[6] ?? "") ||
+        parseBoolean(row[7] ?? "") ||
+        parseBoolean(row[8] ?? "");
+
+      const priority = matchesApplicableDate(applicable_date ?? "", todayISO, ctx, {
+        hasEventFilters,
+      });
       if (!priority) continue;
 
       const match: FreeEntryMatch & { priority: number } = {
