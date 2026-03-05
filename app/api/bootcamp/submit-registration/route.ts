@@ -4,7 +4,6 @@ import {
   createRegistration, 
   findOrCreateMember, 
   createBootcampDetails,
-  getRegistrationIdByMemberId,
   saveYocoApiResult,
 } from '@/lib/db';
 import { logApiResponse, logError, logInfo } from '@/lib/blobLogger';

@@ -336,6 +336,12 @@ export default function BookBootcamp() {
               >
                 Info
               </button>
+              <Link
+                href="/check-registration?source=bootcamp"
+                className="rounded-full px-4 py-2 text-sm font-semibold border border-white/30 text-white/90 hover:bg-white/15 hover:border-yellow-accent transition-colors"
+              >
+                Check registration
+              </Link>
             </div>
           </div>
         </section>
@@ -791,10 +797,7 @@ export default function BookBootcamp() {
                   </p>
                   <p>
                     Want to feel extra prepared before the Weekender? Build confidence with a bootcamp first:{' '}
-                    <Link href="/bookbootcamp?tab=booking" className="text-pink-accent hover:text-yellow-accent underline font-semibold">
-                      Book a bootcamp
-                    </Link>
-                    .
+                      Book a bootcamp (Book link top of page)
                   </p>
                   <p>
                     And if you&apos;re unsure which track is right for you, our teachers are here to help you prepare — please reach out at{' '}

@@ -83,22 +83,29 @@ function SuccessContent() {
           </h1>
           
           <p className="text-text-dark/70 mb-6">
-            Your registration for the WCS Cape Town Weekender is confirmed.
+            Booking confirmed for the WCS Cape Town Weekender.
           </p>
 
           <div className="bg-cloud-dancer rounded-lg p-4 mb-6">
-            <p className="text-sm text-text-dark/60 mb-1">Reference</p>
+            <p className="text-sm text-text-dark/60 mb-1">Order number</p>
             <p className="font-mono text-sm font-semibold">{reference || 'N/A'}</p>
           </div>
 
           <div className="text-left bg-yellow-accent/10 rounded-lg p-4 mb-6">
             <p className="font-semibold mb-2">What&apos;s next?</p>
             <ul className="text-sm text-text-dark/80 space-y-1">
-              <li>• You&apos;ll receive a confirmation email shortly</li>
+              <li>• Keep your order number for your records</li>
               <li>• Save the date: March 20–22, 2026</li>
-              <li>• Check the website for any schedule and venue updates </li>
+              <li>• Check the website for any schedule and venue updates</li>
             </ul>
           </div>
+
+          <p className="text-sm text-text-dark/70 mb-6">
+            Questions? Email{" "}
+            <a href="mailto:weekender@wcscapetown.co.za" className="text-pink-accent hover:text-yellow-accent underline">
+              weekender@wcscapetown.co.za
+            </a>
+          </p>
 
           <Link
             href="/weekender"

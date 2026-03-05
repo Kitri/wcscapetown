@@ -3,6 +3,7 @@ import { logWeekenderEvent, setOrderMemberIds } from '@/lib/redis';
 import { 
   createRegistration, 
   findOrCreateMember, 
+  findMemberByName,
   getExistingRegistration,
   updateRegistrationForRetry,
   createDayPassDetails,
@@ -104,6 +105,17 @@ export async function POST(request: NextRequest) {
     let paymentOrderId: string; // The order ID to use for Yoco payment
     
     if (isSingle) {
+      // Level 2 requires teacher/admin approval for people not yet in members table
+      const existingMember = await findMemberByName(registration.name, registration.surname);
+      if (registration.level === 2 && !existingMember) {
+        return NextResponse.json(
+          {
+            error: 'level2_requires_approval',
+            message: `Level 2 requires teacher approval for new dancers. ${registration.name} ${registration.surname}, please reach out to admin (weekender@wcscapetown.co.za) so we can verify your experience.`,
+          },
+          { status: 403 }
+        );
+      }
       // Generate single order ID for single registration
       paymentOrderId = await getNextOrderNumber();
       const orderId = paymentOrderId; // Alias for consistency in single flow
@@ -154,6 +166,27 @@ export async function POST(request: NextRequest) {
       }
       allMemberIds = [primaryMemberId];
     } else {
+      // Level 2 requires teacher/admin approval for people not yet in members table
+      const [leaderExistingMember, followerExistingMember] = await Promise.all([
+        findMemberByName(registration.leader.name, registration.leader.surname),
+        findMemberByName(registration.follower.name, registration.follower.surname),
+      ]);
+      const level2NeedsApproval: string[] = [];
+      if (registration.leader.level === 2 && !leaderExistingMember) {
+        level2NeedsApproval.push(`${registration.leader.name} ${registration.leader.surname} (Leader)`);
+      }
+      if (registration.follower.level === 2 && !followerExistingMember) {
+        level2NeedsApproval.push(`${registration.follower.name} ${registration.follower.surname} (Follower)`);
+      }
+      if (level2NeedsApproval.length > 0) {
+        return NextResponse.json(
+          {
+            error: 'level2_requires_approval',
+            message: `Level 2 requires teacher approval for new dancers. Please ask admin to verify: ${level2NeedsApproval.join(', ')}. Contact: weekender@wcscapetown.co.za`,
+          },
+          { status: 403 }
+        );
+      }
       // Couple registration - generate separate order IDs for each member
       const [leaderOrderId, followerOrderId] = await Promise.all([
         getNextOrderNumber(),

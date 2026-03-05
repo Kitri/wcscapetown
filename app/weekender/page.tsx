@@ -94,11 +94,14 @@ export default async function Weekender({
           </div>
 
           <div className="px-[5%] py-10 text-center">
-            <p className="text-2xl md:text-4xl font-semibold mb-4">March 20–22, 2026</p>
+            <p className="text-2xl md:text-4xl font-semibold mb-2">March 20–22, 2026</p>
+            <p className="text-base md:text-lg text-white/85 mb-4">
+              Hellenic Community Centre, Greenpoint
+            </p>
             
             <Link
               href="/bookweekender"
-              className="inline-block bg-yellow-accent text-text-dark px-8 py-4 rounded-lg font-bold text-lg md:text-xl hover:-translate-y-1 hover:shadow-lg hover:shadow-yellow-accent/30 transition-all animate-pulse"
+              className="inline-block bg-yellow-accent text-text-dark px-8 py-4 rounded-lg font-bold text-lg md:text-xl hover:-translate-y-1 hover:shadow-lg hover:shadow-yellow-accent/30 transition-all"
             >
               🌟 Book Your Pass Now 🌟
             </Link>
@@ -109,6 +112,14 @@ export default async function Weekender({
               >
                 Unsure if it&apos;s worth it as a WCS newcomer? →
               </Link>
+              <div className="mt-3">
+                <Link
+                  href="/check-registration?source=weekender"
+                  className="inline-block bg-white/10 border border-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/15 transition-colors"
+                >
+                  Check my registration
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -148,21 +159,21 @@ export default async function Weekender({
               <div className="grid grid-cols-3 gap-2">
                 <label
                   htmlFor="weekender-tab-pros"
-                  className="tab-pros cursor-pointer select-none inline-flex items-center justify-center rounded-full bg-white/10 px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold border-2 border-pink-accent/80 text-white/90 hover:bg-white/15 hover:border-yellow-accent transition-colors"
+                  className="tab-pros cursor-pointer select-none inline-flex items-center justify-center rounded-full bg-white/10 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-semibold border-2 border-pink-accent/80 text-white/90 hover:bg-white/15 hover:border-yellow-accent transition-colors"
                 >
                   <span className="sm:hidden">Pros</span>
                   <span className="hidden sm:inline">Meet our pros</span>
                 </label>
                 <label
                   htmlFor="weekender-tab-schedule"
-                  className="tab-schedule cursor-pointer select-none inline-flex items-center justify-center rounded-full bg-white/10 px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold border-2 border-pink-accent/80 text-white/90 hover:bg-white/15 hover:border-yellow-accent transition-colors"
+                  className="tab-schedule cursor-pointer select-none inline-flex items-center justify-center rounded-full bg-white/10 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-semibold border-2 border-pink-accent/80 text-white/90 hover:bg-white/15 hover:border-yellow-accent transition-colors"
                 >
                   <span className="sm:hidden">Schedule</span>
                   <span className="hidden sm:inline">Preliminary schedule</span>
                 </label>
                 <label
                   htmlFor="weekender-tab-passes"
-                  className="tab-passes cursor-pointer select-none inline-flex items-center justify-center rounded-full bg-white/10 px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold border-2 border-pink-accent/80 text-white/90 hover:bg-white/15 hover:border-yellow-accent transition-colors"
+                  className="tab-passes cursor-pointer select-none inline-flex items-center justify-center rounded-full bg-white/10 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-semibold border-2 border-pink-accent/80 text-white/90 hover:bg-white/15 hover:border-yellow-accent transition-colors"
                 >
                   <span className="sm:hidden">Passes</span>
                   <span className="hidden sm:inline">Pass options</span>
@@ -946,7 +957,16 @@ export default async function Weekender({
             <div className="space-y-8">
               <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">
                 <h3 className="font-spartan font-semibold text-2xl mb-4">📍 Venue</h3>
-                <p className="text-text-dark/80">Cape Town Southern Suburbs — details TBC.</p>
+                <p className="text-text-dark/80">
+                  <a
+                    href="https://maps.app.goo.gl/wtpLbBfVesBiajXq7"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-pink-accent hover:text-yellow-accent underline font-semibold"
+                  >
+                    Hellenic Community Centre, Greenpoint
+                  </a>
+                </p>
               </div>
 
               <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">

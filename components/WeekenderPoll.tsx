@@ -19,6 +19,17 @@ export default function WeekenderPoll() {
         <p className="text-lg md:text-xl font-medium mb-3">
           March 20-22, 2026 • Cape Town
         </p>
+        <p className="text-base md:text-lg text-text-dark/80 mb-4">
+          Venue:{" "}
+          <a
+            href="https://maps.app.goo.gl/wtpLbBfVesBiajXq7"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-pink-accent hover:text-yellow-accent underline font-semibold"
+          >
+            Hellenic Community Centre, Greenpoint
+          </a>
+        </p>
         
         {/* Instructor Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-[700px] mx-auto mb-6">

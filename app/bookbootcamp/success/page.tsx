@@ -30,13 +30,19 @@ function SuccessContent() {
       </div>
       <h2 className="font-spartan font-semibold text-2xl mb-2">Payment Successful!</h2>
       <p className="text-text-dark/70 mb-4">
-        Thank you for registering for the bootcamp. You&apos;ll receive a confirmation email shortly.
+        Booking confirmed for the bootcamp.
       </p>
       {reference && (
         <p className="text-sm text-text-dark/60 mb-6">
-          Reference: <span className="font-mono font-semibold">{reference}</span>
+          Order number: <span className="font-mono font-semibold">{reference}</span>
         </p>
       )}
+      <p className="text-sm text-text-dark/70 mb-6">
+        Questions? Email{" "}
+        <a href="mailto:community@wcscapetown.co.za" className="text-pink-accent hover:text-yellow-accent underline">
+          community@wcscapetown.co.za
+        </a>
+      </p>
       <div className="space-y-3">
         <Link
           href="/whats-on#bootcamps"

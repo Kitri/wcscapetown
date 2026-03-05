@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 type Member = {
@@ -64,6 +65,7 @@ const CHECKIN_EVENT_OPTIONS = [
 ] as const;
 
 type CheckinEvent = (typeof CHECKIN_EVENT_OPTIONS)[number];
+type CheckinWeekday = "Monday" | "Tuesday" | "Thursday" | "Saturday";
 
 function getZaTodayISO(): string {
   // en-CA gives YYYY-MM-DD
@@ -97,6 +99,45 @@ function defaultEventForDateISO(dateISO: string): CheckinEvent {
     default:
       return "Monday Plumstead";
   }
+}
+
+function weekdayForEvent(event: CheckinEvent): CheckinWeekday {
+  if (event.startsWith("Monday")) return "Monday";
+  if (event.startsWith("Tuesday")) return "Tuesday";
+  if (event.startsWith("Thursday")) return "Thursday";
+  return "Saturday";
+}
+
+function mostRecentDateForWeekday(targetWeekday: CheckinWeekday, referenceDateISO: string): string {
+  const validReference = /^\d{4}-\d{2}-\d{2}$/.test(referenceDateISO)
+    ? referenceDateISO
+    : getZaTodayISO();
+
+  const base = new Date(`${validReference}T12:00:00+02:00`);
+  if (Number.isNaN(base.getTime())) return getZaTodayISO();
+
+  const dayIndex: Record<string, number> = {
+    Sunday: 0,
+    Monday: 1,
+    Tuesday: 2,
+    Wednesday: 3,
+    Thursday: 4,
+    Friday: 5,
+    Saturday: 6,
+  };
+
+  const currentWeekday = weekdayZa(validReference);
+  const currentIdx = dayIndex[currentWeekday];
+  const targetIdx = dayIndex[targetWeekday];
+
+  if (currentIdx === undefined || targetIdx === undefined) {
+    return validReference;
+  }
+
+  const daysBack = (currentIdx - targetIdx + 7) % 7;
+  base.setDate(base.getDate() - daysBack);
+
+  return base.toLocaleDateString("en-CA", { timeZone: ZA_TIME_ZONE });
 }
 
 function formatZar(amount: number): string {
@@ -647,6 +688,13 @@ export default function CheckInClient({
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
 
+  const handleEventChange = useCallback((nextEvent: CheckinEvent) => {
+    setSelectedEvent(nextEvent);
+    setSelectedDateISO((currentDateISO) =>
+      mostRecentDateForWeekday(weekdayForEvent(nextEvent), currentDateISO)
+    );
+  }, []);
+
   // Keep date/event selection for this browser tab (session).
   useEffect(() => {
     try {
@@ -677,11 +725,10 @@ export default function CheckInClient({
     }
   }, [selectedEvent, selectedDateISO]);
 
-  // On the login screen, if the date changes and the event is still the default for the previous date,
+  // If the date changes and the event is still the default for the previous date,
   // auto-pick the default event for the new date.
   const prevDateISORef = useRef<string>(selectedDateISO);
   useEffect(() => {
-    if (authed) return;
 
     const prev = prevDateISORef.current;
     if (prev === selectedDateISO) return;
@@ -692,7 +739,7 @@ export default function CheckInClient({
     }
 
     prevDateISORef.current = selectedDateISO;
-  }, [authed, selectedDateISO, selectedEvent]);
+  }, [selectedDateISO, selectedEvent]);
 
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<Member[]>([]);
@@ -1220,7 +1267,8 @@ export default function CheckInClient({
               <div className="font-semibold">Event</div>
               <select
                 value={selectedEvent}
-                onChange={(e) => setSelectedEvent(e.target.value as CheckinEvent)}
+                onChange={(e) => handleEventChange(e.target.value as CheckinEvent)}
+
                 className="w-full px-4 py-3 rounded-xl border-2 border-text-dark/20 text-lg bg-white"
               >
                 {CHECKIN_EVENT_OPTIONS.map((opt) => (
@@ -1297,6 +1345,12 @@ export default function CheckInClient({
           </div>
 
           <div className="flex items-center gap-3">
+            <Link
+              href="/admin"
+              className="px-4 py-3 rounded-xl border-2 border-text-dark/20 bg-white text-text-dark font-semibold"
+            >
+              Admin Portal
+            </Link>
             {!selected && !addModalOpen && (
               <button
                 type="button"
@@ -1319,6 +1373,34 @@ export default function CheckInClient({
           </div>
         </div>
 
+        <div className="bg-white/60 rounded-2xl border border-text-dark/10 p-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label className="space-y-2 block">
+              <div className="font-semibold">Event</div>
+              <select
+                value={selectedEvent}
+                onChange={(e) => handleEventChange(e.target.value as CheckinEvent)}
+                className="w-full px-4 py-3 rounded-xl border-2 border-text-dark/20 text-lg bg-white"
+              >
+                {CHECKIN_EVENT_OPTIONS.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="space-y-2 block">
+              <div className="font-semibold">Date</div>
+              <input
+                type="date"
+                value={selectedDateISO}
+                onChange={(e) => setSelectedDateISO(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl border-2 border-text-dark/20 text-lg bg-white"
+              />
+            </label>
+          </div>
+        </div>
         {banner && (
           <div
             className={

@@ -503,7 +503,7 @@ export default function BookWeekender() {
 
       if (!response.ok) {
         setStep('single-form');
-        if (data.error === 'already_registered') {
+        if (data.error === 'already_registered' || data.error === 'level2_requires_approval') {
           setError(data.message);
         } else {
           throw new Error(data.error || 'Failed to submit registration');
@@ -572,7 +572,7 @@ export default function BookWeekender() {
 
       if (!response.ok) {
         setStep('couple-form');
-        if (data.error === 'already_registered') {
+        if (data.error === 'already_registered' || data.error === 'level2_requires_approval') {
           setError(data.message);
         } else {
           throw new Error(data.error || 'Failed to submit registration');
@@ -882,6 +882,9 @@ export default function BookWeekender() {
             {step === 'single-form' && (
               <form onSubmit={handleSubmitSingle} className="bg-white rounded-xl p-8 shadow-lg">
                 <h2 className="font-spartan font-semibold text-2xl mb-6">Your Details</h2>
+                <p className="text-sm text-pink-accent/90 mb-6">
+                  New to our system and choosing Level 2? Please reach out to admin first so a teacher can verify your experience.
+                </p>
                 
                 <div className="space-y-4">
                   <div>
@@ -968,6 +971,7 @@ export default function BookWeekender() {
                       </label>
                     </div>
                     <p className="text-xs text-text-dark/60 mt-1">Not sure? Choose Level 1 — we can adjust later.</p>
+                    <p className="text-xs text-pink-accent mt-1">Level 2 for new dancers requires teacher approval via admin.</p>
                   </div>
                 </div>
 
@@ -1024,6 +1028,9 @@ export default function BookWeekender() {
             {step === 'couple-form' && (
               <form onSubmit={handleSubmitCouple} className="bg-white rounded-xl p-8 shadow-lg">
                 <h2 className="font-spartan font-semibold text-2xl mb-6">Couple Registration</h2>
+                <p className="text-sm text-pink-accent/90 mb-6">
+                  If either partner is new to our system and selects Level 2, please contact admin so a teacher can verify experience first.
+                </p>
                 
                 {/* Leader Section */}
                 <div className="mb-6">

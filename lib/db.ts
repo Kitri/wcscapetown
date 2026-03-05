@@ -90,32 +90,36 @@ export async function createMember(member: Omit<Member, 'member_id' | 'created_a
 export async function createRegistration(registration: Omit<Registration, 'id' | 'created_at'>): Promise<number> {
   const sql = getDb();
   
-  // Check if a registration already exists for this member_id AND pass_type
-  const existing = await sql`
-    SELECT id FROM registrations 
-    WHERE member_id = ${registration.member_id} 
-    AND pass_type = ${registration.pass_type}
-    LIMIT 1
-  `;
-  
-  if (existing.length > 0) {
-    // Update existing registration for this pass type
-    await sql`
-      UPDATE registrations SET
-        email = ${registration.email},
-        role = ${registration.role},
-        level = ${registration.level},
-        booking_session_id = ${registration.booking_session_id},
-        order_id = ${registration.order_id},
-        price_tier = ${registration.pricing_tier},
-        amount_cents = ${registration.amount_cents},
-        payment_status = ${registration.payment_status},
-        registration_status = ${registration.registration_status},
-        registration_type = ${registration.registration_type}
-      WHERE member_id = ${registration.member_id}
+  // Bootcamps are bookable per-session/per-slot, so each bootcamp booking must create
+  // its own registration row even when member_id and pass_type are the same.
+  if (registration.pass_type !== 'bootcamp') {
+    // Check if a registration already exists for this member_id AND pass_type
+    const existing = await sql`
+      SELECT id FROM registrations 
+      WHERE member_id = ${registration.member_id} 
       AND pass_type = ${registration.pass_type}
+      LIMIT 1
     `;
-    return existing[0].id;
+    
+    if (existing.length > 0) {
+      // Update existing registration for this pass type
+      await sql`
+        UPDATE registrations SET
+          email = ${registration.email},
+          role = ${registration.role},
+          level = ${registration.level},
+          booking_session_id = ${registration.booking_session_id},
+          order_id = ${registration.order_id},
+          price_tier = ${registration.pricing_tier},
+          amount_cents = ${registration.amount_cents},
+          payment_status = ${registration.payment_status},
+          registration_status = ${registration.registration_status},
+          registration_type = ${registration.registration_type}
+        WHERE member_id = ${registration.member_id}
+        AND pass_type = ${registration.pass_type}
+      `;
+      return existing[0].id;
+    }
   }
   
   // Insert new registration
@@ -282,6 +286,162 @@ export async function getExistingRegistration(memberId: number): Promise<{
     isExpired,
     minutesRemaining: Math.ceil(minutesRemaining),
   };
+}
+
+export async function getRegistrationsByEmailOrOrder(
+  lookupValue: string,
+  source: 'weekender' | 'bootcamp' | 'all' = 'all'
+): Promise<Array<{
+  id: number;
+  memberId: number;
+  name: string;
+  surname: string;
+  email: string;
+  role: string;
+  level: number;
+  passType: string;
+  priceTier: string;
+  amountCents: number;
+  paymentStatus: string;
+  registrationStatus: string;
+  registrationType: string;
+  orderId: string;
+  workshopDay: string | null;
+  partyAddOn: boolean | null;
+  bootcampType: string | null;
+  createdAt: string;
+}>> {
+  const sql = getDb();
+  const lookup = lookupValue.trim();
+  if (!lookup) return [];
+
+  const byEmail = lookup.includes('@');
+  const normalizedSource = source === 'weekender' || source === 'bootcamp' ? source : 'all';
+
+  const primaryMemberResult = byEmail
+    ? normalizedSource === 'weekender'
+      ? await sql`
+          SELECT member_id
+          FROM registrations
+          WHERE LOWER(email) = LOWER(${lookup})
+          AND pass_type <> 'bootcamp'
+          ORDER BY created_at DESC
+          LIMIT 1
+        `
+      : normalizedSource === 'bootcamp'
+        ? await sql`
+            SELECT member_id
+            FROM registrations
+            WHERE LOWER(email) = LOWER(${lookup})
+            AND pass_type = 'bootcamp'
+            ORDER BY created_at DESC
+            LIMIT 1
+          `
+        : await sql`
+            SELECT member_id
+            FROM registrations
+            WHERE LOWER(email) = LOWER(${lookup})
+            ORDER BY created_at DESC
+            LIMIT 1
+          `
+    : normalizedSource === 'weekender'
+      ? await sql`
+          SELECT member_id
+          FROM registrations
+          WHERE order_id = ${lookup}
+          AND pass_type <> 'bootcamp'
+          ORDER BY created_at DESC
+          LIMIT 1
+        `
+      : normalizedSource === 'bootcamp'
+        ? await sql`
+            SELECT member_id
+            FROM registrations
+            WHERE order_id = ${lookup}
+            AND pass_type = 'bootcamp'
+            ORDER BY created_at DESC
+            LIMIT 1
+          `
+        : await sql`
+            SELECT member_id
+            FROM registrations
+            WHERE order_id = ${lookup}
+            ORDER BY created_at DESC
+            LIMIT 1
+          `;
+
+  if (primaryMemberResult.length === 0) return [];
+
+  const primaryMemberId = Number(primaryMemberResult[0].member_id);
+  const relatedMemberIds = new Set<number>([primaryMemberId]);
+
+  const coupleLinks = await sql`
+    SELECT lead_id, follow_id
+    FROM couple_registrations
+    WHERE lead_id = ${primaryMemberId}
+    OR follow_id = ${primaryMemberId}
+  `;
+
+  for (const link of coupleLinks) {
+    if (link.lead_id) relatedMemberIds.add(Number(link.lead_id));
+    if (link.follow_id) relatedMemberIds.add(Number(link.follow_id));
+  }
+
+  const rowsByMember = await Promise.all(
+    Array.from(relatedMemberIds).map((memberId) =>
+      sql`
+        SELECT
+          r.id,
+          r.member_id,
+          m.name,
+          m.surname,
+          r.email,
+          r.role,
+          r.level,
+          r.pass_type,
+          r.price_tier,
+          r.amount_cents,
+          r.payment_status,
+          r.registration_status,
+          r.registration_type,
+          r.order_id,
+          dp.workshop_day,
+          dp.party_add_on,
+          bd.bootcamp_type,
+          r.created_at
+        FROM registrations r
+        INNER JOIN members m ON m.member_id = r.member_id
+        LEFT JOIN day_pass_details dp ON dp.registration_id = r.id
+        LEFT JOIN bootcamp_details bd ON bd.registration_id = r.id
+        WHERE r.member_id = ${memberId}
+      `
+    )
+  );
+
+  const result = rowsByMember
+    .flat()
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+  return result.map((row) => ({
+    id: row.id,
+    memberId: row.member_id,
+    name: row.name,
+    surname: row.surname,
+    email: row.email,
+    role: row.role,
+    level: row.level,
+    passType: row.pass_type,
+    priceTier: row.price_tier,
+    amountCents: row.amount_cents,
+    paymentStatus: row.payment_status,
+    registrationStatus: row.registration_status,
+    registrationType: row.registration_type,
+    orderId: row.order_id,
+    workshopDay: row.workshop_day,
+    partyAddOn: row.party_add_on,
+    bootcampType: row.bootcamp_type,
+    createdAt: row.created_at,
+  }));
 }
 
 // Update existing registration for retry (by member_id)
