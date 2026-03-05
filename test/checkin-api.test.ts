@@ -16,12 +16,14 @@ const mockFormatZaDateISO = jest.fn();
 const mockFormatZaMonthYear = jest.fn();
 const mockIsZaMonday = jest.fn();
 const mockParseZaDateISO = jest.fn();
+const mockGetZaWeekday = jest.fn();
 
 jest.mock("@/lib/zaDate", () => ({
   formatZaDateISO: (...args: unknown[]) => mockFormatZaDateISO(...args),
   formatZaMonthYear: (...args: unknown[]) => mockFormatZaMonthYear(...args),
   isZaMonday: (...args: unknown[]) => mockIsZaMonday(...args),
   parseZaDateISO: (...args: unknown[]) => mockParseZaDateISO(...args),
+  getZaWeekday: (...args: unknown[]) => mockGetZaWeekday(...args),
 }));
 
 function jsonRequest(url: string, body: unknown): Request {
@@ -71,10 +73,12 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
     mockFormatZaMonthYear.mockReset();
     mockIsZaMonday.mockReset();
     mockParseZaDateISO.mockReset();
+    mockGetZaWeekday.mockReset();
 
     mockFormatZaDateISO.mockImplementation(() => "2026-02-03");
     mockFormatZaMonthYear.mockImplementation(() => "February 2026");
     mockIsZaMonday.mockImplementation(() => true);
+    mockGetZaWeekday.mockImplementation(() => "Tuesday");
   });
 
   it("extracts numeric member_id from mixed input and rejects non-numeric input", async () => {
@@ -161,6 +165,96 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
     const data = await res.json();
     expect(data.applies).toBe(true);
     expect(data.entry_type).toBe("Parsed");
+  });
+
+  it("applies Thursday Tuesday combo as free entry when member attended Tuesday in same week", async () => {
+    const { GET } = await import("../app/api/check-in/free-entry/route");
+
+    mockParseZaDateISO.mockImplementation((v?: unknown) => {
+      if (v === "2026-02-05") return new Date("2026-02-05T12:00:00+02:00");
+      return null;
+    });
+
+    mockGetZaWeekday.mockImplementation((d?: unknown) => {
+      if (d instanceof Date && d.toISOString().startsWith("2026-02-05")) return "Thursday";
+      if (d instanceof Date && d.toISOString().startsWith("2026-02-03")) return "Tuesday";
+      return "Thursday";
+    });
+
+    mockFormatZaDateISO.mockImplementation((d?: unknown) => {
+      if (d instanceof Date && d.toISOString().startsWith("2026-02-03")) return "2026-02-03";
+      return "2026-02-05";
+    });
+
+    mockGetSheetValues.mockImplementation(async (_sheetId: string, range: string) => {
+      if (range === "'Free Entry'!A:I") {
+        return [["member_id", "", "entry_type", "applicable_date", "details", "reason"]];
+      }
+      if (range === "Attendance!A:H") {
+        return [["123", "2026-02-03", "Tuesday Pinelands", "Cash", "50", "Standard entry", "", ""]];
+      }
+      return [];
+    });
+
+    const req = new Request(
+      "http://localhost/api/check-in/free-entry?member_id=123&date=2026-02-05&event=Thursday%20Pinelands",
+      { method: "GET" }
+    );
+
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data).toMatchObject({
+      applies: true,
+      entry_type: "Tuesday combo",
+      reason: "tuesday combo",
+      paid_amount_override: 0,
+    });
+  });
+
+  it("returns Thursday Tuesday combo with R25 override when Tuesday attendance was teacher with no payment", async () => {
+    const { GET } = await import("../app/api/check-in/free-entry/route");
+
+    mockParseZaDateISO.mockImplementation((v?: unknown) => {
+      if (v === "2026-02-05") return new Date("2026-02-05T12:00:00+02:00");
+      return null;
+    });
+
+    mockGetZaWeekday.mockImplementation((d?: unknown) => {
+      if (d instanceof Date && d.toISOString().startsWith("2026-02-05")) return "Thursday";
+      if (d instanceof Date && d.toISOString().startsWith("2026-02-03")) return "Tuesday";
+      return "Thursday";
+    });
+
+    mockFormatZaDateISO.mockImplementation((d?: unknown) => {
+      if (d instanceof Date && d.toISOString().startsWith("2026-02-03")) return "2026-02-03";
+      return "2026-02-05";
+    });
+
+    mockGetSheetValues.mockImplementation(async (_sheetId: string, range: string) => {
+      if (range === "'Free Entry'!A:I") {
+        return [["member_id", "", "entry_type", "applicable_date", "details", "reason"]];
+      }
+      if (range === "Attendance!A:H") {
+        return [["123", "2026-02-03", "Tuesday Pinelands", "", "0", "Teacher", "", ""]];
+      }
+      return [];
+    });
+
+    const req = new Request(
+      "http://localhost/api/check-in/free-entry?member_id=123&date=2026-02-05&event=Thursday%20Pinelands",
+      { method: "GET" }
+    );
+
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data).toMatchObject({
+      applies: true,
+      entry_type: "Tuesday combo (R25)",
+      reason: "tuesday combo",
+      paid_amount_override: 25,
+    });
   });
 });
 

@@ -3,6 +3,7 @@ import { getSheetValues } from "@/lib/googleSheets";
 import {
   formatZaDateISO,
   formatZaMonthYear,
+  getZaWeekday,
   isZaMonday,
   parseZaDateISO,
 } from "@/lib/zaDate";
@@ -15,6 +16,7 @@ type FreeEntryMatch = {
   details: string;
   reason: string;
   applicable_date: string;
+  paid_amount_override?: number;
 };
 
 function parseBoolean(raw: string): boolean {
@@ -96,6 +98,81 @@ function matchesApplicableDate(
   return 0;
 }
 
+function isThursdayContext(event: string, date: Date | null): boolean {
+  if ((event ?? "").toLowerCase().includes("thursday")) return true;
+  if (!date) return false;
+  return getZaWeekday(date) === "Thursday";
+}
+
+function tuesdayDateForSameWeekIso(baseDate: Date): string {
+  const weekday = getZaWeekday(baseDate);
+  const weekdayIndex: Record<string, number> = {
+    Sunday: 0,
+    Monday: 1,
+    Tuesday: 2,
+    Wednesday: 3,
+    Thursday: 4,
+    Friday: 5,
+    Saturday: 6,
+  };
+
+  const current = weekdayIndex[weekday];
+  const tuesday = weekdayIndex["Tuesday"];
+  if (current === undefined) {
+    return formatZaDateISO(baseDate);
+  }
+
+  const adjusted = new Date(baseDate.getTime());
+  adjusted.setDate(adjusted.getDate() - (current - tuesday));
+  return formatZaDateISO(adjusted);
+}
+
+function parseAmount(raw: string): number {
+  const cleaned = String(raw ?? "").replace(/[^0-9.]/g, "");
+  const value = Number(cleaned);
+  return Number.isFinite(value) ? value : 0;
+}
+
+function isTeacherEntryType(rawType: string): boolean {
+  return (rawType ?? "").trim().toLowerCase().includes("teach");
+}
+
+async function getTuesdayComboForMember(memberId: number, thursdayDate: Date): Promise<FreeEntryMatch | null> {
+  const attendanceRows = await getSheetValues(CHECKIN_SPREADSHEET_ID, "Attendance!A:H");
+  const tuesdayISO = tuesdayDateForSameWeekIso(thursdayDate);
+
+  for (const row of attendanceRows) {
+    const firstCell = (row[0] ?? "").trim().toLowerCase();
+    if (!firstCell || firstCell === "member_id") continue;
+
+    const id = parseMemberId(row[0] ?? "");
+    if (!Number.isFinite(id) || id !== memberId) continue;
+
+    const attendanceDate = (row[1] ?? "").trim();
+    if (attendanceDate !== tuesdayISO) continue;
+
+    const event = (row[2] ?? "").trim().toLowerCase();
+    if (!event.includes("tuesday")) continue;
+
+    const type = (row[5] ?? "").trim();
+    const paidAmount = parseAmount(row[4] ?? "");
+    const teacherNoPay = isTeacherEntryType(type) && paidAmount <= 0;
+
+    return {
+      member_id: memberId,
+      entry_type: teacherNoPay ? "Tuesday combo (R25)" : "Tuesday combo",
+      details: teacherNoPay
+        ? "Attended Tuesday as teacher. Thursday combo rate applies."
+        : "Attended Tuesday this week. Thursday combo applies.",
+      reason: "tuesday combo",
+      applicable_date: tuesdayISO,
+      paid_amount_override: teacherNoPay ? 25 : 0,
+    };
+  }
+
+  return null;
+}
+
 export async function GET(request: Request) {
   try {
     if (!(await isCheckinAuthed())) {
@@ -168,17 +245,27 @@ export async function GET(request: Request) {
       }
     }
 
-    if (!best) {
+    const comboCandidate =
+      isThursdayContext(eventParam, date) && date
+        ? await getTuesdayComboForMember(member_id, date)
+        : null;
+
+    if (!best && !comboCandidate) {
+      return NextResponse.json({ applies: false, today: todayISO });
+    }
+    const resolved = best ?? comboCandidate;
+    if (!resolved) {
       return NextResponse.json({ applies: false, today: todayISO });
     }
 
     return NextResponse.json({
       applies: true,
       today: todayISO,
-      entry_type: best.entry_type,
-      applicable_date: best.applicable_date,
-      details: best.details,
-      reason: best.reason,
+      entry_type: resolved.entry_type,
+      applicable_date: resolved.applicable_date,
+      details: resolved.details,
+      reason: resolved.reason,
+      paid_amount_override: resolved.paid_amount_override ?? 0,
     });
   } catch (error) {
     console.error("Free entry check error:", error);

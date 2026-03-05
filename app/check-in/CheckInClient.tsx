@@ -23,6 +23,7 @@ type FreeEntryResponse =
       applicable_date: string;
       details: string;
       reason: string;
+      paid_amount_override?: number;
     };
 
 type CostsResponse = {
@@ -852,6 +853,16 @@ export default function CheckInClient({
     return Number.isFinite(n) ? n : NaN;
   }, [customAmount]);
 
+  const freeEntryPaidAmount = useMemo(() => {
+    if (!effectiveFreeEntry?.applies) return 0;
+    const raw = Number(effectiveFreeEntry.paid_amount_override ?? 0);
+    return Number.isFinite(raw) ? Math.max(0, raw) : 0;
+  }, [effectiveFreeEntry]);
+
+  const freeEntryNeedsPayment = useMemo(() => {
+    return Boolean(effectiveFreeEntry?.applies && !isDoorVolunteer && freeEntryPaidAmount > 0);
+  }, [effectiveFreeEntry, isDoorVolunteer, freeEntryPaidAmount]);
+
   const checkinEnabled = useMemo(() => {
     if (!selected) return false;
     if (alreadyCheckedIn) return false;
@@ -861,6 +872,9 @@ export default function CheckInClient({
         if (!Number.isFinite(customAmountNumber)) return false;
         // paid_via optional if amount is 0
         return customAmountNumber === 0 ? true : Boolean(customPaidVia);
+      }
+      if (freeEntryNeedsPayment) {
+        return Boolean(selectedPaidVia);
       }
 
       return true;
@@ -872,6 +886,7 @@ export default function CheckInClient({
     customAmountNumber,
     customPaidVia,
     effectiveFreeEntry,
+    freeEntryNeedsPayment,
     isDoorVolunteer,
     selected,
     selectedPaidVia,
@@ -1059,8 +1074,8 @@ export default function CheckInClient({
           : {
               member_id: selected.member_id,
               type: effectiveFreeEntry.entry_type || "Free Entry",
-              paid_via: "",
-              paid_amount: 0,
+              paid_via: freeEntryNeedsPayment ? (selectedPaidVia ?? "") : "",
+              paid_amount: freeEntryNeedsPayment ? freeEntryPaidAmount : 0,
               comment: comment.trim(),
               free_entry_reason: effectiveFreeEntry.reason ?? "",
             }
@@ -1726,6 +1741,28 @@ export default function CheckInClient({
                     {effectiveFreeEntry.details && (
                       <div className="mt-2 text-text-dark/80">
                         {effectiveFreeEntry.details}
+                      </div>
+                    )}
+                    {freeEntryNeedsPayment && (
+                      <div className="mt-4 bg-white rounded-xl border border-text-dark/10 p-4">
+                        <div className="font-semibold mb-2">
+                          Thursday combo amount due: {formatZar(freeEntryPaidAmount)}
+                        </div>
+                        <div className="font-semibold mb-2">Payment method</div>
+                        <div className="flex gap-3 flex-wrap">
+                          <PillButton
+                            selected={selectedPaidVia === "Cash"}
+                            onClick={() => setSelectedPaidVia("Cash")}
+                          >
+                            Cash
+                          </PillButton>
+                          <PillButton
+                            selected={selectedPaidVia === "Yoco"}
+                            onClick={() => setSelectedPaidVia("Yoco")}
+                          >
+                            Yoco
+                          </PillButton>
+                        </div>
                       </div>
                     )}
                   </div>

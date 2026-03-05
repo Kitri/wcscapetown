@@ -310,7 +310,7 @@ function SizeChartTable({ chart }: { chart: ShirtType["sizeChart"] }) {
   );
 }
 
-export default function TShirtSurveyClient() {
+export default function TShirtSurveyClient({ readOnly = false }: { readOnly?: boolean }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState(() => {
     if (typeof window === "undefined") return "";
@@ -649,12 +649,21 @@ export default function TShirtSurveyClient() {
       <section className="px-[5%] py-[40px] bg-cloud-dancer">
         <div className="max-w-[950px] mx-auto text-center">
           <h1 className="font-spartan font-semibold text-[36px] md:text-[52px] mb-3">T-shirt survey</h1>
+          {readOnly && (
+            <div className="mb-4 rounded-xl border border-pink-accent/40 bg-pink-accent/10 px-4 py-3 text-sm font-semibold text-text-dark">
+              Poll closed, page purely informational.
+            </div>
+          )}
           <p className="text-lg md:text-xl text-text-dark/80">
-            Help us order the right stock for the weekender — tell us what you plan to buy.
+            {readOnly
+              ? "Browse the available options and size charts."
+              : "Help us order the right stock for the weekender — tell us what you plan to buy."}
           </p>
-          <p className="text-sm text-text-dark/70 mt-4">
-            Estimated price range: <span className="font-semibold">R160 – R200</span>. T-shirts will be on sale at the weekender.
-          </p>
+          {!readOnly && (
+            <p className="text-sm text-text-dark/70 mt-4">
+              Estimated price range: <span className="font-semibold">R160 – R200</span>. T-shirts will be on sale at the weekender.
+            </p>
+          )}
           <p className="text-sm text-text-dark/70 mt-1">
             Sadly, no XS available on any of the options.
           </p>
@@ -668,7 +677,7 @@ export default function TShirtSurveyClient() {
             Choose your shirts
           </h2>
           <p className="text-center text-sm text-text-dark/70 mb-10">
-            Tap a shirt to select it, then choose your size(s).
+            {readOnly ? "Poll closed — selections are disabled." : "Tap a shirt to select it, then choose your size(s)."}
           </p>
 
           <div className="space-y-12">
@@ -728,8 +737,9 @@ export default function TShirtSurveyClient() {
                         <button
                           type="button"
                           onClick={() => toggleVariant(type.key, color.key)}
+                          disabled={readOnly}
                           aria-pressed={!!selected}
-                          className="w-full text-left"
+                          className={`w-full text-left ${readOnly ? "cursor-not-allowed opacity-90" : ""}`}
                         >
                           <div className="bg-white rounded-lg border border-text-dark/10 p-3">
                             <div className="relative h-[320px] md:h-[360px]">
@@ -753,7 +763,7 @@ export default function TShirtSurveyClient() {
                               ) : null}
                             </div>
                             <span className="text-xs text-text-dark/60">
-                              {selected ? "Selected" : "Tap to select"}
+                              {readOnly ? "Informational only" : selected ? "Selected" : "Tap to select"}
                             </span>
                           </div>
                         </button>
@@ -994,22 +1004,24 @@ export default function TShirtSurveyClient() {
         </div>
       </section>
 
-      {/* Submit planned order */}
-      <section
-        className="px-[5%] py-[60px]"
-        style={{
-          background: "linear-gradient(135deg, rgba(255, 209, 23, 0.15), rgba(255, 209, 23, 0.05))",
-        }}
-      >
-        <div className="max-w-[1100px] mx-auto">
-          <h2 className="font-spartan font-semibold text-2xl md:text-3xl text-center mb-2">
-            Planned order
-          </h2>
-          <p className="text-center text-sm text-text-dark/70 mb-8">
-            Please include what you&apos;d realistically buy at the weekender.
-          </p>
+      {!readOnly && (
+        <>
+          {/* Submit planned order */}
+          <section
+            className="px-[5%] py-[60px]"
+            style={{
+              background: "linear-gradient(135deg, rgba(255, 209, 23, 0.15), rgba(255, 209, 23, 0.05))",
+            }}
+          >
+            <div className="max-w-[1100px] mx-auto">
+              <h2 className="font-spartan font-semibold text-2xl md:text-3xl text-center mb-2">
+                Planned order
+              </h2>
+              <p className="text-center text-sm text-text-dark/70 mb-8">
+                Please include what you&apos;d realistically buy at the weekender.
+              </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-white rounded-xl p-5 border-2 border-text-dark/10">
                 <label className="block text-sm font-semibold mb-2">Name</label>
@@ -1102,9 +1114,11 @@ export default function TShirtSurveyClient() {
                 We&apos;ll use the totals to order stock. Final availability depends on supplier stock and demand.
               </p>
             </div>
-          </form>
-        </div>
-      </section>
+              </form>
+            </div>
+          </section>
+        </>
+      )}
     </>
   );
 }
