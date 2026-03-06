@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, Suspense, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 
@@ -35,7 +35,7 @@ function getVenueEmbedUrl(venueName: string, venueAddress: string, venueMapUrl: 
   return `https://www.google.com/maps?q=${query}&output=embed`;
 }
 
-export default function CheckRegistrationPage() {
+function CheckRegistrationContent() {
   const searchParams = useSearchParams();
   const source = (searchParams.get('source') || '').toLowerCase();
   const [query, setQuery] = useState('');
@@ -258,5 +258,13 @@ export default function CheckRegistrationPage() {
         </section>
       </main>
     </>
+  );
+}
+
+export default function CheckRegistrationPage() {
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-cloud-dancer" />}>
+      <CheckRegistrationContent />
+    </Suspense>
   );
 }
