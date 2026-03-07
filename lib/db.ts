@@ -1,11 +1,15 @@
 import { neon } from '@neondatabase/serverless';
+let dbClient: ReturnType<typeof neon> | null = null;
 
 // Get a database connection
 export function getDb() {
   if (!process.env.NEON_DATABASE_URL) {
     throw new Error('NEON_DATABASE_URL environment variable is not set');
   }
-  return neon(process.env.NEON_DATABASE_URL);
+  if (!dbClient) {
+    dbClient = neon(process.env.NEON_DATABASE_URL);
+  }
+  return dbClient;
 }
 
 // Types for database tables

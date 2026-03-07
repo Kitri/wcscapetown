@@ -9,6 +9,7 @@ import {
 } from "@/lib/zaDate";
 import { CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
+import { isBootcampEvent, loadBootcampAttendees } from "@/lib/server/bootcampSheet";
 
 type FreeEntryMatch = {
   member_id: number;
@@ -195,6 +196,24 @@ export async function GET(request: Request) {
     }
 
     const eventParam = (searchParams.get("event") ?? "").trim();
+
+    if (isBootcampEvent(eventParam)) {
+      const attendees = await loadBootcampAttendees(CHECKIN_SPREADSHEET_ID);
+      const attendeeExists = attendees.some((a) => a.member_id === member_id);
+      if (!attendeeExists) {
+        return NextResponse.json({ applies: false, today: dateISOParam || formatZaDateISO(date ?? undefined) });
+      }
+
+      return NextResponse.json({
+        applies: true,
+        today: dateISOParam || formatZaDateISO(date ?? undefined),
+        entry_type: "Bootcamp registration",
+        applicable_date: dateISOParam || formatZaDateISO(date ?? undefined),
+        details: "Registered bootcamp attendee.",
+        reason: "bootcamp registration",
+        paid_amount_override: 0,
+      });
+    }
 
     const todayISO = dateISOParam || formatZaDateISO(date ?? undefined);
     const ctx = {

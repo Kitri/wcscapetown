@@ -63,6 +63,7 @@ const CHECKIN_EVENT_OPTIONS = [
   "Tuesday Pinelands",
   "Thursday Pinelands",
   "Saturday scout hall",
+  "Bootcamp",
 ] as const;
 
 type CheckinEvent = (typeof CHECKIN_EVENT_OPTIONS)[number];
@@ -807,6 +808,7 @@ export default function CheckInClient({
   const [undoing, setUndoing] = useState(false);
 
   const searchAbortRef = useRef<AbortController | null>(null);
+  const isBootcampMode = selectedEvent === "Bootcamp";
 
   // Check if member qualifies for Level 2 Tuesday discount
   const isLevel2TuesdayDiscount = useMemo(() => {
@@ -939,7 +941,7 @@ export default function CheckInClient({
         searchAbortRef.current = ac;
 
         const res = await fetchJson<{ results: Member[] }>(
-          `/api/check-in/members?q=${encodeURIComponent(q)}`,
+          `/api/check-in/members?q=${encodeURIComponent(q)}&event=${encodeURIComponent(selectedEvent)}`,
           { signal: ac.signal }
         );
 
@@ -953,7 +955,7 @@ export default function CheckInClient({
     }, 200);
 
     return () => window.clearTimeout(handle);
-  }, [authed, search, selected, step1Mode]);
+  }, [authed, search, selected, step1Mode, selectedEvent]);
 
   const refreshCheckedInList = useCallback(async () => {
     setCheckedInError(null);
@@ -1446,13 +1448,15 @@ export default function CheckInClient({
                   Check in existing member
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setAddModalOpen(true)}
-                  className="px-4 py-3 rounded-xl border-2 border-purple-accent bg-purple-accent text-white font-semibold"
-                >
-                  Add new person
-                </button>
+                {!isBootcampMode && (
+                  <button
+                    type="button"
+                    onClick={() => setAddModalOpen(true)}
+                    className="px-4 py-3 rounded-xl border-2 border-purple-accent bg-purple-accent text-white font-semibold"
+                  >
+                    Add new person
+                  </button>
+                )}
 
                 <button
                   type="button"
@@ -1488,7 +1492,7 @@ export default function CheckInClient({
                   </div>
                 </div>
 
-                {(searchLoading || results.length > 0) && (
+                {(searchLoading || search.trim().length >= 3) && (
                   <div className="mt-4">
                     <div className="font-semibold mb-2">
                       {searchLoading ? "Searching…" : "Select a person"}
@@ -1506,7 +1510,9 @@ export default function CheckInClient({
                         results.length === 0 &&
                         search.trim().length >= 3 && (
                           <div className="text-text-dark/70">
-                            No matches. Use “Add new person”.
+                            {isBootcampMode
+                              ? "No one registered by that name."
+                              : "No matches. Use “Add new person”."}
                           </div>
                         )}
                     </div>

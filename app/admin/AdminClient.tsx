@@ -98,32 +98,17 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
     setDataError("");
 
     try {
-      const [regRes, balanceRes, dayRes, bootcampRes, nonCompleteRes, tiersRes] = await Promise.all([
-        fetch("/api/admin/weekender-registrations"),
-        fetch("/api/admin/role-balance"),
-        fetch("/api/admin/aggregate-by-day"),
-        fetch("/api/admin/bootcamp-registrations"),
-        fetch("/api/admin/non-complete-breakdown"),
-        fetch("/api/admin/pricing-tiers"),
-      ]);
-
-      if (!regRes.ok || !balanceRes.ok || !dayRes.ok || !bootcampRes.ok || !nonCompleteRes.ok || !tiersRes.ok) {
+      const res = await fetch("/api/admin/dashboard");
+      if (!res.ok) {
         throw new Error("Failed to fetch data");
       }
-
-      const regData = await regRes.json();
-      const balanceData = await balanceRes.json();
-      const dayData = await dayRes.json();
-      const bootcampData = await bootcampRes.json();
-      const nonCompleteData = await nonCompleteRes.json();
-      const tiersData = await tiersRes.json();
-
-      setRegistrations(regData.registrations || []);
-      setRoleBalance(balanceData.roleBalance || []);
-      setAggregateByDay(dayData.aggregateByDay || []);
-      setBootcampRegistrations(bootcampData.registrations || []);
-      setNonComplete(nonCompleteData.breakdown || []);
-      setPricingTiers(tiersData.tiers || []);
+      const data = await res.json();
+      setRegistrations(data.registrations || []);
+      setRoleBalance(data.roleBalance || []);
+      setAggregateByDay(data.aggregateByDay || []);
+      setBootcampRegistrations(data.bootcampRegistrations || []);
+      setNonComplete(data.nonComplete || []);
+      setPricingTiers(data.pricingTiers || []);
     } catch (err) {
       setDataError(err instanceof Error ? err.message : "Failed to load data");
     } finally {

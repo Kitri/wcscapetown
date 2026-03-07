@@ -3,6 +3,7 @@ import { appendToSheet, getSheetValues } from "@/lib/googleSheets";
 import { formatZaDateISO, parseZaDateISO } from "@/lib/zaDate";
 import { CHECKIN_EVENT_NAME, CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
+import { isBootcampEvent, loadBootcampAttendees } from "@/lib/server/bootcampSheet";
 
 type Member = {
   member_id: number;
@@ -124,12 +125,35 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q") ?? "";
+    const event = (searchParams.get("event") ?? "").trim();
 
     if (q.trim().length < 3) {
       return NextResponse.json({ results: [] });
     }
 
     const query = normalize(q);
+
+    if (isBootcampEvent(event)) {
+      const attendees = await loadBootcampAttendees(CHECKIN_SPREADSHEET_ID);
+      const results = attendees
+        .filter((a) => {
+          const aName = normalize(a.full_name);
+          const bName = normalize(`${a.surname} ${a.first_name}`.trim());
+          return aName.includes(query) || bName.includes(query);
+        })
+        .slice(0, 20)
+        .map((a) => ({
+          member_id: a.member_id,
+          first_name: a.first_name,
+          surname: a.surname,
+          full_name: a.full_name,
+          role: "",
+          level: "Bootcamp",
+          pensionerStudent: "",
+        }));
+
+      return NextResponse.json({ results });
+    }
     const members = await loadMembers();
 
     const results = members

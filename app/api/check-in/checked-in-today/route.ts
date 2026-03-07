@@ -3,6 +3,7 @@ import { getSheetValues } from "@/lib/googleSheets";
 import { formatZaDateISO, parseZaDateISO } from "@/lib/zaDate";
 import { CHECKIN_EVENT_NAME, CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
+import { isBootcampEvent, loadBootcampAttendees } from "@/lib/server/bootcampSheet";
 
 function parseMemberId(raw: string): number {
   const digits = raw.replace(/[^0-9]/g, "");
@@ -40,18 +41,28 @@ export async function GET(request: Request) {
 
     const today = dateISOParam || formatZaDateISO(date ?? undefined);
 
-    // Members mapping
-    const memberRows = await getSheetValues(CHECKIN_SPREADSHEET_ID, "All_members!A:C");
     const idToName = new Map<number, string>();
-    for (const row of memberRows) {
-      const firstCell = (row[0] ?? "").trim().toLowerCase();
-      if (!firstCell || firstCell === "member_id") continue;
-      const id = parseMemberId(row[0] ?? "");
-      if (!Number.isFinite(id)) continue;
-      const first = (row[1] ?? "").trim();
-      const sur = (row[2] ?? "").trim();
-      const full_name = `${first} ${sur}`.trim();
-      if (full_name) idToName.set(id, full_name);
+
+    if (isBootcampEvent(eventName)) {
+      const attendees = await loadBootcampAttendees(CHECKIN_SPREADSHEET_ID);
+      for (const attendee of attendees) {
+        if (attendee.full_name) {
+          idToName.set(attendee.member_id, attendee.full_name);
+        }
+      }
+    } else {
+      // Members mapping
+      const memberRows = await getSheetValues(CHECKIN_SPREADSHEET_ID, "All_members!A:C");
+      for (const row of memberRows) {
+        const firstCell = (row[0] ?? "").trim().toLowerCase();
+        if (!firstCell || firstCell === "member_id") continue;
+        const id = parseMemberId(row[0] ?? "");
+        if (!Number.isFinite(id)) continue;
+        const first = (row[1] ?? "").trim();
+        const sur = (row[2] ?? "").trim();
+        const full_name = `${first} ${sur}`.trim();
+        if (full_name) idToName.set(id, full_name);
+      }
     }
 
     // Attendance: A member_id, B date, C event, D paid_via, E amount, F type, G comment
