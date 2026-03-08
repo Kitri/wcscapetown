@@ -3,6 +3,15 @@ import { getDb, saveYocoApiResult, getRegistrationIdByOrderId } from '@/lib/db';
 import { setOrderMemberIds } from '@/lib/redis';
 import { logApiResponse, logError, logInfo } from '@/lib/blobLogger';
 
+type RegistrationRow = {
+  member_id: number;
+  email: string;
+  pass_type: string;
+  amount_cents: number;
+  payment_status: string;
+  registration_status: string;
+};
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -38,12 +47,18 @@ export async function POST(request: NextRequest) {
       WHERE r.order_id = ${orderId.trim()}
       LIMIT 1
     `;
+    const rowsSource = Array.isArray(result)
+      ? result
+      : (result as unknown as { rows?: unknown }).rows;
+    const rows: RegistrationRow[] = Array.isArray(rowsSource)
+      ? (rowsSource as RegistrationRow[])
+      : [];
 
-    if (result.length === 0) {
+    if (rows.length === 0) {
       return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
     }
 
-    const registration = result[0];
+    const registration = rows[0];
 
     // Check if already paid
     if (registration.payment_status === 'complete' && registration.registration_status === 'complete') {

@@ -1,5 +1,5 @@
-import { neon } from '@neondatabase/serverless';
-let dbClient: ReturnType<typeof neon> | null = null;
+import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
+let dbClient: NeonQueryFunction<false, false> | null = null;
 
 // Get a database connection
 export function getDb() {
@@ -7,7 +7,7 @@ export function getDb() {
     throw new Error('NEON_DATABASE_URL environment variable is not set');
   }
   if (!dbClient) {
-    dbClient = neon(process.env.NEON_DATABASE_URL);
+    dbClient = neon<false, false>(process.env.NEON_DATABASE_URL);
   }
   return dbClient;
 }

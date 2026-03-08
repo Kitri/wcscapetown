@@ -123,21 +123,29 @@ export async function getNextOrderNumber(): Promise<string> {
   let orderId = `WKN-${year}-${orderNum.padStart(6, '0')}`;
   
   // Check if this order_id already exists
-  const existing = await sql`
+  const existingResult = await sql`
     SELECT order_id FROM registrations WHERE order_id = ${orderId} LIMIT 1
   `;
+  const hasRows = (result: unknown): boolean => {
+    const rowsSource = Array.isArray(result)
+      ? result
+      : (result as unknown as { rows?: unknown }).rows;
+    return Array.isArray(rowsSource) && rowsSource.length > 0;
+  };
+  let hasDuplicate = hasRows(existingResult);
   
   // If duplicate found, increment the last digit until we find a unique one
   let attempts = 0;
-  while (existing.length > 0 && attempts < 10) {
+  while (hasDuplicate && attempts < 10) {
     orderNum = (parseInt(orderNum) + 1).toString();
     orderId = `WKN-${year}-${orderNum.padStart(6, '0')}`;
     
-    const check = await sql`
+    const checkResult = await sql`
       SELECT order_id FROM registrations WHERE order_id = ${orderId} LIMIT 1
     `;
+    hasDuplicate = hasRows(checkResult);
     
-    if (check.length === 0) break;
+    if (!hasDuplicate) break;
     attempts++;
   }
   
