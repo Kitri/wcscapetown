@@ -54,36 +54,6 @@ function getStatusInfo(paymentStatus: string, registrationStatus: string, role: 
   };
 }
 
-function getBootcampInfo(bootcampType: string | null) {
-  const isBeginner = bootcampType === 'beginner';
-  const isFastTrack = bootcampType === 'fasttrack';
-
-  const title = isBeginner
-    ? 'Beginner Bootcamp'
-    : isFastTrack
-      ? 'Fast-Track Intensive Bootcamp'
-      : 'Bootcamp';
-
-  const startTime = isBeginner ? '11:00' : isFastTrack ? '14:30' : 'TBC';
-
-  return {
-    registrationLabel: title,
-    eventDate: '7 March 2026',
-    venueName: 'OBS Community Center',
-    venueAddress: 'Cnr. Lower Main Road and Collingwood Street, Observatory',
-    venueMapUrl: 'https://maps.app.goo.gl/kA2M3yYk1oVpupKP6',
-    details: [
-      `Workshop starts at ${startTime} and runs for 3 hours.`,
-      'Please arrive 10 minutes before the workshop so we can check everyone in and direct you to the right room.',
-      "Parking is available onsite, and we'll be near the parking lot to direct people to the smaller second-floor hall (not the main hall).",
-    ],
-    shoeTips: [
-      'Wear comfortable dance shoes (WCS is not typically danced in heels).',
-      'Bring a water bottle.',
-    ],
-    shoeOptions: [] as string[],
-  };
-}
 
 function getWeekenderInfo(passType: string, workshopDay: string | null, partyAddOn: boolean | null) {
   const passLabel =
@@ -116,7 +86,7 @@ function getWeekenderInfo(passType: string, workshopDay: string | null, partyAdd
       'You can bring your own water bottle, but no other drinks before 4pm.',
       'The schedule is being finalised and will be shared via email on Monday 9 March 2026.',
       'The venue is close to the promenade and several restaurants/coffee shops, which makes for a great day out.',
-      'Friday night social will be at a different venue (TBC), likely Claremont Scout Hall.',
+      'Friday pre-party is at Scout Hall, Claremont (our usual monthly social venue).',
     ],
     shoeTips: [
       'Bring comfortable, flat, or low-heeled shoes with smooth, non-stick soles that allow for easy spinning (particularly the patch around the ball of the foot).',
@@ -137,8 +107,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const query = String(body?.query ?? '').trim();
     const sourceRaw = String(body?.source ?? '').trim().toLowerCase();
-    const source: 'weekender' | 'bootcamp' | 'all' =
-      sourceRaw === 'weekender' || sourceRaw === 'bootcamp' ? sourceRaw : 'all';
+    const source: 'weekender' | 'all' =
+      sourceRaw === 'weekender' ? sourceRaw : 'all';
 
     if (!query) {
       return NextResponse.json({ error: 'Please enter an email address or order number.' }, { status: 400 });
@@ -147,10 +117,7 @@ export async function POST(request: NextRequest) {
     const rows = await getRegistrationsByEmailOrOrder(query, source);
     const registrations = rows.map((row) => {
       const status = getStatusInfo(row.paymentStatus, row.registrationStatus, row.role);
-      const eventInfo =
-        row.passType === 'bootcamp'
-          ? getBootcampInfo(row.bootcampType)
-          : getWeekenderInfo(row.passType, row.workshopDay, row.partyAddOn);
+      const eventInfo = getWeekenderInfo(row.passType, row.workshopDay, row.partyAddOn);
 
       return {
         orderId: row.orderId,

@@ -96,13 +96,6 @@ export default function WeekenderPoll() {
             </Link>
           </div>
 
-          <p className="text-sm text-text-dark/80 mt-4 max-w-[640px] mx-auto">
-            Feel like you&apos;re too low level to get value from the Weekender? Build confidence with a bootcamp first →{" "}
-            <Link href="/bookbootcamp" className="text-pink-accent hover:text-yellow-accent underline font-semibold">
-              Bootcamps
-            </Link>
-          </p>
-
           <p className="text-xs text-text-dark/60 mt-6 max-w-[600px] mx-auto">
             Details may change slightly — the Weekender page is always the latest info.
           </p>

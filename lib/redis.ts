@@ -46,8 +46,7 @@ export type WeekenderEventType =
   | 'payment_failed'
   | 'payment_expired'
   | 'session_expired'
-  | 'waitlist_registration'
-  | 'bootcamp_payment_in_progress';
+  | 'waitlist_registration';
 
 export interface WeekenderEvent {
   sessionId: string;

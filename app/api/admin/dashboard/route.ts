@@ -45,17 +45,6 @@ export async function GET() {
       FROM aggregate_by_day
     `;
 
-    const bootcampRegistrations = await sql`
-      SELECT
-        created_at,
-        name,
-        surname,
-        bootcamp_type,
-        role,
-        registration_type,
-        registration_status
-      FROM bootcamp_registration_admin_view
-    `;
 
     const nonComplete = await sql`
       SELECT
@@ -86,8 +75,7 @@ export async function GET() {
           WHEN 'weekend' THEN 1
           WHEN 'day' THEN 2
           WHEN 'party' THEN 3
-          WHEN 'bootcamp' THEN 4
-          ELSE 5
+          ELSE 4
         END,
         CASE price_tier
           WHEN 'now' THEN 1
@@ -103,7 +91,6 @@ export async function GET() {
       registrations,
       roleBalance,
       aggregateByDay,
-      bootcampRegistrations,
       nonComplete,
       pricingTiers,
     });

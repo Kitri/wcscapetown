@@ -101,7 +101,6 @@ interface YocoEvent {
       customerId?: string;
       customerEmail?: string;
       source?: string;
-      bootcampType?: string;
     };
   };
 }

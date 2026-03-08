@@ -658,6 +658,9 @@ export default async function Weekender({
                   <div>
                     <p className="font-semibold text-lg mb-1">Pre-party & Meet the Pros</p>
                     <p className="text-text-dark/70">Kick off the weekend, say hi to the pros, and get in some relaxed social dancing</p>
+                    <p className="text-sm text-text-dark/70 mt-2">
+                      Venue: Scout Hall, Claremont (our usual monthly social venue)
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1018,13 +1021,6 @@ export default async function Weekender({
                   <p>
                     That&apos;s also why we have a <span className="font-semibold">Level 1</span> and <span className="font-semibold">Level 2</span> track. Level 1&apos;s only entry requirement is knowing the 5 basics.
                     The weekend builds up as it goes, and because we&apos;re a smaller group, the pros can get to know us and adjust the classes to the actual level in the room (not just deliver a fixed script) — they meet us where we&apos;re at, which helps ensure everyone learns something.
-                  </p>
-                  <p>
-                    Want to feel extra prepared before the Weekender? Build confidence with a bootcamp first:{' '}
-                    <Link href="/bookbootcamp?tab=info" className="text-pink-accent hover:text-yellow-accent underline font-semibold">
-                      Bootcamps
-                    </Link>
-                    .
                   </p>
                   <p>
                     And if you&apos;re unsure which track is right for you, our teachers are here to help you prepare — please reach out at{' '}

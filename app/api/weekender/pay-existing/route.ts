@@ -77,17 +77,11 @@ export async function POST(request: NextRequest) {
       passDisplayName = 'Day Pass';
     } else if (registration.pass_type === 'party') {
       passDisplayName = 'Party Pass';
-    } else if (registration.pass_type === 'bootcamp') {
-      passDisplayName = 'Bootcamp';
     }
 
-    // Determine success/cancel/failure URLs based on pass type
-    const baseSuccessUrl = registration.pass_type === 'bootcamp' 
-      ? '/bookbootcamp/success' 
-      : '/bookweekender/success';
-    const baseCancelUrl = registration.pass_type === 'bootcamp'
-      ? '/bookbootcamp'
-      : '/bookweekender';
+    // Determine success/cancel/failure URLs
+    const baseSuccessUrl = '/bookweekender/success';
+    const baseCancelUrl = '/bookweekender';
 
     // Log payment initiation
     logInfo('existing_payment', 'Initiating payment for existing registration', {

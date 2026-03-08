@@ -30,7 +30,7 @@ export interface Registration {
   level: 0 | 1 | 2;
   booking_session_id: string;
   order_id: string;
-  pass_type: 'weekend' | 'day' | 'day_saturday' | 'day_sunday' | 'party' | 'bootcamp';
+  pass_type: 'weekend' | 'day' | 'day_saturday' | 'day_sunday' | 'party';
   pricing_tier: 'now' | 'now-now' | 'just-now' | 'ai-tog' | 'promo' | 'full' | 'half';
   amount_cents: number;
   payment_status: 'pending' | 'complete' | 'failed' | 'expired' | 'waitlist';
@@ -93,37 +93,32 @@ export async function createMember(member: Omit<Member, 'member_id' | 'created_a
 // Insert or update a registration (upsert by member_id AND pass_type)
 export async function createRegistration(registration: Omit<Registration, 'id' | 'created_at'>): Promise<number> {
   const sql = getDb();
+  // Check if a registration already exists for this member_id AND pass_type
+  const existing = await sql`
+    SELECT id FROM registrations 
+    WHERE member_id = ${registration.member_id} 
+    AND pass_type = ${registration.pass_type}
+    LIMIT 1
+  `;
   
-  // Bootcamps are bookable per-session/per-slot, so each bootcamp booking must create
-  // its own registration row even when member_id and pass_type are the same.
-  if (registration.pass_type !== 'bootcamp') {
-    // Check if a registration already exists for this member_id AND pass_type
-    const existing = await sql`
-      SELECT id FROM registrations 
-      WHERE member_id = ${registration.member_id} 
+  if (existing.length > 0) {
+    // Update existing registration for this pass type
+    await sql`
+      UPDATE registrations SET
+        email = ${registration.email},
+        role = ${registration.role},
+        level = ${registration.level},
+        booking_session_id = ${registration.booking_session_id},
+        order_id = ${registration.order_id},
+        price_tier = ${registration.pricing_tier},
+        amount_cents = ${registration.amount_cents},
+        payment_status = ${registration.payment_status},
+        registration_status = ${registration.registration_status},
+        registration_type = ${registration.registration_type}
+      WHERE member_id = ${registration.member_id}
       AND pass_type = ${registration.pass_type}
-      LIMIT 1
     `;
-    
-    if (existing.length > 0) {
-      // Update existing registration for this pass type
-      await sql`
-        UPDATE registrations SET
-          email = ${registration.email},
-          role = ${registration.role},
-          level = ${registration.level},
-          booking_session_id = ${registration.booking_session_id},
-          order_id = ${registration.order_id},
-          price_tier = ${registration.pricing_tier},
-          amount_cents = ${registration.amount_cents},
-          payment_status = ${registration.payment_status},
-          registration_status = ${registration.registration_status},
-          registration_type = ${registration.registration_type}
-        WHERE member_id = ${registration.member_id}
-        AND pass_type = ${registration.pass_type}
-      `;
-      return existing[0].id;
-    }
+    return existing[0].id;
   }
   
   // Insert new registration
@@ -294,7 +289,7 @@ export async function getExistingRegistration(memberId: number): Promise<{
 
 export async function getRegistrationsByEmailOrOrder(
   lookupValue: string,
-  source: 'weekender' | 'bootcamp' | 'all' = 'all'
+  source: 'weekender' | 'all' = 'all'
 ): Promise<Array<{
   id: number;
   memberId: number;
@@ -312,7 +307,6 @@ export async function getRegistrationsByEmailOrOrder(
   orderId: string;
   workshopDay: string | null;
   partyAddOn: boolean | null;
-  bootcampType: string | null;
   createdAt: string;
 }>> {
   const sql = getDb();
@@ -320,7 +314,7 @@ export async function getRegistrationsByEmailOrOrder(
   if (!lookup) return [];
 
   const byEmail = lookup.includes('@');
-  const normalizedSource = source === 'weekender' || source === 'bootcamp' ? source : 'all';
+  const normalizedSource = source === 'weekender' ? source : 'all';
 
   const primaryMemberResult = byEmail
     ? normalizedSource === 'weekender'
@@ -328,19 +322,10 @@ export async function getRegistrationsByEmailOrOrder(
           SELECT member_id
           FROM registrations
           WHERE LOWER(email) = LOWER(${lookup})
-          AND pass_type <> 'bootcamp'
+          AND pass_type IN ('weekend', 'day', 'party')
           ORDER BY created_at DESC
           LIMIT 1
         `
-      : normalizedSource === 'bootcamp'
-        ? await sql`
-            SELECT member_id
-            FROM registrations
-            WHERE LOWER(email) = LOWER(${lookup})
-            AND pass_type = 'bootcamp'
-            ORDER BY created_at DESC
-            LIMIT 1
-          `
         : await sql`
             SELECT member_id
             FROM registrations
@@ -353,19 +338,10 @@ export async function getRegistrationsByEmailOrOrder(
           SELECT member_id
           FROM registrations
           WHERE order_id = ${lookup}
-          AND pass_type <> 'bootcamp'
+          AND pass_type IN ('weekend', 'day', 'party')
           ORDER BY created_at DESC
           LIMIT 1
         `
-      : normalizedSource === 'bootcamp'
-        ? await sql`
-            SELECT member_id
-            FROM registrations
-            WHERE order_id = ${lookup}
-            AND pass_type = 'bootcamp'
-            ORDER BY created_at DESC
-            LIMIT 1
-          `
         : await sql`
             SELECT member_id
             FROM registrations
@@ -411,12 +387,10 @@ export async function getRegistrationsByEmailOrOrder(
           r.order_id,
           dp.workshop_day,
           dp.party_add_on,
-          bd.bootcamp_type,
           r.created_at
         FROM registrations r
         INNER JOIN members m ON m.member_id = r.member_id
         LEFT JOIN day_pass_details dp ON dp.registration_id = r.id
-        LEFT JOIN bootcamp_details bd ON bd.registration_id = r.id
         WHERE r.member_id = ${memberId}
       `
     )
@@ -443,7 +417,6 @@ export async function getRegistrationsByEmailOrOrder(
     orderId: row.order_id,
     workshopDay: row.workshop_day,
     partyAddOn: row.party_add_on,
-    bootcampType: row.bootcamp_type,
     createdAt: row.created_at,
   }));
 }
@@ -933,47 +906,6 @@ export async function shouldWaitlistDayPassRole(
   return shouldWaitlistRole(role, level, 'day');
 }
 
-// Create or update bootcamp details entry (upsert by registration_id)
-export async function createBootcampDetails(
-  registrationId: number,
-  bootcampType: 'beginner' | 'fasttrack',
-  wcsExperience: string,
-  howDidYouFindUs: string | null,
-  yearsExperience: number | null = null,
-  danceStyle: string | null = null,
-  danceRole: string | null = null
-): Promise<number> {
-  const sql = getDb();
-  
-  // Check if bootcamp details already exist for this registration_id
-  const existing = await sql`
-    SELECT id FROM bootcamp_details WHERE registration_id = ${registrationId} LIMIT 1
-  `;
-  
-  if (existing.length > 0) {
-    // Update existing record
-    await sql`
-      UPDATE bootcamp_details SET
-        bootcamp_type = ${bootcampType},
-        years_experience = ${yearsExperience},
-        dance_style = ${danceStyle},
-        dance_role = ${danceRole},
-        "WCS_experience" = ${wcsExperience},
-        how_did_you_find_us = ${howDidYouFindUs}
-      WHERE registration_id = ${registrationId}
-    `;
-    return existing[0].id;
-  }
-  
-  // Insert new record
-  const result = await sql`
-    INSERT INTO bootcamp_details (registration_id, bootcamp_type, years_experience, dance_style, dance_role, "WCS_experience", how_did_you_find_us)
-    VALUES (${registrationId}, ${bootcampType}, ${yearsExperience}, ${danceStyle}, ${danceRole}, ${wcsExperience}, ${howDidYouFindUs})
-    RETURNING id
-  `;
-  
-  return result[0].id;
-}
 
 // Validate weekender registration by name and surname
 export async function validateWeekenderByName(name: string, surname: string): Promise<{ valid: boolean; registrationId: number | null }> {
@@ -1030,7 +962,6 @@ export async function getRegistrationByOrderId(orderId: string): Promise<{
   orderId: string;
   workshopDay: string | null;
   partyAddOn: boolean | null;
-  bootcampType: string | null;
 } | null> {
   const sql = getDb();
   
@@ -1048,8 +979,7 @@ export async function getRegistrationByOrderId(orderId: string): Promise<{
       registration_status,
       order_id,
       workshop_day,
-      party_add_on,
-      bootcamp_type
+      party_add_on
     FROM registration_details
     WHERE order_id = ${orderId.trim()}
     LIMIT 1
@@ -1072,7 +1002,6 @@ export async function getRegistrationByOrderId(orderId: string): Promise<{
     orderId: row.order_id,
     workshopDay: row.workshop_day,
     partyAddOn: row.party_add_on,
-    bootcampType: row.bootcamp_type,
   };
 }
 

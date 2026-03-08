@@ -18,16 +18,6 @@ type Registration = {
   party_add_on: boolean | null;
 };
 
-type BootcampRegistration = {
-  name: string;
-  surname: string;
-  bootcamp_type: string;
-  role: string;
-  registration_type: string;
-  registration_status: string;
-  created_at: string;
-};
-
 type RoleBalanceItem = {
   level: number;
   role: string;
@@ -57,9 +47,7 @@ type PricingTierItem = {
 };
 
 type SortKey = keyof Registration;
-type BootcampSortKey = keyof BootcampRegistration;
 type SortDirection = "asc" | "desc";
-type ActiveTab = "weekender" | "bootcamp";
 
 export default function AdminClient({ initialAuthed }: { initialAuthed: boolean }) {
   const [authed, setAuthed] = useState(initialAuthed);
@@ -68,7 +56,6 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
   const [authLoading, setAuthLoading] = useState(false);
 
   const [registrations, setRegistrations] = useState<Registration[]>([]);
-  const [bootcampRegistrations, setBootcampRegistrations] = useState<BootcampRegistration[]>([]);
   const [roleBalance, setRoleBalance] = useState<RoleBalanceItem[]>([]);
   const [aggregateByDay, setAggregateByDay] = useState<AggregateByDayItem[]>([]);
   const [nonComplete, setNonComplete] = useState<NonCompleteItem[]>([]);
@@ -77,11 +64,8 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
   const [dataError, setDataError] = useState("");
   
 
-  const [activeTab, setActiveTab] = useState<ActiveTab>("weekender");
   const [sortKey, setSortKey] = useState<SortKey>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [bootcampSortKey, setBootcampSortKey] = useState<BootcampSortKey>("created_at");
-  const [bootcampSortDirection, setBootcampSortDirection] = useState<SortDirection>("desc");
   
   // Collapsible sections state
   const [showAnalytics, setShowAnalytics] = useState(true);
@@ -106,7 +90,6 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
       setRegistrations(data.registrations || []);
       setRoleBalance(data.roleBalance || []);
       setAggregateByDay(data.aggregateByDay || []);
-      setBootcampRegistrations(data.bootcampRegistrations || []);
       setNonComplete(data.nonComplete || []);
       setPricingTiers(data.pricingTiers || []);
     } catch (err) {
@@ -149,15 +132,6 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
     }
   };
 
-  const handleBootcampSort = (key: BootcampSortKey) => {
-    if (bootcampSortKey === key) {
-      setBootcampSortDirection(bootcampSortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setBootcampSortKey(key);
-      setBootcampSortDirection("asc");
-    }
-  };
-
   const sortedRegistrations = useMemo(() => {
     return [...registrations].sort((a, b) => {
       const aVal = a[sortKey];
@@ -176,25 +150,6 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
       return sortDirection === "asc" ? comparison : -comparison;
     });
   }, [registrations, sortKey, sortDirection]);
-
-  const sortedBootcampRegistrations = useMemo(() => {
-    return [...bootcampRegistrations].sort((a, b) => {
-      const aVal = a[bootcampSortKey];
-      const bVal = b[bootcampSortKey];
-
-      if (aVal === null || aVal === undefined) return 1;
-      if (bVal === null || bVal === undefined) return -1;
-
-      let comparison = 0;
-      if (typeof aVal === "number" && typeof bVal === "number") {
-        comparison = aVal - bVal;
-      } else {
-        comparison = String(aVal).localeCompare(String(bVal));
-      }
-
-      return bootcampSortDirection === "asc" ? comparison : -comparison;
-    });
-  }, [bootcampRegistrations, bootcampSortKey, bootcampSortDirection]);
 
   // Calculate role balance by level
   const roleBalanceByLevel = useMemo(() => {
@@ -278,18 +233,6 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
       {label}
       {sortKey === sortKeyName && (
         <span className="ml-1">{sortDirection === "asc" ? "↑" : "↓"}</span>
-      )}
-    </th>
-  );
-
-  const BootcampSortHeader = ({ label, sortKeyName }: { label: string; sortKeyName: BootcampSortKey }) => (
-    <th
-      className="px-3 py-2 text-left text-xs font-semibold text-text-dark/70 cursor-pointer hover:text-text-dark select-none"
-      onClick={() => handleBootcampSort(sortKeyName)}
-    >
-      {label}
-      {bootcampSortKey === sortKeyName && (
-        <span className="ml-1">{bootcampSortDirection === "asc" ? "↑" : "↓"}</span>
       )}
     </th>
   );
@@ -485,7 +428,7 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
             <p className="text-text-dark/60 text-xs">No pricing data available.</p>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {['weekend', 'day', 'party', 'bootcamp'].map(passType => {
+              {['weekend', 'day', 'party'].map(passType => {
                 const passData = pricingTiers.filter(t => t.pass_type === passType);
                 if (passData.length === 0) return null;
                 const total = passData.reduce((sum, t) => sum + Number(t.count), 0);
@@ -575,179 +518,82 @@ export default function AdminClient({ initialAuthed }: { initialAuthed: boolean 
         </>
         )}
 
-        {/* Registrations Section with Tabs */}
+        {/* Registrations Section */}
         <section className="bg-white rounded-xl shadow-sm">
-          {/* Tab Header */}
-          <div className="flex items-center justify-between border-b border-text-dark/10 px-6 pt-4">
-            <div className="flex gap-1">
-              <button
-                onClick={() => setActiveTab("weekender")}
-                className={`px-4 py-2 font-semibold text-sm rounded-t-lg transition-colors ${
-                  activeTab === "weekender"
-                    ? "bg-yellow-accent text-text-dark"
-                    : "text-text-dark/60 hover:text-text-dark hover:bg-cloud-dancer"
-                }`}
-              >
-                Weekender ({registrations.length})
-              </button>
-              <button
-                onClick={() => setActiveTab("bootcamp")}
-                className={`px-4 py-2 font-semibold text-sm rounded-t-lg transition-colors ${
-                  activeTab === "bootcamp"
-                    ? "bg-purple-accent text-white"
-                    : "text-text-dark/60 hover:text-text-dark hover:bg-cloud-dancer"
-                }`}
-              >
-                Bootcamp ({bootcampRegistrations.length})
-              </button>
-            </div>
+          <div className="flex items-center justify-between border-b border-text-dark/10 px-6 py-4">
+            <h2 className="font-spartan font-semibold text-lg">
+              Weekender Registrations ({registrations.length})
+            </h2>
             <button
               onClick={fetchData}
               disabled={dataLoading}
-              className="text-sm text-pink-accent hover:text-yellow-accent underline disabled:opacity-50 mb-2"
+              className="text-sm text-pink-accent hover:text-yellow-accent underline disabled:opacity-50"
             >
               {dataLoading ? "Refreshing..." : "Refresh"}
             </button>
           </div>
-
-          {/* Tab Content */}
           <div className="p-6">
-            {/* Weekender Tab */}
-            {activeTab === "weekender" && (
-              <>
-                {dataLoading ? (
-                  <p className="text-text-dark/60">Loading...</p>
-                ) : registrations.length === 0 ? (
-                  <p className="text-text-dark/60">No registrations yet.</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-cloud-dancer">
-                        <tr>
-                          <SortHeader label="Created" sortKeyName="created_at" />
-                          <SortHeader label="Name" sortKeyName="name" />
-                          <SortHeader label="Surname" sortKeyName="surname" />
-                          <SortHeader label="Level" sortKeyName="level" />
-                          <SortHeader label="Role" sortKeyName="role" />
-                          <SortHeader label="Type" sortKeyName="registration_type" />
-                          <SortHeader label="Status" sortKeyName="registration_status" />
-                          <SortHeader label="Tier" sortKeyName="price_tier" />
-                          <SortHeader label="Pass" sortKeyName="pass_type" />
-                          <SortHeader label="Day" sortKeyName="workshop_day" />
-                          <SortHeader label="Party" sortKeyName="party_add_on" />
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sortedRegistrations.map((reg, idx) => (
-                          <tr
-                            key={idx}
-                            className="border-t border-text-dark/10 hover:bg-cloud-dancer/50"
+            {dataLoading ? (
+              <p className="text-text-dark/60">Loading...</p>
+            ) : registrations.length === 0 ? (
+              <p className="text-text-dark/60">No registrations yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-cloud-dancer">
+                    <tr>
+                      <SortHeader label="Created" sortKeyName="created_at" />
+                      <SortHeader label="Name" sortKeyName="name" />
+                      <SortHeader label="Surname" sortKeyName="surname" />
+                      <SortHeader label="Level" sortKeyName="level" />
+                      <SortHeader label="Role" sortKeyName="role" />
+                      <SortHeader label="Type" sortKeyName="registration_type" />
+                      <SortHeader label="Status" sortKeyName="registration_status" />
+                      <SortHeader label="Tier" sortKeyName="price_tier" />
+                      <SortHeader label="Pass" sortKeyName="pass_type" />
+                      <SortHeader label="Day" sortKeyName="workshop_day" />
+                      <SortHeader label="Party" sortKeyName="party_add_on" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedRegistrations.map((reg, idx) => (
+                      <tr
+                        key={idx}
+                        className="border-t border-text-dark/10 hover:bg-cloud-dancer/50"
+                      >
+                        <td className="px-3 py-2 text-xs text-text-dark/60">
+                          {reg.created_at ? new Date(reg.created_at).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'}
+                        </td>
+                        <td className="px-3 py-2">{reg.name}</td>
+                        <td className="px-3 py-2">{reg.surname}</td>
+                        <td className="px-3 py-2">{reg.level}</td>
+                        <td className="px-3 py-2">{formatRole(reg.role)}</td>
+                        <td className="px-3 py-2 capitalize">{reg.registration_type}</td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                              reg.registration_status === "complete"
+                                ? "bg-green-100 text-green-700"
+                                : reg.registration_status === "pending"
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-gray-100 text-gray-700"
+                            }`}
                           >
-                            <td className="px-3 py-2 text-xs text-text-dark/60">
-                              {reg.created_at ? new Date(reg.created_at).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'}
-                            </td>
-                            <td className="px-3 py-2">{reg.name}</td>
-                            <td className="px-3 py-2">{reg.surname}</td>
-                            <td className="px-3 py-2">{reg.level}</td>
-                            <td className="px-3 py-2">{formatRole(reg.role)}</td>
-                            <td className="px-3 py-2 capitalize">{reg.registration_type}</td>
-                            <td className="px-3 py-2">
-                              <span
-                                className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                                  reg.registration_status === "complete"
-                                    ? "bg-green-100 text-green-700"
-                                    : reg.registration_status === "pending"
-                                    ? "bg-yellow-100 text-yellow-700"
-                                    : "bg-gray-100 text-gray-700"
-                                }`}
-                              >
-                                {formatStatus(reg.registration_status)}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2">{reg.price_tier}</td>
-                            <td className="px-3 py-2">{reg.pass_type}</td>
-                            <td className="px-3 py-2">{reg.workshop_day || '-'}</td>
-                            <td className="px-3 py-2">{reg.party_add_on ? 'Yes' : '-'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <p className="text-xs text-text-dark/60 mt-3">
-                      Total: {registrations.length} registration(s)
-                    </p>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Bootcamp Tab */}
-            {activeTab === "bootcamp" && (
-              <>
-                {dataLoading ? (
-                  <p className="text-text-dark/60">Loading...</p>
-                ) : bootcampRegistrations.length === 0 ? (
-                  <p className="text-text-dark/60">No bootcamp registrations yet.</p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-cloud-dancer">
-                        <tr>
-                          <BootcampSortHeader label="Created" sortKeyName="created_at" />
-                          <BootcampSortHeader label="Name" sortKeyName="name" />
-                          <BootcampSortHeader label="Surname" sortKeyName="surname" />
-                          <BootcampSortHeader label="Bootcamp" sortKeyName="bootcamp_type" />
-                          <BootcampSortHeader label="Role" sortKeyName="role" />
-                          <BootcampSortHeader label="Type" sortKeyName="registration_type" />
-                          <BootcampSortHeader label="Status" sortKeyName="registration_status" />
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {sortedBootcampRegistrations.map((reg, idx) => (
-                          <tr
-                            key={idx}
-                            className="border-t border-text-dark/10 hover:bg-cloud-dancer/50"
-                          >
-                            <td className="px-3 py-2 text-xs text-text-dark/60">
-                              {reg.created_at ? new Date(reg.created_at).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-'}
-                            </td>
-                            <td className="px-3 py-2">{reg.name}</td>
-                            <td className="px-3 py-2">{reg.surname}</td>
-                            <td className="px-3 py-2">
-                              <span
-                                className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                                  reg.bootcamp_type === "beginner"
-                                    ? "bg-purple-100 text-purple-700"
-                                    : "bg-yellow-100 text-yellow-700"
-                                }`}
-                              >
-                                {reg.bootcamp_type === "beginner" ? "Beginner" : "Fast-Track"}
-                              </span>
-                            </td>
-                            <td className="px-3 py-2">{formatRole(reg.role)}</td>
-                            <td className="px-3 py-2 capitalize">{reg.registration_type}</td>
-                            <td className="px-3 py-2">
-                              <span
-                                className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
-                                  reg.registration_status === "complete"
-                                    ? "bg-green-100 text-green-700"
-                                    : reg.registration_status === "pending"
-                                    ? "bg-yellow-100 text-yellow-700"
-                                    : "bg-gray-100 text-gray-700"
-                                }`}
-                              >
-                                {formatStatus(reg.registration_status)}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <p className="text-xs text-text-dark/60 mt-3">
-                      Total: {bootcampRegistrations.length} registration(s)
-                    </p>
-                  </div>
-                )}
-              </>
+                            {formatStatus(reg.registration_status)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2">{reg.price_tier}</td>
+                        <td className="px-3 py-2">{reg.pass_type}</td>
+                        <td className="px-3 py-2">{reg.workshop_day || '-'}</td>
+                        <td className="px-3 py-2">{reg.party_add_on ? 'Yes' : '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="text-xs text-text-dark/60 mt-3">
+                  Total: {registrations.length} registration(s)
+                </p>
+              </div>
             )}
           </div>
         </section>

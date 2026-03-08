@@ -26,7 +26,6 @@ interface ExistingRegistration {
   orderId: string;
   workshopDay: string | null;
   partyAddOn: boolean | null;
-  bootcampType: string | null;
 }
 
 // Component to handle URL params (must be wrapped in Suspense)

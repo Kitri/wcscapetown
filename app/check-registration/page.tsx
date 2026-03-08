@@ -51,12 +51,6 @@ function CheckRegistrationContent() {
         prefixHint: 'Weekender order numbers usually start with WKN.',
       };
     }
-    if (source === 'bootcamp') {
-      return {
-        placeholder: 'e.g. you@email.com or BOOT-2026-123456',
-        prefixHint: 'Bootcamp order numbers usually start with BOOT.',
-      };
-    }
     return {
       placeholder: 'e.g. you@email.com or your order number',
       prefixHint: '',

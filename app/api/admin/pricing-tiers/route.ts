@@ -26,8 +26,7 @@ export async function GET() {
           WHEN 'weekend' THEN 1 
           WHEN 'day' THEN 2 
           WHEN 'party' THEN 3 
-          WHEN 'bootcamp' THEN 4 
-          ELSE 5 
+          ELSE 4 
         END,
         CASE price_tier
           WHEN 'now' THEN 1
