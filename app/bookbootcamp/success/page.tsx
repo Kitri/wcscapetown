@@ -1,25 +1,13 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useEffect } from 'react';
+import { Suspense } from 'react';
 import Header from "@/components/Header";
 import Link from 'next/link';
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const reference = searchParams.get('ref') || '';
-  const sessionId = searchParams.get('session');
-
-  useEffect(() => {
-    // Mark registration as complete
-    if (sessionId && reference) {
-      fetch('/api/weekender/payment-complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, reference })
-      }).catch(console.error);
-    }
-  }, [sessionId, reference]);
 
   return (
     <div className="bg-white rounded-xl p-8 shadow-sm text-center">

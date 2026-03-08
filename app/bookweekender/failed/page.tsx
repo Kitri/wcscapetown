@@ -1,24 +1,10 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import Header from "@/components/Header";
 import Link from 'next/link';
 
 function FailedContent() {
-  const searchParams = useSearchParams();
-  const sessionId = searchParams.get('session');
-
-  useEffect(() => {
-    // Log payment failed event
-    if (sessionId) {
-      fetch('/api/weekender/payment-failed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId })
-      }).catch(console.error);
-    }
-  }, [sessionId]);
 
   return (
     <>

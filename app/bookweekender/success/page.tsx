@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, Suspense } from 'react';
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from "@/components/Header";
 import Link from 'next/link';
@@ -8,19 +8,7 @@ import Link from 'next/link';
 function SuccessContent() {
   const searchParams = useSearchParams();
   const reference = searchParams.get('ref');
-  const sessionId = searchParams.get('session');
   const isWaitlist = searchParams.get('waitlist') === 'true';
-
-  useEffect(() => {
-    // Log payment complete event (only for non-waitlist)
-    if (sessionId && !isWaitlist) {
-      fetch('/api/weekender/payment-complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId, reference })
-      }).catch(console.error);
-    }
-  }, [sessionId, reference, isWaitlist]);
 
   if (isWaitlist) {
     return (
