@@ -642,7 +642,10 @@ export default async function Weekender({
             <div className="mt-10 bg-white rounded-xl p-6 md:p-8 border-2 border-purple-accent/30">
               <h3 className="font-spartan font-semibold text-2xl mb-2 text-pink-accent">Advanced Spinning Workshop (Add-on)</h3>
               <p className="text-text-dark/80">
-                Focused training to improve spinning technique and build toward one-foot spins (lead and follow technique).
+                Aimed at dancers with basic spinning technique who want to take it to the next level.
+              </p>
+              <p className="text-text-dark/80 mt-2">
+                The class builds up progressively to one-foot spins (for both leads and follows), so it&apos;s not for complete beginners with no turning fundamentals yet.
               </p>
               <p className="text-sm text-text-dark/70 mt-3">
                 Initial sign-up is to measure interest and determine final pricing.

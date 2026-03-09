@@ -87,12 +87,24 @@ export default function WeekenderPoll() {
         </p>
 
         <div className="mt-4">
-          <div className="mt-6">
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/bookweekender"
               className="inline-block bg-pink-accent text-white px-10 py-4 rounded-lg font-medium text-lg transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-pink-accent/30"
             >
               Book now
+            </Link>
+            <Link
+              href="/weekender?tab=schedule"
+              className="inline-block bg-text-dark/5 border border-text-dark/15 text-text-dark px-6 py-4 rounded-lg font-medium text-base transition-all duration-200 hover:bg-text-dark/10"
+            >
+              Weekender schedule
+            </Link>
+            <Link
+              href="/weekender?tab=pros"
+              className="inline-block bg-text-dark/5 border border-text-dark/15 text-text-dark px-6 py-4 rounded-lg font-medium text-base transition-all duration-200 hover:bg-text-dark/10"
+            >
+              Meet the pros
             </Link>
           </div>
 

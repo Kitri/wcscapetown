@@ -667,7 +667,10 @@ export default function WeekenderAddOnsPage() {
                     Initial sign-up is to measure interest and help determine final pricing (more people = lower cost).
                   </p>
                   <p className="text-sm text-text-dark/80 mt-2">
-                    This workshop focuses on spinning technique and builds up to one-foot spins (both lead and follow technique) in the last quarter of the workshop, so it is not aimed at complete beginners.
+                    This workshop is aimed at dancers with basic spinning technique who want to take it to the next level.
+                  </p>
+                  <p className="text-sm text-text-dark/80 mt-2">
+                    We build up progressively to one-foot spins (for both leads and follows)
                   </p>
                   <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
