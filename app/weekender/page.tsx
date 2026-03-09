@@ -707,14 +707,30 @@ export default async function Weekender({
                 Friday, March 20
               </h3>
               <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">
-                <div className="flex items-start gap-4">
-                  <div className="text-lg font-semibold text-text-dark/70 min-w-[100px]">19:30-23:00</div>
-                  <div>
-                    <p className="font-semibold text-lg mb-1">Pre-party & Meet the Pros</p>
-                    <p className="text-text-dark/70">Kick off the weekend, say hi to the pros, and get in some relaxed social dancing</p>
-                    <p className="text-sm text-text-dark/70 mt-2">
-                      Venue: Scout Hall, Claremont (our usual monthly social venue)
+                <div className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="text-lg font-semibold text-text-dark/70 min-w-[100px]">20:00-23:00</div>
+                    <div>
+                      <p className="font-semibold text-lg mb-1">Social Dancing</p>
+                      <p className="text-text-dark/70">Kick off the weekend with some relaxed social dancing</p>
+                      <p className="text-sm text-text-dark/70 mt-2">Meet the pros at 9pm — a quick meet & greet before the social continues</p>
+                    </div>
+                  </div>
+                  <div className="pt-4 border-t border-text-dark/10">
+                    <p className="font-semibold mb-1">📍 Venue</p>
+                    <p className="text-text-dark/80">
+                      <a href="https://maps.app.goo.gl/JVyfLAohdRTqQvcg8" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline font-semibold">
+                        Scout Hall
+                      </a>
+                      <br />17 Bowwood Rd, Claremont, Cape Town
                     </p>
+                    <div className="mt-3">
+                      <p className="font-semibold mb-1">🏎️ Parking</p>
+                      <p className="text-sm text-text-dark/80">
+                        Scout Hall is on the corner of Bowwood and Thelma.{" "}
+                        <a href="https://maps.app.goo.gl/dW2qw4e79TymZuzU9" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">Parking</a> is in Thelma, just after the building before the tennis courts. Look for a wired gate with a small purple sign: &quot;SCOUTS - Scout Hall Parking only&quot;.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -727,6 +743,12 @@ export default async function Weekender({
               </h3>
               <p className="text-sm md:text-base text-text-dark/70 mb-6">
                 Highly recommended to build and solidify technique & connection on Saturday before Sunday&apos;s fun & style focus.
+                <br />
+                <span className="font-semibold">Venue:{" "}
+                  <a href="https://maps.app.goo.gl/wtpLbBfVesBiajXq7" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">
+                    Hellenic Community Centre, Greenpoint
+                  </a>
+                </span>
               </p>
 
               <div className="bg-cloud-dancer rounded-xl p-4 md:p-6">
@@ -747,9 +769,9 @@ export default async function Weekender({
                     </div>
                   </div>
 
-                  {/* 10:30-11:30 Spotlight / Private slots */}
+                  {/* 10:45-11:45 Spotlight / Private slots */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">10:30-11:30</div>
+                    <div className="font-semibold text-text-dark/70 flex items-center">10:45-11:45</div>
                     <div className="bg-yellow-accent/10 rounded-lg p-2 md:p-3 border-2 border-yellow-accent/30">
                       <p className="font-semibold">Spotlight Critique (Add-on)</p>
                       <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
@@ -760,95 +782,106 @@ export default async function Weekender({
                     </div>
                   </div>
 
-                  {/* 11:30-12:00 Coffee break */}
+                  {/* 11:45-12:00 Break */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">11:30-12:00</div>
-                    <div className="bg-text-dark/5 rounded-lg p-2 md:p-3 col-span-2 text-center font-semibold">
-                      Coffee break / go buy food for community lunch
+                    <div className="font-semibold text-text-dark/70 flex items-center">11:45-12:00</div>
+                    <div className="bg-text-dark/5 rounded-lg p-2 md:p-3 col-span-2 text-center font-semibold">Break</div>
+                  </div>
+
+                  {/* 12:00-13:00 */}
+                  <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
+                    <div className="font-semibold text-text-dark/70 flex items-center">12:00-13:00</div>
+                    <div className="bg-yellow-accent/10 rounded-lg p-2 md:p-3">
+                      <p className="font-semibold">Level 2</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
+                    </div>
+                    <div className="bg-purple-accent/10 rounded-lg p-2 md:p-3">
+                      <p className="font-semibold">Level 1</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
                     </div>
                   </div>
 
-                  {/* 12:00-13:30 Lunch */}
+                  {/* 13:00-13:15 Break */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">12:00-13:30</div>
+                    <div className="font-semibold text-text-dark/70 flex items-center">13:00-13:15</div>
+                    <div className="bg-text-dark/5 rounded-lg p-2 md:p-3 col-span-2 text-center font-semibold">Break</div>
+                  </div>
+
+                  {/* 13:15-14:15 */}
+                  <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
+                    <div className="font-semibold text-text-dark/70 flex items-center">13:15-14:15</div>
+                    <div className="bg-yellow-accent/10 rounded-lg p-2 md:p-3">
+                      <p className="font-semibold">Level 2</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
+                    </div>
+                    <div className="bg-purple-accent/10 rounded-lg p-2 md:p-3">
+                      <p className="font-semibold">Level 1</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
+                    </div>
+                  </div>
+
+                  {/* 14:15-15:45 Community Lunch */}
+                  <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
+                    <div className="font-semibold text-text-dark/70 flex items-center">14:15-15:45</div>
                     <div className="bg-pink-accent/10 rounded-lg p-2 md:p-3 col-span-2 border-2 border-pink-accent/30">
                       <p className="font-semibold">Community Lunch</p>
                       <p className="text-xs text-text-dark/70 mt-1">Bring and share</p>
                     </div>
                   </div>
 
-                  {/* 13:30-14:30 */}
+                  {/* 15:45-16:45 */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">13:30-14:30</div>
-                    <div className="bg-purple-accent/10 rounded-lg p-2 md:p-3">
-                      <p className="font-semibold">Level 1</p>
-                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
-                    </div>
+                    <div className="font-semibold text-text-dark/70 flex items-center">15:45-16:45</div>
                     <div className="bg-yellow-accent/10 rounded-lg p-2 md:p-3">
                       <p className="font-semibold">Level 2</p>
                       <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
                     </div>
+                    <div className="bg-purple-accent/10 rounded-lg p-2 md:p-3">
+                      <p className="font-semibold">Level 1</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
+                    </div>
                   </div>
 
-                  {/* 14:30-14:45 Break */}
+                  {/* 16:45-17:00 Break */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">14:30-14:45</div>
+                    <div className="font-semibold text-text-dark/70 flex items-center">16:45-17:00</div>
                     <div className="bg-text-dark/5 rounded-lg p-2 md:p-3 col-span-2 text-center font-semibold">Break</div>
                   </div>
 
-                  {/* 14:45-15:45 */}
+                  {/* 17:00-18:00 */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">14:45-15:45</div>
-                    <div className="bg-purple-accent/10 rounded-lg p-2 md:p-3">
-                      <p className="font-semibold">Level 1</p>
-                      <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
-                    </div>
-                    <div className="bg-yellow-accent/10 rounded-lg p-2 md:p-3">
-                      <p className="font-semibold">Level 2</p>
-                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
-                    </div>
-                  </div>
-
-                  {/* 15:45-16:00 Break */}
-                  <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">15:45-16:00</div>
-                    <div className="bg-text-dark/5 rounded-lg p-2 md:p-3 col-span-2 text-center font-semibold">Break</div>
-                  </div>
-
-                  {/* 16:00-17:00 */}
-                  <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">16:00-17:00</div>
-                    <div className="bg-purple-accent/10 rounded-lg p-2 md:p-3">
-                      <p className="font-semibold">Level 1</p>
-                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
-                    </div>
+                    <div className="font-semibold text-text-dark/70 flex items-center">17:00-18:00</div>
                     <div className="bg-yellow-accent/10 rounded-lg p-2 md:p-3">
                       <p className="font-semibold">Level 2</p>
                       <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
                     </div>
+                    <div className="bg-purple-accent/10 rounded-lg p-2 md:p-3">
+                      <p className="font-semibold">Level 1</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
+                    </div>
                   </div>
 
-                  {/* 17:00-18:30 Dinner */}
+                  {/* 18:00-19:30 Dinner */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">17:00-18:30</div>
+                    <div className="font-semibold text-text-dark/70 flex items-center">18:00-19:30</div>
                     <div className="bg-text-dark/5 rounded-lg p-2 md:p-3 col-span-2 text-center font-semibold">Dinner Break</div>
                   </div>
 
-                  {/* 18:30-19:30 All levels */}
+                  {/* 19:30-20:30 All levels */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">18:30-19:30</div>
+                    <div className="font-semibold text-text-dark/70 flex items-center">19:30-20:30</div>
                     <div className="bg-pink-accent/5 rounded-lg p-2 md:p-3 col-span-2">
                       <p className="font-semibold">Master Your Social Dance on the Floor</p>
-                      <p className="text-xs text-text-dark/70 mt-1">All levels • Igor & Fernanda • main hall</p>
+                      <p className="text-xs text-text-dark/70 mt-1">All levels • Igor & Fernanda • Main Hall</p>
                     </div>
                   </div>
 
-                  {/* 19:30-23:00 Social */}
+                  {/* 20:30-23:00 Social */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">19:30-23:00</div>
+                    <div className="font-semibold text-text-dark/70 flex items-center">20:30-23:00</div>
                     <div className="bg-pink-accent/10 rounded-lg p-2 md:p-3 col-span-2 border-2 border-pink-accent/30">
-                      <p className="font-semibold">Saturday Night Social + Pro shows</p>
-                      <p className="text-xs text-text-dark/70 mt-1">Improv style</p>
+                      <p className="font-semibold">Social Dancing</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Potential Pro shows at ~22:00</p>
                     </div>
                   </div>
                 </div>
@@ -862,6 +895,12 @@ export default async function Weekender({
               </h3>
               <p className="text-sm md:text-base text-text-dark/70 mb-6">
                 Fun, creativity, and style-building — highly recommended after you&apos;ve solidified technique & connection on Saturday.
+                <br />
+                <span className="font-semibold">Venue:{" "}
+                  <a href="https://maps.app.goo.gl/wtpLbBfVesBiajXq7" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">
+                    Hellenic Community Centre, Greenpoint
+                  </a>
+                </span>
               </p>
 
               <div className="bg-cloud-dancer rounded-xl p-4 md:p-6">
@@ -873,50 +912,75 @@ export default async function Weekender({
                 </div>
 
                 <div className="space-y-2 text-[11px] md:text-sm">
-                  {/* 09:00-11:00 Private Lessons */}
+                  {/* 09:00-10:30 Private Lessons */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">09:00-11:00</div>
+                    <div className="font-semibold text-text-dark/70 flex items-center">09:00-10:30</div>
                     <div className="bg-text-dark/10 rounded-lg p-2 md:p-3 col-span-2">
-                      <p className="font-semibold">Private lesson slots</p>
+                      <p className="font-semibold">Private lessons</p>
                       <p className="text-xs text-text-dark/70 mt-1">All pros (by appointment)</p>
                     </div>
                   </div>
 
-                  {/* 11:00-12:00 Follower Focus */}
+                  {/* 10:45-11:45 Spinning / Privates */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">11:00-12:00</div>
-                    <div className="bg-pink-accent/5 rounded-lg p-2 md:p-3">
-                      <p className="font-semibold">Follower Focus</p>
-                      <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda • main hall</p>
+                    <div className="font-semibold text-text-dark/70 flex items-center">10:45-11:45</div>
+                    <div className="bg-yellow-accent/10 rounded-lg p-2 md:p-3 border-2 border-yellow-accent/30">
+                      <p className="font-semibold">Advanced Spinning Intensive (Add-On)</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
                     </div>
                     <div className="bg-text-dark/10 rounded-lg p-2 md:p-3">
-                      <p className="font-semibold">Private lesson slots</p>
+                      <p className="font-semibold">Private lessons</p>
                       <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
                     </div>
                   </div>
 
-                  {/* 12:00-13:00 Leads Focus */}
+                  {/* 11:45-12:00 Break */}
+                  <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
+                    <div className="font-semibold text-text-dark/70 flex items-center">11:45-12:00</div>
+                    <div className="bg-text-dark/5 rounded-lg p-2 md:p-3 col-span-2 text-center font-semibold">Break</div>
+                  </div>
+
+                  {/* 12:00-13:00 Followers Intensive / Privates */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
                     <div className="font-semibold text-text-dark/70 flex items-center">12:00-13:00</div>
                     <div className="bg-pink-accent/5 rounded-lg p-2 md:p-3">
-                      <p className="font-semibold">Leads Focus</p>
-                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen • main hall</p>
+                      <p className="font-semibold">Followers Intensive</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
                     </div>
                     <div className="bg-text-dark/10 rounded-lg p-2 md:p-3">
-                      <p className="font-semibold">Private lesson slots</p>
+                      <p className="font-semibold">Private lessons</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
+                    </div>
+                  </div>
+
+                  {/* 13:00-13:10 Break */}
+                  <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
+                    <div className="font-semibold text-text-dark/70 flex items-center">13:00-13:10</div>
+                    <div className="bg-text-dark/5 rounded-lg p-2 md:p-3 col-span-2 text-center font-semibold">Break</div>
+                  </div>
+
+                  {/* 13:10-14:10 Leads Intensive / Privates */}
+                  <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
+                    <div className="font-semibold text-text-dark/70 flex items-center">13:10-14:10</div>
+                    <div className="bg-pink-accent/5 rounded-lg p-2 md:p-3">
+                      <p className="font-semibold">Leads Intensive</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
+                    </div>
+                    <div className="bg-text-dark/10 rounded-lg p-2 md:p-3">
+                      <p className="font-semibold">Private lessons</p>
                       <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
                     </div>
                   </div>
 
-                  {/* 13:00-14:00 Lunch */}
+                  {/* 14:10-15:30 Lunch */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">13:00-14:00</div>
+                    <div className="font-semibold text-text-dark/70 flex items-center">14:10-15:30</div>
                     <div className="bg-text-dark/5 rounded-lg p-2 md:p-3 col-span-2 text-center font-semibold">Lunch Break</div>
                   </div>
 
-                  {/* 14:00-15:00 */}
+                  {/* 15:30-16:30 */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">14:00-15:00</div>
+                    <div className="font-semibold text-text-dark/70 flex items-center">15:30-16:30</div>
                     <div className="bg-yellow-accent/10 rounded-lg p-2 md:p-3">
                       <p className="font-semibold">Level 2</p>
                       <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
@@ -927,15 +991,15 @@ export default async function Weekender({
                     </div>
                   </div>
 
-                  {/* 15:00-15:15 Break */}
+                  {/* 16:30-16:45 Break */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">15:00-15:15</div>
+                    <div className="font-semibold text-text-dark/70 flex items-center">16:30-16:45</div>
                     <div className="bg-text-dark/5 rounded-lg p-2 md:p-3 col-span-2 text-center font-semibold">Break</div>
                   </div>
 
-                  {/* 15:15-16:15 */}
+                  {/* 16:45-17:45 */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">15:15-16:15</div>
+                    <div className="font-semibold text-text-dark/70 flex items-center">16:45-17:45</div>
                     <div className="bg-yellow-accent/10 rounded-lg p-2 md:p-3">
                       <p className="font-semibold">Level 2</p>
                       <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
@@ -946,45 +1010,29 @@ export default async function Weekender({
                     </div>
                   </div>
 
-                  {/* 16:15-16:30 Break */}
+                  {/* 17:45-19:30 Dinner */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">16:15-16:30</div>
-                    <div className="bg-text-dark/5 rounded-lg p-2 md:p-3 col-span-2 text-center font-semibold">Break</div>
-                  </div>
-
-                  {/* 16:30-17:30 */}
-                  <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">16:30-17:30</div>
-                    <div className="bg-yellow-accent/10 rounded-lg p-2 md:p-3">
-                      <p className="font-semibold">Level 2</p>
-                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen</p>
-                    </div>
-                    <div className="bg-purple-accent/10 rounded-lg p-2 md:p-3">
-                      <p className="font-semibold">Level 1</p>
-                      <p className="text-xs text-text-dark/70 mt-1">Igor & Fernanda</p>
+                    <div className="font-semibold text-text-dark/70 flex items-center">17:45-19:30</div>
+                    <div className="bg-text-dark/5 rounded-lg p-2 md:p-3 col-span-2 text-center">
+                      <p className="font-semibold">Dinner Break</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Potential carnival parade watching</p>
                     </div>
                   </div>
 
-                  {/* 17:30-18:30 Dinner */}
+                  {/* 19:30-20:30 All levels */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">17:30-18:30</div>
-                    <div className="bg-text-dark/5 rounded-lg p-2 md:p-3 col-span-2 text-center font-semibold">Dinner Break</div>
-                  </div>
-
-                  {/* 18:30-19:30 All levels */}
-                  <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">18:30-19:30</div>
+                    <div className="font-semibold text-text-dark/70 flex items-center">19:30-20:30</div>
                     <div className="bg-pink-accent/5 rounded-lg p-2 md:p-3 col-span-2">
                       <p className="font-semibold">All Levels Workshop</p>
-                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen • main hall</p>
+                      <p className="text-xs text-text-dark/70 mt-1">Harold & Kristen • Main Hall</p>
                     </div>
                   </div>
 
-                  {/* 19:30-23:00 Social */}
+                  {/* 20:30-23:00 Social */}
                   <div className="grid grid-cols-[88px_1fr_1fr] md:grid-cols-[120px_1fr_1fr] gap-2 md:gap-3">
-                    <div className="font-semibold text-text-dark/70 flex items-center">19:30-23:00</div>
+                    <div className="font-semibold text-text-dark/70 flex items-center">20:30-23:00</div>
                     <div className="bg-pink-accent/10 rounded-lg p-2 md:p-3 col-span-2 border-2 border-pink-accent/30">
-                      <p className="font-semibold">Sunday Night Social</p>
+                      <p className="font-semibold">Social Dancing</p>
                     </div>
                   </div>
                 </div>

@@ -5,6 +5,7 @@ import { getDb } from '@/lib/db';
 type BookingType = 'private_lesson' | 'spotlight_critique' | 'advanced_spinning_intensive';
 type PrivatePro = 'igor' | 'fernanda' | 'harold' | 'kristen';
 type Role = 'L' | 'F';
+const ANY_TIME_PRIVATE_SLOT = 'any_time';
 
 type LookupResult = {
   email: string;
@@ -28,6 +29,9 @@ type SubmitPayload = {
       lessonCount: number;
     }>;
     unavailablePlan: string;
+    bookWithPartner?: boolean;
+    partnerName?: string;
+    partnerSurname?: string;
   };
   spotlightCritique?: {
     partnerName: string;
@@ -89,6 +93,18 @@ function normalizePrivateSlot(slot: string): string {
     .trim()
     .replace(/_(igor|fernanda|harold|kristen)$/i, '')
     .replace(/_hellenic$/i, '');
+}
+
+function normalizePrivateSlots(slots: string[]): string[] {
+  const normalized = slots
+    .map((slot) => normalizePrivateSlot(slot).toLowerCase())
+    .filter((slot) => slot.length > 0);
+
+  if (normalized.includes(ANY_TIME_PRIVATE_SLOT)) {
+    return [ANY_TIME_PRIVATE_SLOT];
+  }
+
+  return Array.from(new Set(normalized));
 }
 
 async function writeRowsToSheet(
@@ -159,6 +175,9 @@ export async function POST(request: NextRequest) {
       const privateLesson = body.privateLesson;
       const requests = Array.isArray(privateLesson?.requests) ? privateLesson.requests : [];
       const unavailablePlan = String(privateLesson?.unavailablePlan ?? '').trim();
+      const bookWithPartner = Boolean(privateLesson?.bookWithPartner);
+      const partnerName = String(privateLesson?.partnerName ?? '').trim();
+      const partnerSurname = String(privateLesson?.partnerSurname ?? '').trim();
 
       if (requests.length === 0 || !unavailablePlan) {
         return NextResponse.json(
@@ -167,15 +186,26 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      if (bookWithPartner && (!partnerName || !partnerSurname)) {
+        return NextResponse.json(
+          { error: 'Please provide partner name and surname when booking private lessons with a partner.' },
+          { status: 400 }
+        );
+      }
+      const partnerLookup = bookWithPartner
+        ? await findWeekenderRegistrant(partnerName, partnerSurname)
+        : null;
+      const partnerEmail = partnerLookup?.email ?? '';
+
       const seenPros = new Set<PrivatePro>();
       const privateRows: string[][] = [];
 
       for (const request of requests) {
         const pro = String(request?.pro ?? '').trim().toLowerCase();
         const preferredSlots = Array.isArray(request?.preferredSlots)
-          ? request.preferredSlots
-            .filter((slot) => typeof slot === 'string' && slot.trim().length > 0)
-            .map((slot) => normalizePrivateSlot(slot))
+          ? normalizePrivateSlots(
+            request.preferredSlots.filter((slot) => typeof slot === 'string')
+          )
           : [];
         const lessonCount = Number(request?.lessonCount ?? NaN);
 
@@ -207,9 +237,13 @@ export async function POST(request: NextRequest) {
           String(lessonCount), // K
           preferredSlots.join(' | '), // L
           unavailablePlan, // M
+          bookWithPartner ? 'yes' : 'no', // N
+          bookWithPartner ? partnerName : '', // O
+          bookWithPartner ? partnerSurname : '', // P
+          partnerEmail, // Q
         ]);
       }
-      await writeRowsToSheet(sheetId, 'Privates', 'M', privateRows);
+      await writeRowsToSheet(sheetId, 'Privates', 'Q', privateRows);
       return NextResponse.json({ success: true });
     }
 

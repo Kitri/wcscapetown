@@ -35,8 +35,13 @@ const PRIVATE_PRO_LABELS: Record<PrivatePro, string> = {
   harold: 'Harold',
   kristen: 'Kristen',
 };
+const ANY_TIME_PRIVATE_SLOT_ID = 'any_time';
 
 const COMMON_PRIVATE_SLOTS: SlotOption[] = [
+  {
+    id: ANY_TIME_PRIVATE_SLOT_ID,
+    label: 'Any time (I’m flexible)',
+  },
   {
     id: 'sat_9_11',
     label: 'Saturday 9:00–11:00 at Hellenic Centre',
@@ -114,6 +119,9 @@ export default function WeekenderAddOnsPage() {
     INITIAL_PRIVATE_LESSON_REQUESTS
   );
   const [privateUnavailablePlan, setPrivateUnavailablePlan] = useState('');
+  const [privateBookWithPartner, setPrivateBookWithPartner] = useState(false);
+  const [privatePartnerName, setPrivatePartnerName] = useState('');
+  const [privatePartnerSurname, setPrivatePartnerSurname] = useState('');
   const [spotlightPartnerName, setSpotlightPartnerName] = useState('');
   const [spotlightPartnerSurname, setSpotlightPartnerSurname] = useState('');
   const [spotlightAvailable17, setSpotlightAvailable17] = useState(false);
@@ -140,9 +148,17 @@ export default function WeekenderAddOnsPage() {
   const togglePrivateSlot = (pro: PrivatePro, slotId: string) => {
     setPrivateLessonRequests((prev) => {
       const currentSlots = prev[pro].preferredSlots;
-      const updatedSlots = currentSlots.includes(slotId)
-        ? currentSlots.filter((slot) => slot !== slotId)
-        : [...currentSlots, slotId];
+      let updatedSlots: string[] = [];
+
+      if (slotId === ANY_TIME_PRIVATE_SLOT_ID) {
+        updatedSlots = currentSlots.includes(ANY_TIME_PRIVATE_SLOT_ID)
+          ? currentSlots.filter((slot) => slot !== ANY_TIME_PRIVATE_SLOT_ID)
+          : [ANY_TIME_PRIVATE_SLOT_ID];
+      } else {
+        updatedSlots = currentSlots.includes(slotId)
+          ? currentSlots.filter((slot) => slot !== slotId)
+          : [...currentSlots.filter((slot) => slot !== ANY_TIME_PRIVATE_SLOT_ID), slotId];
+      }
 
       return {
         ...prev,
@@ -255,6 +271,11 @@ export default function WeekenderAddOnsPage() {
         setError('Please tell us what to do if your pro is unavailable.');
         return;
       }
+
+      if (privateBookWithPartner && (!privatePartnerName.trim() || !privatePartnerSurname.trim())) {
+        setError('Please provide your partner name and surname for private lessons.');
+        return;
+      }
     }
 
     if (bookingType === 'spotlight_critique') {
@@ -266,6 +287,7 @@ export default function WeekenderAddOnsPage() {
 
     setSubmitting(true);
     try {
+      const resolvedContactEmail = (hasWeekenderLookup ? lookupInfo?.email : trimmedEmail)?.trim() ?? '';
       const payload = {
         bookingType,
         contact: {
@@ -282,6 +304,9 @@ export default function WeekenderAddOnsPage() {
                   lessonCount: privateLessonRequests[pro].lessonCount,
                 })),
                 unavailablePlan: privateUnavailablePlan.trim(),
+                bookWithPartner: privateBookWithPartner,
+                partnerName: privateBookWithPartner ? privatePartnerName.trim() : '',
+                partnerSurname: privateBookWithPartner ? privatePartnerSurname.trim() : '',
               }
             : undefined,
         spotlightCritique:
@@ -313,7 +338,16 @@ export default function WeekenderAddOnsPage() {
       if (!response.ok) {
         throw new Error(data.error || 'Failed to submit booking.');
       }
-      router.push('/weekender/add-ons/success');
+      const successParams = new URLSearchParams();
+      if (resolvedContactEmail) {
+        successParams.set('email', resolvedContactEmail);
+      }
+      const successQuery = successParams.toString();
+      router.push(
+        successQuery
+          ? `/weekender/add-ons/success?${successQuery}`
+          : '/weekender/add-ons/success'
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit booking.');
     } finally {
@@ -470,6 +504,47 @@ export default function WeekenderAddOnsPage() {
                         </label>
                       ))}
                     </div>
+                  </div>
+
+                  <div className="mt-4 rounded-lg border border-text-dark/10 bg-white p-4">
+                    <label className="inline-flex items-center gap-2 text-sm font-medium text-text-dark cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={privateBookWithPartner}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setPrivateBookWithPartner(checked);
+                          if (!checked) {
+                            setPrivatePartnerName('');
+                            setPrivatePartnerSurname('');
+                          }
+                        }}
+                      />
+                      Book with partner (optional)
+                    </label>
+
+                    {privateBookWithPartner && (
+                      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Partner name</label>
+                          <input
+                            type="text"
+                            value={privatePartnerName}
+                            onChange={(e) => setPrivatePartnerName(e.target.value)}
+                            className="w-full px-4 py-3 rounded-lg border-2 border-text-dark/10 focus:border-yellow-accent focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-1">Partner surname</label>
+                          <input
+                            type="text"
+                            value={privatePartnerSurname}
+                            onChange={(e) => setPrivatePartnerSurname(e.target.value)}
+                            className="w-full px-4 py-3 rounded-lg border-2 border-text-dark/10 focus:border-yellow-accent focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {selectedPrivatePros.length > 0 && (

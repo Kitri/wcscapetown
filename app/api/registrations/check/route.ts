@@ -12,6 +12,10 @@ type AddOnRequestSummary = {
     lessonCount: number;
     preferredSlots: string[];
     unavailablePlan: string;
+    bookWithPartner?: boolean;
+    partnerName?: string;
+    partnerSurname?: string;
+    partnerEmail?: string;
   };
   spotlightCritique?: {
     participantName: string;
@@ -49,6 +53,11 @@ function normalizePrivateSlot(slot: string): string {
     .replace(/_hellenic$/i, '');
 }
 
+function parseYesNo(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  return normalized === 'yes' || normalized === 'true';
+}
+
 async function getWeekenderAddOnsByEmail(emails: string[]): Promise<Record<string, AddOnRequestSummary[]>> {
   if (emails.length === 0) return {};
 
@@ -72,12 +81,15 @@ async function getWeekenderAddOnsByEmail(emails: string[]): Promise<Record<strin
   };
 
   try {
-    const privateRows = await readRange('Privates!A:M');
+    const privateRows = await readRange('Privates!A:Q');
     for (const row of privateRows) {
-      const email = String(row[3] ?? '').trim().toLowerCase();
-      if (!emailSet.has(email)) continue;
+      const participantEmail = String(row[3] ?? '').trim().toLowerCase();
+      const partnerEmail = String(row[16] ?? '').trim().toLowerCase();
+      const participantMatches = emailSet.has(participantEmail);
+      const partnerMatches = emailSet.has(partnerEmail);
+      if (!participantMatches && !partnerMatches) continue;
 
-      addRequest(email, {
+      const privateRequest: AddOnRequestSummary = {
         bookingType: 'private_lesson',
         submittedAt: String(row[0] ?? '').trim(),
         privateLesson: {
@@ -85,8 +97,19 @@ async function getWeekenderAddOnsByEmail(emails: string[]): Promise<Record<strin
           lessonCount: parseLessonCount(String(row[10] ?? '').trim()),
           preferredSlots: splitPipeList(String(row[11] ?? '')).map(normalizePrivateSlot),
           unavailablePlan: String(row[12] ?? '').trim(),
+          bookWithPartner: parseYesNo(String(row[13] ?? '')),
+          partnerName: String(row[14] ?? '').trim(),
+          partnerSurname: String(row[15] ?? '').trim(),
+          partnerEmail,
         },
-      });
+      };
+
+      if (participantMatches) {
+        addRequest(participantEmail, privateRequest);
+      }
+      if (partnerMatches && partnerEmail !== participantEmail) {
+        addRequest(partnerEmail, privateRequest);
+      }
     }
 
     const spotlightRows = await readRange('Spotlight!A:M');
@@ -147,6 +170,10 @@ async function getWeekenderAddOnsByEmail(emails: string[]): Promise<Record<strin
             lessonCount: parseLessonCount(String(row[11] ?? '').trim()),
             preferredSlots: splitPipeList(String(row[11] ?? '').includes('|') ? String(row[11] ?? '') : String(row[12] ?? '')).map(normalizePrivateSlot),
             unavailablePlan: String(row[13] ?? row[12] ?? '').trim(),
+            bookWithPartner: false,
+            partnerName: '',
+            partnerSurname: '',
+            partnerEmail: '',
           },
         });
       } else if (bookingTypeRaw === 'spotlight_critique') {

@@ -11,6 +11,9 @@ type AddOnRequest = {
     lessonCount: number;
     preferredSlots: string[];
     unavailablePlan: string;
+    bookWithPartner?: boolean;
+    partnerName?: string;
+    partnerSurname?: string;
   };
   spotlightCritique?: {
     participantName: string;
@@ -83,7 +86,7 @@ function titleCase(value: string) {
 function CheckRegistrationContent() {
   const searchParams = useSearchParams();
   const source = (searchParams.get('source') || '').toLowerCase();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(() => searchParams.get('query')?.trim() || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [results, setResults] = useState<RegistrationResult[]>([]);
@@ -311,11 +314,23 @@ function CheckRegistrationContent() {
                                 <p>
                                   Lessons requested: <span className="font-medium">{request.privateLesson.lessonCount}</span>
                                 </p>
+                                {request.privateLesson.bookWithPartner && (
+                                  <p>
+                                    Book with partner:{' '}
+                                    <span className="font-medium">
+                                      {request.privateLesson.partnerName && request.privateLesson.partnerSurname
+                                        ? `${request.privateLesson.partnerName} ${request.privateLesson.partnerSurname}`
+                                        : 'Yes'}
+                                    </span>
+                                  </p>
+                                )}
                                 <p>
                                   Preferred slots:{' '}
                                   <span className="font-medium">
                                     {request.privateLesson.preferredSlots.length > 0
-                                      ? request.privateLesson.preferredSlots.join(', ')
+                                      ? request.privateLesson.preferredSlots
+                                        .map((slot) => (slot === 'any_time' ? 'Any time' : slot))
+                                        .join(', ')
                                       : '—'}
                                   </span>
                                 </p>

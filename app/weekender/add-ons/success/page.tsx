@@ -1,7 +1,19 @@
 import Header from '@/components/Header';
 import Link from 'next/link';
 
-export default function WeekenderAddOnsSuccessPage() {
+type SuccessPageProps = {
+  searchParams: Promise<{
+    email?: string;
+  }>;
+};
+
+export default async function WeekenderAddOnsSuccessPage({ searchParams }: SuccessPageProps) {
+  const params = await searchParams;
+  const submittedEmail = typeof params?.email === 'string' ? params.email.trim() : '';
+  const checkRegistrationHref = submittedEmail
+    ? `/check-registration?source=weekender&query=${encodeURIComponent(submittedEmail)}`
+    : '/check-registration?source=weekender';
+
   return (
     <>
       <Header />
@@ -34,7 +46,7 @@ export default function WeekenderAddOnsSuccessPage() {
               Return to weekender page
             </Link>
             <Link
-              href="/check-registration?source=weekender"
+              href={checkRegistrationHref}
               className="block w-full bg-text-dark/5 text-text-dark px-6 py-3 rounded-lg font-semibold border border-text-dark/10 hover:bg-text-dark/10 transition-colors"
             >
               Check my registration
