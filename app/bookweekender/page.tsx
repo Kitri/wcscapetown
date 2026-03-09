@@ -984,6 +984,9 @@ export default function BookWeekender() {
                     <p className="text-sm text-text-dark/70 mt-2">
                       You can still register below and we&apos;ll add you to the waitlist. No payment required until a spot opens.
                     </p>
+                    <p className="text-sm text-text-dark/80 mt-2 font-medium">
+                      If you convince a lead to sign up, we&apos;ll take both of you off the waitlist and give each of you a R200 discount.
+                    </p>
                   </div>
                 )}
 
@@ -1208,6 +1211,9 @@ export default function BookWeekender() {
                   We&apos;ve added you to the Level {level} {role === 'F' ? 'Follower' : 'Lead'} waitlist. 
                   As soon as enough {role === 'F' ? 'leads' : 'followers'} sign up to balance the numbers, 
                   we&apos;ll send you an email with a payment link.
+                </p>
+                <p className="text-text-dark/80 mb-6 font-medium">
+                  If you convince a lead to sign up, we&apos;ll take both of you off the waitlist and give each of you a R200 discount.
                 </p>
                 <div className="bg-cloud-dancer rounded-lg p-4 mb-6">
                   <p className="text-sm text-text-dark/60">Reference number</p>
