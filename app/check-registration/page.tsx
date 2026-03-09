@@ -3,6 +3,27 @@
 import { FormEvent, Suspense, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
+type AddOnRequest = {
+  bookingType: 'private_lesson' | 'spotlight_critique' | 'advanced_spinning_intensive';
+  submittedAt: string;
+  privateLesson?: {
+    pro: string;
+    lessonCount: number;
+    preferredSlots: string[];
+    unavailablePlan: string;
+  };
+  spotlightCritique?: {
+    participantName: string;
+    participantSurname: string;
+    partnerName: string;
+    partnerSurname: string;
+    earlierAvailability: string[];
+  };
+  advancedSpinning?: {
+    role: string;
+    level: string;
+  };
+};
 
 type RegistrationResult = {
   orderId: string;
@@ -24,6 +45,7 @@ type RegistrationResult = {
   details: string[];
   shoeTips: string[];
   shoeOptions: string[];
+  addOnRequests: AddOnRequest[];
 };
 
 function getVenueEmbedUrl(venueName: string, venueAddress: string, venueMapUrl: string) {
@@ -33,6 +55,29 @@ function getVenueEmbedUrl(venueName: string, venueAddress: string, venueMapUrl: 
 
   const query = encodeURIComponent(venueAddress || venueName);
   return `https://www.google.com/maps?q=${query}&output=embed`;
+}
+
+function formatAddOnLabel(bookingType: AddOnRequest['bookingType']) {
+  if (bookingType === 'private_lesson') return 'Private lesson request';
+  if (bookingType === 'spotlight_critique') return 'Spotlight critique request';
+  return 'Advanced spinning workshop request';
+}
+
+function formatSubmittedAt(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value || 'Unknown';
+  return date.toLocaleString('en-ZA', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function titleCase(value: string) {
+  if (!value) return value;
+  return value[0].toUpperCase() + value.slice(1);
 }
 
 function CheckRegistrationContent() {
@@ -216,7 +261,6 @@ function CheckRegistrationContent() {
                       </ul>
                     </div>
                   </div>
-
                   {(item.shoeTips.length > 0 || item.shoeOptions.length > 0) && (
                     <div className="mt-4 rounded-lg border border-text-dark/10 bg-white p-4">
                       <p className="font-semibold text-sm mb-2">Shoe tips</p>
@@ -235,6 +279,82 @@ function CheckRegistrationContent() {
                           ))}
                         </ul>
                       )}
+                    </div>
+                  )}
+
+                  {item.addOnRequests.length > 0 && (
+                    <div className="mt-4 rounded-lg border border-text-dark/10 bg-white p-4">
+                      <p className="font-semibold text-sm mb-3">Add-on booking requests</p>
+                      <div className="space-y-3">
+                        {item.addOnRequests.map((request, requestIndex) => (
+                          <div key={`${item.orderId}-addon-${requestIndex}`} className="rounded-lg border border-text-dark/10 bg-cloud-dancer/40 p-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                              <p className="text-sm font-semibold text-text-dark">
+                                {formatAddOnLabel(request.bookingType)}
+                              </p>
+                              <p className="text-xs text-text-dark/60">
+                                Submitted: {formatSubmittedAt(request.submittedAt)}
+                              </p>
+                            </div>
+
+                            {(request.bookingType === 'private_lesson' || request.bookingType === 'spotlight_critique') && (
+                              <p className="text-xs font-medium text-pink-accent mt-2">
+                                Not finalised — these are your preferences (for now).
+                              </p>
+                            )}
+
+                            {request.bookingType === 'private_lesson' && request.privateLesson && (
+                              <div className="mt-2 text-sm text-text-dark/85 space-y-1">
+                                <p>
+                                  Pro: <span className="font-medium">{titleCase(request.privateLesson.pro)}</span>
+                                </p>
+                                <p>
+                                  Lessons requested: <span className="font-medium">{request.privateLesson.lessonCount}</span>
+                                </p>
+                                <p>
+                                  Preferred slots:{' '}
+                                  <span className="font-medium">
+                                    {request.privateLesson.preferredSlots.length > 0
+                                      ? request.privateLesson.preferredSlots.join(', ')
+                                      : '—'}
+                                  </span>
+                                </p>
+                              </div>
+                            )}
+
+                            {request.bookingType === 'spotlight_critique' && request.spotlightCritique && (
+                              <div className="mt-2 text-sm text-text-dark/85 space-y-1">
+                                <p>
+                                  Pair:{' '}
+                                  <span className="font-medium">
+                                    {request.spotlightCritique.participantName} {request.spotlightCritique.participantSurname} +{' '}
+                                    {request.spotlightCritique.partnerName} {request.spotlightCritique.partnerSurname}
+                                  </span>
+                                </p>
+                                <p>
+                                  Earlier-week availability:{' '}
+                                  <span className="font-medium">
+                                    {request.spotlightCritique.earlierAvailability.length > 0
+                                      ? request.spotlightCritique.earlierAvailability.join(', ')
+                                      : 'None selected'}
+                                  </span>
+                                </p>
+                              </div>
+                            )}
+
+                            {request.bookingType === 'advanced_spinning_intensive' && request.advancedSpinning && (
+                              <div className="mt-2 text-sm text-text-dark/85 space-y-1">
+                                <p>
+                                  Role: <span className="font-medium">{request.advancedSpinning.role || '—'}</span>
+                                </p>
+                                <p>
+                                  Level: <span className="font-medium">{request.advancedSpinning.level || '—'}</span>
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
 

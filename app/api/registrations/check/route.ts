@@ -1,5 +1,192 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRegistrationsByEmailOrOrder } from '@/lib/db';
+import { getSheetValues } from '@/lib/googleSheets';
+
+type AddOnBookingType = 'private_lesson' | 'spotlight_critique' | 'advanced_spinning_intensive';
+
+type AddOnRequestSummary = {
+  bookingType: AddOnBookingType;
+  submittedAt: string;
+  privateLesson?: {
+    pro: string;
+    lessonCount: number;
+    preferredSlots: string[];
+    unavailablePlan: string;
+  };
+  spotlightCritique?: {
+    participantName: string;
+    participantSurname: string;
+    partnerName: string;
+    partnerSurname: string;
+    earlierAvailability: string[];
+  };
+  advancedSpinning?: {
+    role: string;
+    level: string;
+  };
+};
+
+function isAddOnBookingType(value: string): value is AddOnBookingType {
+  return value === 'private_lesson' || value === 'spotlight_critique' || value === 'advanced_spinning_intensive';
+}
+
+function splitPipeList(value: string): string[] {
+  return value
+    .split('|')
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function parseLessonCount(value: string): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 1 ? parsed : 1;
+}
+
+function normalizePrivateSlot(slot: string): string {
+  return slot
+    .trim()
+    .replace(/_(igor|fernanda|harold|kristen)$/i, '')
+    .replace(/_hellenic$/i, '');
+}
+
+async function getWeekenderAddOnsByEmail(emails: string[]): Promise<Record<string, AddOnRequestSummary[]>> {
+  if (emails.length === 0) return {};
+
+  const sheetId = process.env.SHEET_ID_WEEKEND_ADDON;
+  if (!sheetId) return {};
+
+  const emailSet = new Set(emails.map((email) => email.trim().toLowerCase()).filter(Boolean));
+  if (emailSet.size === 0) return {};
+  const byEmail: Record<string, AddOnRequestSummary[]> = {};
+  const addRequest = (email: string, request: AddOnRequestSummary) => {
+    if (!byEmail[email]) byEmail[email] = [];
+    byEmail[email].push(request);
+  };
+
+  const readRange = async (range: string): Promise<string[][]> => {
+    try {
+      return await getSheetValues(sheetId, range);
+    } catch {
+      return [];
+    }
+  };
+
+  try {
+    const privateRows = await readRange('Privates!A:M');
+    for (const row of privateRows) {
+      const email = String(row[3] ?? '').trim().toLowerCase();
+      if (!emailSet.has(email)) continue;
+
+      addRequest(email, {
+        bookingType: 'private_lesson',
+        submittedAt: String(row[0] ?? '').trim(),
+        privateLesson: {
+          pro: String(row[9] ?? '').trim(),
+          lessonCount: parseLessonCount(String(row[10] ?? '').trim()),
+          preferredSlots: splitPipeList(String(row[11] ?? '')).map(normalizePrivateSlot),
+          unavailablePlan: String(row[12] ?? '').trim(),
+        },
+      });
+    }
+
+    const spotlightRows = await readRange('Spotlight!A:M');
+    for (const row of spotlightRows) {
+      const participantEmail = String(row[3] ?? '').trim().toLowerCase();
+      const partnerEmail = String(row[12] ?? '').trim().toLowerCase();
+      const participantMatches = emailSet.has(participantEmail);
+      const partnerMatches = emailSet.has(partnerEmail);
+      if (!participantMatches && !partnerMatches) continue;
+
+      const spotlightRequest: AddOnRequestSummary = {
+        bookingType: 'spotlight_critique',
+        submittedAt: String(row[0] ?? '').trim(),
+        spotlightCritique: {
+          participantName: String(row[1] ?? '').trim(),
+          participantSurname: String(row[2] ?? '').trim(),
+          partnerName: String(row[9] ?? '').trim(),
+          partnerSurname: String(row[10] ?? '').trim(),
+          earlierAvailability: splitPipeList(String(row[11] ?? '')),
+        },
+      };
+
+      if (participantMatches) {
+        addRequest(participantEmail, spotlightRequest);
+      }
+      if (partnerMatches && partnerEmail !== participantEmail) {
+        addRequest(partnerEmail, spotlightRequest);
+      }
+    }
+
+    const spinningRows = await readRange('Spinning!A:K');
+    for (const row of spinningRows) {
+      const email = String(row[3] ?? '').trim().toLowerCase();
+      if (!emailSet.has(email)) continue;
+
+      addRequest(email, {
+        bookingType: 'advanced_spinning_intensive',
+        submittedAt: String(row[0] ?? '').trim(),
+        advancedSpinning: {
+          role: String(row[9] ?? '').trim(),
+          level: String(row[10] ?? '').trim(),
+        },
+      });
+    }
+
+    const legacyRows = await readRange('Sheet1!A:U');
+    for (const row of legacyRows) {
+      const bookingTypeRaw = String(row[1] ?? '').trim();
+      const email = String(row[4] ?? '').trim().toLowerCase();
+      if (!isAddOnBookingType(bookingTypeRaw) || !emailSet.has(email)) continue;
+
+      if (bookingTypeRaw === 'private_lesson') {
+        addRequest(email, {
+          bookingType: 'private_lesson',
+          submittedAt: String(row[0] ?? '').trim(),
+          privateLesson: {
+            pro: String(row[10] ?? '').trim(),
+            lessonCount: parseLessonCount(String(row[11] ?? '').trim()),
+            preferredSlots: splitPipeList(String(row[11] ?? '').includes('|') ? String(row[11] ?? '') : String(row[12] ?? '')).map(normalizePrivateSlot),
+            unavailablePlan: String(row[13] ?? row[12] ?? '').trim(),
+          },
+        });
+      } else if (bookingTypeRaw === 'spotlight_critique') {
+        addRequest(email, {
+          bookingType: 'spotlight_critique',
+          submittedAt: String(row[0] ?? '').trim(),
+          spotlightCritique: {
+            participantName: String(row[13] ?? '').trim(),
+            participantSurname: String(row[14] ?? '').trim(),
+            partnerName: String(row[15] ?? '').trim(),
+            partnerSurname: String(row[16] ?? '').trim(),
+            earlierAvailability: splitPipeList(String(row[17] ?? '')),
+          },
+        });
+      } else {
+        addRequest(email, {
+          bookingType: 'advanced_spinning_intensive',
+          submittedAt: String(row[0] ?? '').trim(),
+          advancedSpinning: {
+            role: String(row[18] ?? '').trim(),
+            level: String(row[19] ?? '').trim(),
+          },
+        });
+      }
+    }
+  } catch (error) {
+    console.error('Failed to read weekender add-ons sheets for registration check:', error);
+    return {};
+  }
+
+  for (const email of Object.keys(byEmail)) {
+    byEmail[email].sort((a, b) => {
+      const aTime = new Date(a.submittedAt).getTime();
+      const bTime = new Date(b.submittedAt).getTime();
+      return bTime - aTime;
+    });
+  }
+
+  return byEmail;
+}
 
 function getStatusInfo(paymentStatus: string, registrationStatus: string, role: string) {
   const normalizedRole = String(role || '').trim().toUpperCase();
@@ -115,9 +302,12 @@ export async function POST(request: NextRequest) {
     }
 
     const rows = await getRegistrationsByEmailOrOrder(query, source);
+    const addOnsByEmail = await getWeekenderAddOnsByEmail(rows.map((row) => row.email));
+
     const registrations = rows.map((row) => {
       const status = getStatusInfo(row.paymentStatus, row.registrationStatus, row.role);
       const eventInfo = getWeekenderInfo(row.passType, row.workshopDay, row.partyAddOn);
+      const rowEmail = String(row.email ?? '').trim().toLowerCase();
 
       return {
         orderId: row.orderId,
@@ -139,6 +329,7 @@ export async function POST(request: NextRequest) {
         details: eventInfo.details,
         shoeTips: eventInfo.shoeTips,
         shoeOptions: eventInfo.shoeOptions,
+        addOnRequests: addOnsByEmail[rowEmail] ?? [],
       };
     });
 

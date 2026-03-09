@@ -64,14 +64,15 @@ function InstagramIcon({ className }: { className?: string }) {
 export default async function Weekender({
   searchParams,
 }: {
-  searchParams?: { tab?: string };
+  searchParams?: Promise<{ tab?: string }>;
 }) {
   const partyPassStatus = await isPartyPassSoldOut();
   const soldOut = {
     ...WEEKENDER_SOLD_OUT,
     partyPass: partyPassStatus.soldOut,
   };
-  const tab = (searchParams?.tab ?? "passes").toLowerCase();
+  const resolvedSearchParams = await searchParams;
+  const tab = (resolvedSearchParams?.tab ?? "passes").toLowerCase();
   const isPros = tab === "pros";
   const isSchedule = tab === "schedule";
   const isPasses = tab === "passes" || (!isPros && !isSchedule);
@@ -113,12 +114,20 @@ export default async function Weekender({
                 Unsure if it&apos;s worth it as a WCS newcomer? →
               </Link>
               <div className="mt-3">
-                <Link
-                  href="/check-registration?source=weekender"
-                  className="inline-block bg-white/10 border border-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/15 transition-colors"
-                >
-                  Check my registration
-                </Link>
+                <div className="flex flex-wrap justify-center gap-2">
+                  <Link
+                    href="/check-registration?source=weekender"
+                    className="inline-block bg-white/10 border border-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/15 transition-colors"
+                  >
+                    Check my registration
+                  </Link>
+                  <Link
+                    href="/weekender/add-ons"
+                    className="inline-block bg-white/10 border border-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/15 transition-colors"
+                  >
+                    Private lessons & extras
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -585,11 +594,27 @@ export default async function Weekender({
                 </div>
               </div>
             </div>
+            <div className="mt-10 bg-white rounded-xl p-6 md:p-8 border-2 border-pink-accent/30">
+              <h3 className="font-spartan font-semibold text-2xl mb-2 text-pink-accent">
+                Private Lessons (Add-on)
+              </h3>
+              <p className="text-text-dark/80">
+                Want one or more 45-minute private lesson slots with the pros? Submit your interest and date preferences here.
+              </p>
+              <div className="mt-5">
+                <Link
+                  href="/weekender/add-ons?tab=private_lesson"
+                  className="inline-block bg-yellow-accent text-text-dark px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all"
+                >
+                  Book private lessons
+                </Link>
+              </div>
+            </div>
 
             <div className="mt-10 bg-white rounded-xl p-6 md:p-8 border-2 border-yellow-accent/30">
               <h3 className="font-spartan font-semibold text-2xl mb-2 text-pink-accent">Spotlight Critique (Add-on)</h3>
               <p className="text-text-dark/80">
-                R300 per couple • limited to 8 couples • optional add-on (not included in any pass).
+                R400 per lead-follow pair • limited to 8 pairs • optional add-on (not included in any pass).
               </p>
               <p className="text-sm text-text-dark/70 mt-3">
                 Spotlight Critique is a coached “mini performance” where you dance a short round and get direct feedback on what
@@ -601,12 +626,35 @@ export default async function Weekender({
                 </p>
                 <div className="text-lg">
                   <span className="text-text-dark/70 mr-2">Price:</span>
-                  <PriceCell price={300} isSoldOut={soldOut.spotlightCritique} />
+                  <PriceCell price={400} isSoldOut={soldOut.spotlightCritique} />
                 </div>
               </div>
-              <p className="mt-4 text-sm font-semibold text-pink-accent">
-                Bookings will open soon
+              <div className="mt-5">
+                <Link
+                  href="/weekender/add-ons?tab=spotlight_critique"
+                  className="inline-block bg-yellow-accent text-text-dark px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all"
+                >
+                  Book spotlight critique
+                </Link>
+              </div>
+            </div>
+
+            <div className="mt-10 bg-white rounded-xl p-6 md:p-8 border-2 border-purple-accent/30">
+              <h3 className="font-spartan font-semibold text-2xl mb-2 text-pink-accent">Advanced Spinning Workshop (Add-on)</h3>
+              <p className="text-text-dark/80">
+                Focused training to improve spinning technique and build toward one-foot spins (lead and follow technique).
               </p>
+              <p className="text-sm text-text-dark/70 mt-3">
+                Initial sign-up is to measure interest and determine final pricing.
+              </p>
+              <div className="mt-5">
+                <Link
+                  href="/weekender/add-ons?tab=advanced_spinning_intensive"
+                  className="inline-block bg-yellow-accent text-text-dark px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all"
+                >
+                  Book advanced spinning workshop
+                </Link>
+              </div>
             </div>
 
             <div className="mt-10 bg-white rounded-xl p-6 md:p-8 border-2 border-text-dark/10">
