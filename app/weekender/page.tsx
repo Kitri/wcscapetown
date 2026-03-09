@@ -645,7 +645,7 @@ export default async function Weekender({
                 Aimed at dancers with basic spinning technique who want to take it to the next level.
               </p>
               <p className="text-text-dark/80 mt-2">
-                The class builds up progressively to one-foot spins (for both leads and follows), so it&apos;s not for complete beginners with no turning fundamentals yet.
+                The class builds up progressively to one-foot spins (for both leads and follows).
               </p>
               <p className="text-sm text-text-dark/70 mt-3">
                 Initial sign-up is to measure interest and determine final pricing.
