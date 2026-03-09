@@ -712,7 +712,7 @@ export default async function Weekender({
               <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">
                 <div className="space-y-4">
                   <div className="flex items-start gap-4">
-                    <div className="text-lg font-semibold text-text-dark/70 min-w-[100px]">20:00-23:00</div>
+                    <div className="text-lg font-semibold text-text-dark/70 min-w-[100px]">20:30-23:00</div>
                     <div>
                       <p className="font-semibold text-lg mb-1">Social Dancing</p>
                       <p className="text-text-dark/70">Kick off the weekend with some relaxed social dancing</p>
