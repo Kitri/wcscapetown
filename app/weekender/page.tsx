@@ -6,8 +6,8 @@ import { isPartyPassSoldOut } from "@/lib/db";
 
 const WEEKENDER_SOLD_OUT = {
   nowWeekend: true,
-  nowNowWeekend: false,
-  nowNowDay: false,
+  nowNowWeekend: true,
+  nowNowDay: true,
   justNowWeekend: false,
   justNowDay: false,
   aiTogWeekend: false,
@@ -438,28 +438,29 @@ export default async function Weekender({
                     </p>
                     <p className="text-xs text-text-dark/60">First 10 tickets • 24 hours • opens 18 Feb</p>
 
-                    {/* Active tier highlight */}
-                    <div className="mt-2 -mx-2 px-2 py-2 bg-yellow-accent/15 border-l-4 border-yellow-accent rounded-r-lg">
+                    <div className="flex items-center justify-between py-2 border-t border-text-dark/10 mt-2">
                       <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                           <span className="font-semibold">Now-now</span>
                         </div>
                         <PriceCell price={1800} isSoldOut={soldOut.nowNowWeekend} />
                       </div>
-                      <p className="text-xs text-text-dark/70 mt-1">Classic SA “soonish but not really now”</p>
-                      <p className="text-xs text-text-dark/70">
-                        Limited tickets • until sold out or 8 March (whichever comes first)
-                      </p>
-                    </div>
-
-                    <div className="flex items-center justify-between py-2 border-t border-text-dark/10 mt-2">
-                      <span className="font-semibold">Just-now</span>
-                      <PriceCell price={2200} isSoldOut={soldOut.justNowWeekend} />
                     </div>
                     <p className="text-xs text-text-dark/60 mt-1">
-                      The famous “eventually, maybe later today, who knows”
+                      This tier closed on 8 March 2026.
                     </p>
-                    <p className="text-xs text-text-dark/60">Until sold out</p>
+
+                    {/* Active tier highlight */}
+                    <div className="mt-2 -mx-2 px-2 py-2 bg-yellow-accent/15 border-l-4 border-yellow-accent rounded-r-lg">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold">Just-now</span>
+                        <PriceCell price={2200} isSoldOut={soldOut.justNowWeekend} />
+                      </div>
+                      <p className="text-xs text-text-dark/70 mt-1">
+                        The famous “eventually, maybe later today, who knows”
+                      </p>
+                      <p className="text-xs text-text-dark/70">Current tier • until sold out</p>
+                    </div>
 
                     <div className="flex items-center justify-between py-2 border-t border-text-dark/10 mt-2">
                       <span className="font-semibold">Ai tog</span>
@@ -494,23 +495,28 @@ export default async function Weekender({
                   </ul>
 
                   <div className="text-sm">
-                    {/* Active tier highlight */}
-                    <div className="-mx-2 px-2 py-2 bg-yellow-accent/15 border-l-4 border-yellow-accent rounded-r-lg border-t border-t-text-dark/10">
+                    <div className="flex items-center justify-between py-2 border-t border-text-dark/10 mt-2">
                       <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                           <span className="font-semibold">Now-now</span>
                         </div>
                         <PriceCell price={1000} isSoldOut={soldOut.nowNowDay} />
                       </div>
-                      <p className="text-xs text-text-dark/70 mt-1">Classic SA “soonish but not really now”</p>
-                      <p className="text-xs text-text-dark/70">
-                        Limited tickets • until sold out or 8 March (whichever comes first)
-                      </p>
                     </div>
+                    <p className="text-xs text-text-dark/60 mt-1">
+                      This tier closed on 8 March 2026.
+                    </p>
 
-                    <div className="flex items-center justify-between py-2 border-t border-text-dark/10 mt-2">
-                      <span className="font-semibold">Just-now</span>
-                      <PriceCell price={1200} isSoldOut={soldOut.justNowDay} />
+                    {/* Active tier highlight */}
+                    <div className="-mx-2 px-2 py-2 bg-yellow-accent/15 border-l-4 border-yellow-accent rounded-r-lg border-t border-t-text-dark/10 mt-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold">Just-now</span>
+                        <PriceCell price={1200} isSoldOut={soldOut.justNowDay} />
+                      </div>
+                      <p className="text-xs text-text-dark/70 mt-1">
+                        The famous “eventually, maybe later today, who knows”
+                      </p>
+                      <p className="text-xs text-text-dark/70">Current tier • until sold out</p>
                     </div>
                     <p className="text-xs text-text-dark/60 mt-1">
                       The famous “eventually, maybe later today, who knows”

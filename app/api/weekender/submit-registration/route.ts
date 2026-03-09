@@ -19,8 +19,8 @@ type PassType = 'weekend' | 'day' | 'party';
 type PriceTier = 'now' | 'now-now' | 'just-now' | 'ai-tog' | 'promo';
 
 const PASS_PRICES: Record<PassType, { single: number; couple: number; name: string }> = {
-  'weekend': { single: 180000, couple: 360000, name: 'Weekend Pass' },  // R1800/R3600
-  'day': { single: 100000, couple: 200000, name: 'Day Pass' },          // R1000/R2000
+  'weekend': { single: 220000, couple: 440000, name: 'Weekend Pass' },  // R2200/R4400
+  'day': { single: 120000, couple: 240000, name: 'Day Pass' },          // R1200/R2400
   'party': { single: 80000, couple: 160000, name: 'Party Pass' },       // R800/R1600
 };
 

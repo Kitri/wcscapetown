@@ -64,8 +64,8 @@ function UrlParamHandler({
 
 const PASS_PRICES: Record<PassType, { single: number; couple: number; name: string; description: string[]; tierNote: string; headerColor: string }> = {
   'weekend': { 
-    single: 1800, 
-    couple: 3600, 
+    single: 2200, 
+    couple: 4400, 
     name: 'Weekend Pass',
     description: [
       'Friday pre-party',
@@ -73,19 +73,19 @@ const PASS_PRICES: Record<PassType, { single: number; couple: number; name: stri
       'Community lunch (Saturday)',
       'All evening parties (Fri + Sat + Sun)',
     ],
-    tierNote: 'Until sold out or 8 March (whichever comes first)',
+    tierNote: 'Current tier • until sold out',
     headerColor: 'bg-pink-accent/10',
   },
   'day': { 
-    single: 1000, 
-    couple: 2000, 
+    single: 1200, 
+    couple: 2400, 
     name: 'Day Pass',
     description: [
       'Workshops (one day)',
       'Community lunch (Saturday only)',
       'Evening party for your day',
     ],
-    tierNote: 'Until sold out or 8 March (whichever comes first)',
+    tierNote: 'Current tier • until sold out',
     headerColor: 'bg-purple-accent/10',
   },
   'party': { 
@@ -482,7 +482,8 @@ export default function BookWeekender() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId,
-          priceTier: 'now-now',
+          priceTier: 'just-now',
+
           passType,
           daySelection: passType === 'day' ? daySelection : undefined,
           addFridayParty: passType === 'day' ? addFridayParty : undefined,
@@ -546,7 +547,7 @@ export default function BookWeekender() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionId,
-          priceTier: 'now-now',
+          priceTier: 'just-now',
           passType,
           daySelection: passType === 'day' ? daySelection : undefined,
           addFridayParty: passType === 'day' ? addFridayParty : undefined,
@@ -633,7 +634,8 @@ export default function BookWeekender() {
 
                     <div className="border-t border-text-dark/10 pt-4">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-semibold">Now-Now</span>
+                        <span className="font-semibold">Just-now</span>
+
                         <span className="font-bold text-lg">R{PASS_PRICES.weekend.single.toLocaleString()}</span>
                       </div>
                       <p className="text-xs text-text-dark/60 mb-4">{PASS_PRICES.weekend.tierNote}</p>
@@ -665,7 +667,7 @@ export default function BookWeekender() {
 
                     <div className="border-t border-text-dark/10 pt-4">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-semibold">Now-Now</span>
+                        <span className="font-semibold">Just-now</span>
                         <span className="font-bold text-lg">R{PASS_PRICES.day.single.toLocaleString()}</span>
                       </div>
                       <p className="text-xs text-text-dark/60 mb-4">{PASS_PRICES.day.tierNote}</p>
