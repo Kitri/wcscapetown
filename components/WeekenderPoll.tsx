@@ -20,14 +20,24 @@ export default function WeekenderPoll() {
           March 20-22, 2026 • Cape Town
         </p>
         <p className="text-base md:text-lg text-text-dark/80 mb-4">
-          Venue:{" "}
+          Friday social:{" "}
+          <a
+            href="https://maps.app.goo.gl/JVyfLAohdRTqQvcg8"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-pink-accent hover:text-yellow-accent underline font-semibold"
+          >
+            Scout Hall, Claremont
+          </a>
+          {" "}&bull;{" "}
+          Saturday & Sunday:{" "}
           <a
             href="https://maps.app.goo.gl/wtpLbBfVesBiajXq7"
             target="_blank"
             rel="noopener noreferrer"
             className="text-pink-accent hover:text-yellow-accent underline font-semibold"
           >
-            Hellenic Community Centre, Greenpoint
+            Hellenic, Greenpoint
           </a>
         </p>
         

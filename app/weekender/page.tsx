@@ -72,10 +72,10 @@ export default async function Weekender({
     partyPass: partyPassStatus.soldOut,
   };
   const resolvedSearchParams = await searchParams;
-  const tab = (resolvedSearchParams?.tab ?? "passes").toLowerCase();
+  const tab = (resolvedSearchParams?.tab ?? "schedule").toLowerCase();
   const isPros = tab === "pros";
-  const isSchedule = tab === "schedule";
-  const isPasses = tab === "passes" || (!isPros && !isSchedule);
+  const isPasses = tab === "passes";
+  const isSchedule = tab === "schedule" || (!isPros && !isPasses);
 
   return (
     <>
@@ -95,40 +95,42 @@ export default async function Weekender({
           </div>
 
           <div className="px-[5%] py-10 text-center">
-            <p className="text-2xl md:text-4xl font-semibold mb-2">March 20–22, 2026</p>
-            <p className="text-base md:text-lg text-white/85 mb-4">
-              Hellenic Community Centre, Greenpoint
-            </p>
-            
-            <Link
-              href="/bookweekender"
-              className="inline-block bg-yellow-accent text-text-dark px-8 py-4 rounded-lg font-bold text-lg md:text-xl hover:-translate-y-1 hover:shadow-lg hover:shadow-yellow-accent/30 transition-all"
-            >
-              🌟 Book Your Pass Now 🌟
-            </Link>
-            <div className="mt-4">
+            <p className="text-2xl md:text-4xl font-semibold mb-4">March 20–22, 2026</p>
+
+            {/* Venue callout */}
+            <div className="inline-block bg-white/10 border-2 border-yellow-accent rounded-xl px-6 py-4 mb-6">
+              <p className="text-sm md:text-base font-semibold text-yellow-accent uppercase tracking-wide mb-2">
+                ⚠️ Please note: 2 venues
+              </p>
+              <p className="text-base md:text-lg text-white">
+                <span className="font-semibold">Friday social:</span>{" "}
+                <a href="https://maps.app.goo.gl/JVyfLAohdRTqQvcg8" target="_blank" rel="noopener noreferrer" className="text-yellow-accent hover:text-white underline">Claremont Scout Hall</a>
+              </p>
+              <p className="text-base md:text-lg text-white">
+                <span className="font-semibold">Saturday & Sunday:</span>{" "}
+                <a href="https://maps.app.goo.gl/wtpLbBfVesBiajXq7" target="_blank" rel="noopener noreferrer" className="text-yellow-accent hover:text-white underline">Hellenic Community Centre, Greenpoint</a>
+              </p>
+            </div>
+
+            <div className="flex flex-wrap justify-center gap-2">
               <Link
-                href="/weekender?tab=passes#new-to-wcs"
-                className="text-sm md:text-base text-white/80 hover:text-yellow-accent underline"
+                href="/bookweekender"
+                className="inline-block bg-yellow-accent text-text-dark px-6 py-3 rounded-lg font-bold text-sm md:text-base hover:-translate-y-0.5 hover:shadow-lg hover:shadow-yellow-accent/30 transition-all"
               >
-                Unsure if it&apos;s worth it as a WCS newcomer? →
+                Book Your Pass
               </Link>
-              <div className="mt-3">
-                <div className="flex flex-wrap justify-center gap-2">
-                  <Link
-                    href="/check-registration?source=weekender"
-                    className="inline-block bg-white/10 border border-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/15 transition-colors"
-                  >
-                    Check my registration
-                  </Link>
-                  <Link
-                    href="/weekender/add-ons"
-                    className="inline-block bg-white/10 border border-white/30 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-white/15 transition-colors"
-                  >
-                    Private lessons & extras
-                  </Link>
-                </div>
-              </div>
+              <Link
+                href="/weekender/add-ons"
+                className="inline-block bg-white/10 border border-white/30 text-white px-6 py-3 rounded-lg text-sm md:text-base font-semibold hover:bg-white/15 transition-colors"
+              >
+                Private lessons & extras
+              </Link>
+              <Link
+                href="/check-registration?source=weekender"
+                className="inline-block bg-white/10 border border-white/30 text-white px-6 py-3 rounded-lg text-sm md:text-base font-semibold hover:bg-white/15 transition-colors"
+              >
+                Check my registration
+              </Link>
             </div>
           </div>
 
@@ -178,7 +180,7 @@ export default async function Weekender({
                   className="tab-schedule cursor-pointer select-none inline-flex items-center justify-center rounded-full bg-white/10 px-4 md:px-6 py-2.5 md:py-3 text-sm md:text-base font-semibold border-2 border-pink-accent/80 text-white/90 hover:bg-white/15 hover:border-yellow-accent transition-colors"
                 >
                   <span className="sm:hidden">Schedule</span>
-                  <span className="hidden sm:inline">Preliminary schedule</span>
+                  <span className="hidden sm:inline">Schedule</span>
                 </label>
                 <label
                   htmlFor="weekender-tab-passes"
@@ -700,8 +702,8 @@ export default async function Weekender({
             <h2 className="font-spartan font-semibold text-[32px] md:text-[40px] text-center mb-4">
               Weekend Schedule
             </h2>
-            <p className="text-center text-sm md:text-base text-text-dark/70 mb-12 max-w-[900px] mx-auto">
-              Preliminary schedule — exact details may still change.
+            <p className="text-center text-sm md:text-base text-text-dark/70 mb-4 max-w-[900px] mx-auto">
+              Friday social at Claremont Scout Hall • Saturday & Sunday at Hellenic Community Centre, Greenpoint
             </p>
 
             {/* Friday */}
@@ -723,7 +725,7 @@ export default async function Weekender({
                     <p className="font-semibold mb-1">📍 Venue</p>
                     <p className="text-text-dark/80">
                       <a href="https://maps.app.goo.gl/JVyfLAohdRTqQvcg8" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline font-semibold">
-                        Scout Hall
+                        Claremont Scout Hall
                       </a>
                       <br />17 Bowwood Rd, Claremont, Cape Town
                     </p>
@@ -1042,13 +1044,6 @@ export default async function Weekender({
               </div>
             </div>
 
-            {/* Pro Tip */}
-            <div className="bg-text-dark/5 rounded-xl p-6 md:p-8 border-2 border-text-dark/10">
-              <p className="font-semibold text-lg mb-2">💡 Pro Tip: Private Lessons</p>
-              <p className="text-text-dark/80">
-                Private lessons can be shared. Book as a couple and split the time (and cost). Limited slots available — see the schedule for the dedicated private lesson windows.
-              </p>
-            </div>
           </div>
         </section>
             </div>
@@ -1064,17 +1059,33 @@ export default async function Weekender({
 
             <div className="space-y-8">
               <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">
-                <h3 className="font-spartan font-semibold text-2xl mb-4">📍 Venue</h3>
-                <p className="text-text-dark/80">
-                  <a
-                    href="https://maps.app.goo.gl/wtpLbBfVesBiajXq7"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-pink-accent hover:text-yellow-accent underline font-semibold"
-                  >
-                    Hellenic Community Centre, Greenpoint
-                  </a>
-                </p>
+                <h3 className="font-spartan font-semibold text-2xl mb-4">📍 Venues</h3>
+                <div className="space-y-3">
+                  <p className="text-text-dark/80">
+                    <span className="font-semibold">Friday social:</span>{" "}
+                    <a
+                      href="https://maps.app.goo.gl/JVyfLAohdRTqQvcg8"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-pink-accent hover:text-yellow-accent underline font-semibold"
+                    >
+                      Claremont Scout Hall
+                    </a>
+                    , 17 Bowwood Rd, Claremont
+                  </p>
+                  <p className="text-text-dark/80">
+                    <span className="font-semibold">Saturday & Sunday:</span>{" "}
+                    <a
+                      href="https://maps.app.goo.gl/wtpLbBfVesBiajXq7"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-pink-accent hover:text-yellow-accent underline font-semibold"
+                    >
+                      Hellenic Community Centre
+                    </a>
+                    , Greenpoint
+                  </p>
+                </div>
               </div>
 
               <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">

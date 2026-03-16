@@ -35,6 +35,8 @@ const PRIVATE_PRO_LABELS: Record<PrivatePro, string> = {
   harold: 'Harold',
   kristen: 'Kristen',
 };
+
+const UNAVAILABLE_PROS: PrivatePro[] = ['igor'];
 const ANY_TIME_PRIVATE_SLOT_ID = 'any_time';
 
 const COMMON_PRIVATE_SLOTS: SlotOption[] = [
@@ -55,10 +57,10 @@ const COMMON_PRIVATE_SLOTS: SlotOption[] = [
 const PRO_SPECIFIC_PRIVATE_SLOTS: Record<PrivatePro, SlotOption[]> = {
   igor: [],
   fernanda: [
-    { id: 'mon_9_12_fernanda', label: 'Monday 9:00–12:00 (Pinelands or Plumstead)' },
-    { id: 'mon_12_17_fernanda', label: 'Monday 12:00–17:00 (Pinelands or Plumstead)' },
-    { id: 'tue_9_12_fernanda', label: 'Tuesday 9:00–12:00 (Pinelands or Plumstead)' },
-    { id: 'tue_12_17_fernanda', label: 'Tuesday 12:00–17:00 (Pinelands or Plumstead)' },
+    { id: 'mon_9_12_fernanda', label: 'Monday 9:00–12:00 (Pinelands)' },
+    { id: 'mon_12_17_fernanda', label: 'Monday 12:00–17:00 (Pinelands)' },
+    { id: 'tue_9_12_fernanda', label: 'Tuesday 9:00–12:00 (Pinelands)' },
+    { id: 'tue_12_17_fernanda', label: 'Tuesday 12:00–17:00 (Pinelands)' },
   ],
   harold: [
     { id: 'mar17_18_20_harold', label: '17 March 18:00–20:00 (Plumstead)' },
@@ -79,20 +81,11 @@ const PRO_SPECIFIC_PRIVATE_SLOTS: Record<PrivatePro, SlotOption[]> = {
     { id: 'mar26_12_17_harold', label: '26 March 12:00–17:00 (Plumstead)' },
   ],
   kristen: [
-    { id: 'mar16_9_12_kristen', label: '16 March 9:00–12:00 (Vredehoek or Plumstead)' },
-    { id: 'mar16_12_17_kristen', label: '16 March 12:00–17:00 (Vredehoek or Plumstead)' },
-    { id: 'mar17_9_12_kristen', label: '17 March 9:00–12:00 (Vredehoek or Plumstead)' },
-    { id: 'mar17_12_17_kristen', label: '17 March 12:00–17:00 (Vredehoek or Plumstead)' },
-    { id: 'mar17_18_20_kristen', label: '17 March 18:00–20:00 (Vredehoek or Plumstead)' },
-    { id: 'mar18_9_12_kristen', label: '18 March 9:00–12:00 (Vredehoek or Plumstead)' },
-    { id: 'mar18_12_17_kristen', label: '18 March 12:00–17:00 (Vredehoek or Plumstead)' },
-    { id: 'mar18_18_20_kristen', label: '18 March 18:00–20:00 (Vredehoek or Plumstead)' },
-    { id: 'mar19_9_12_kristen', label: '19 March 9:00–12:00 (Vredehoek or Plumstead)' },
-    { id: 'mar19_12_17_kristen', label: '19 March 12:00–17:00 (Vredehoek or Plumstead)' },
-    { id: 'mar23_9_12_kristen', label: '23 March 9:00–12:00 (Vredehoek or Plumstead)' },
-    { id: 'mar23_12_17_kristen', label: '23 March 12:00–17:00 (Vredehoek or Plumstead)' },
-    { id: 'mar24_9_12_kristen', label: '24 March 9:00–12:00 (Vredehoek or Plumstead)' },
-    { id: 'mar24_12_17_kristen', label: '24 March 12:00–17:00 (Vredehoek or Plumstead)' },
+    { id: 'mar16_15_18_kristen', label: '16 March 15:00–18:00 (Vredehoek)' },
+    { id: 'mar17_15_18_kristen', label: '17 March 15:00–18:00 (Vredehoek)' },
+    { id: 'mar17_18_21_kristen', label: '17 March 18:00–21:00 (Vredehoek)' },
+    { id: 'mar18_15_18_kristen', label: '18 March 15:00–18:00 (Vredehoek)' },
+    { id: 'mar18_18_19_kristen', label: '18 March 18:00–19:00 (Vredehoek)' },
   ],
 };
 
@@ -481,28 +474,42 @@ export default function WeekenderAddOnsPage() {
                   <p className="text-sm text-text-dark/80 mt-2">
                     You can select multiple pros and multiple date/time preferences below, then submit once.
                   </p>
+                  <div className="mt-3 bg-text-dark/5 rounded-lg p-3 border border-text-dark/10">
+                    <p className="text-sm text-text-dark/80">
+                      💡 <span className="font-semibold">Tip:</span> Private lessons can be shared. Book as a couple and split the time (and cost). Limited slots available.
+                    </p>
+                  </div>
 
                   <div className="mt-4">
                     <label className="block text-sm font-medium text-text-dark mb-2">Which pro(s) would you like?</label>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                      {(Object.keys(PRIVATE_PRO_LABELS) as PrivatePro[]).map((pro) => (
-                        <label
-                          key={pro}
-                          className={`cursor-pointer rounded-lg border-2 p-2 text-sm font-semibold text-center transition-colors ${
-                            selectedPrivatePros.includes(pro)
-                              ? 'border-yellow-accent bg-yellow-accent/10'
-                              : 'border-text-dark/10 hover:border-yellow-accent/60'
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            className="sr-only"
-                            checked={selectedPrivatePros.includes(pro)}
-                            onChange={() => togglePrivatePro(pro)}
-                          />
-                          {PRIVATE_PRO_LABELS[pro]}
-                        </label>
-                      ))}
+                      {(Object.keys(PRIVATE_PRO_LABELS) as PrivatePro[]).map((pro) => {
+                        const isUnavailable = UNAVAILABLE_PROS.includes(pro);
+                        return (
+                          <label
+                            key={pro}
+                            className={`rounded-lg border-2 p-2 text-sm font-semibold text-center transition-colors ${
+                              isUnavailable
+                                ? 'border-text-dark/10 bg-text-dark/5 opacity-60 cursor-not-allowed'
+                                : selectedPrivatePros.includes(pro)
+                                ? 'border-yellow-accent bg-yellow-accent/10 cursor-pointer'
+                                : 'border-text-dark/10 hover:border-yellow-accent/60 cursor-pointer'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="sr-only"
+                              checked={selectedPrivatePros.includes(pro)}
+                              onChange={() => !isUnavailable && togglePrivatePro(pro)}
+                              disabled={isUnavailable}
+                            />
+                            {PRIVATE_PRO_LABELS[pro]}
+                            {isUnavailable && (
+                              <span className="block text-xs text-red-600 font-semibold mt-1">No more slots available</span>
+                            )}
+                          </label>
+                        );
+                      })}
                     </div>
                   </div>
 

@@ -31,7 +31,10 @@ export default function WhatsOn() {
                 <h3 className="font-spartan font-semibold text-lg mb-2">Level 1 & 2 Classes & Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">7-10 PM</p>
                 <p className="text-sm text-text-dark/70">Havana Nights, Plumstead</p>
-                <p className="text-xs mt-3 text-text-dark/60">
+                <p className="text-xs mt-2 font-semibold text-pink-accent">
+                  ⚠️ 16 & 23 March: All-level class, 7:30–8:30 PM
+                </p>
+                <p className="text-xs mt-1 text-text-dark/60">
                   See level descriptions below
                 </p>
               </a>
@@ -112,6 +115,15 @@ export default function WhatsOn() {
             <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] text-center mb-6">
               Monday Classes & Social
             </h2>
+
+            <div className="bg-yellow-accent/20 border-2 border-yellow-accent rounded-xl p-6 md:p-8 mb-8 text-center">
+              <p className="text-lg md:text-xl font-semibold mb-2">
+                ⚠️ Mondays 16 & 23 March
+              </p>
+              <p className="text-base md:text-lg">
+                All-level class from 7:30 – 8:30 PM. There is no Level 1 and Level 2 class, and class starts at 7:30.
+              </p>
+            </div>
 
             <div className="grid md:grid-cols-2 gap-8">
               {/* Left Column - Class Flow */}
