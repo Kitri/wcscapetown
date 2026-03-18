@@ -12,7 +12,7 @@ const WEEKENDER_SOLD_OUT = {
   justNowDay: false,
   aiTogWeekend: false,
   aiTogDay: false,
-  spotlightCritique: false,
+  spotlightCritique: true,
 } as const;
 
 function PriceCell({
@@ -632,12 +632,9 @@ export default async function Weekender({
                 </div>
               </div>
               <div className="mt-5">
-                <Link
-                  href="/weekender/add-ons?tab=spotlight_critique"
-                  className="inline-block bg-yellow-accent text-text-dark px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all"
-                >
-                  Book spotlight critique
-                </Link>
+                <span className="inline-block bg-red-600 text-white px-6 py-3 rounded-lg font-semibold">
+                  Spots Full
+                </span>
               </div>
             </div>
 

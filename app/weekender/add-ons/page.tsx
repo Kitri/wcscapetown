@@ -615,54 +615,11 @@ export default function WeekenderAddOnsPage() {
               {bookingType === 'spotlight_critique' && (
                 <div className="mt-8 rounded-lg border border-text-dark/10 bg-cloud-dancer/40 p-4">
                   <h3 className="font-spartan font-semibold text-xl mb-2">Spotlight critique</h3>
-                  <p className="text-sm text-text-dark/80">
-                    Sign up as a pair. Cost is R400 per pair.
-                  </p>
-                  <p className="text-sm text-text-dark/80 mt-2">
-                    There is no payment at this stage. We&apos;re collecting interest first; once enough people sign up we&apos;ll send payment links.
-                  </p>
-
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Partner name</label>
-                      <input
-                        type="text"
-                        value={spotlightPartnerName}
-                        onChange={(e) => setSpotlightPartnerName(e.target.value)}
-                        className="w-full px-4 py-3 rounded-lg border-2 border-text-dark/10 focus:border-yellow-accent focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Partner surname</label>
-                      <input
-                        type="text"
-                        value={spotlightPartnerSurname}
-                        onChange={(e) => setSpotlightPartnerSurname(e.target.value)}
-                        className="w-full px-4 py-3 rounded-lg border-2 border-text-dark/10 focus:border-yellow-accent focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="mt-4">
-                    <p className="text-sm font-medium mb-2">
-                      If we get high demand and need a second session, are you available earlier in the week?
+                  <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                    <p className="text-red-700 font-semibold text-lg">All spots are full</p>
+                    <p className="text-sm text-red-600 mt-1">
+                      Spotlight critique registrations are now closed.
                     </p>
-                    <label className="inline-flex items-center gap-2 text-sm mr-6">
-                      <input
-                        type="checkbox"
-                        checked={spotlightAvailable17}
-                        onChange={(e) => setSpotlightAvailable17(e.target.checked)}
-                      />
-                      17 March
-                    </label>
-                    <label className="inline-flex items-center gap-2 text-sm">
-                      <input
-                        type="checkbox"
-                        checked={spotlightAvailable18}
-                        onChange={(e) => setSpotlightAvailable18(e.target.checked)}
-                      />
-                      18 March
-                    </label>
                   </div>
                 </div>
               )}
