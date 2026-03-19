@@ -26,6 +26,7 @@ export async function GET() {
         workshop_day,
         party_add_on
       FROM registration_admin_view
+      WHERE COALESCE(registration_status, '') != 'cancelled'
     `;
 
     const roleBalance = await sql`
@@ -41,8 +42,56 @@ export async function GET() {
     `;
 
     const aggregateByDay = await sql`
-      SELECT day, level, role, count
-      FROM aggregate_by_day
+      WITH completed_registrations AS (
+        SELECT
+          r.member_id,
+          r.role,
+          r.level,
+          r.pass_type,
+          dp.workshop_day
+        FROM registrations r
+        LEFT JOIN day_pass_details dp ON dp.registration_id = r.id
+        WHERE r.registration_status = 'complete'
+          AND COALESCE(r.registration_status, '') != 'cancelled'
+          AND r.pass_type IN ('weekend', 'day')
+      ),
+      expanded_days AS (
+        SELECT
+          CASE
+            WHEN pass_type = 'weekend' THEN 'Saturday'
+            ELSE workshop_day
+          END AS day,
+          level,
+          role
+        FROM completed_registrations
+        WHERE pass_type = 'weekend'
+        UNION ALL
+        SELECT
+          CASE
+            WHEN pass_type = 'weekend' THEN 'Sunday'
+            ELSE workshop_day
+          END AS day,
+          level,
+          role
+        FROM completed_registrations
+        WHERE pass_type = 'weekend'
+        UNION ALL
+        SELECT
+          workshop_day AS day,
+          level,
+          role
+        FROM completed_registrations
+        WHERE pass_type = 'day'
+      )
+      SELECT
+        day,
+        level,
+        role,
+        COUNT(*)::int AS count
+      FROM expanded_days
+      WHERE day IN ('Saturday', 'Sunday')
+      GROUP BY day, level, role
+      ORDER BY day, level, role
     `;
 
 
@@ -55,6 +104,7 @@ export async function GET() {
         COUNT(*) as count
       FROM registrations
       WHERE registration_status != 'complete'
+      AND COALESCE(registration_status, '') != 'cancelled'
       GROUP BY registration_status, level, role, pass_type
       ORDER BY
         registration_status,
@@ -66,10 +116,12 @@ export async function GET() {
     const pricingTiers = await sql`
       SELECT
         pass_type,
-        price_tier,
+        price_tier as price_tier,
         registration_status,
-        count
-      FROM price_tier_status
+        COUNT(*)::int as count
+      FROM registrations
+      WHERE COALESCE(registration_status, '') != 'cancelled'
+      GROUP BY pass_type, price_tier, registration_status
       ORDER BY
         CASE pass_type
           WHEN 'weekend' THEN 1
