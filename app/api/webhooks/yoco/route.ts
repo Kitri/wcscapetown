@@ -1,7 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { completeRegistration, updateRegistrationPaymentStatusByOrder, updateYocoPaymentId, getOrderIdByCheckoutId, getRegistrationIdsByOrderId } from '@/lib/db';
+import {
+  completeRegistration,
+  updateRegistrationPaymentStatusByOrder,
+  updateYocoPaymentId,
+  getOrderIdByCheckoutId,
+  getRegistrationIdsByOrderId,
+  updateWeekendAddOnPaymentStatusByRegistrationIds,
+  updateWeekendAddOnPaymentStatusByMemberIds,
+} from '@/lib/db';
 import { logApiResponse } from '@/lib/blobLogger';
+import {
+  type AddOnPassType,
+  type AddOnRegistrationType,
+  getParticipantsForRegistrationType,
+  resolveAddOnPaymentLookup,
+  toWeekendAddOnPassType,
+} from '@/lib/weekenderAddOnPayments';
 
 // ─── Signature verification ───────────────────────────────────────────────────
 
@@ -101,8 +116,56 @@ interface YocoEvent {
       customerId?: string;
       customerEmail?: string;
       source?: string;
+      registrationType?: string;
+      memberIds?: string;
     };
   };
+}
+
+function parseAddOnPassTypeFromSource(source: string | undefined): AddOnPassType | null {
+  if (source === 'addon_spinning_intensive') return 'spinning_intensive';
+  if (source === 'addon_spotlight_critique') return 'spotlight_critique';
+  return null;
+}
+
+function parseAddOnRegistrationType(value: string | undefined): AddOnRegistrationType {
+  return value === 'couple' ? 'couple' : 'single';
+}
+
+function parseMemberIds(value: string | undefined): number[] {
+  if (!value) return [];
+  const ids = value
+    .split(',')
+    .map((part) => Number(part.trim()))
+    .filter((num) => Number.isInteger(num) && num > 0);
+  return Array.from(new Set(ids));
+}
+
+async function resolveAddOnMemberIdsFromMetadata(
+  passType: AddOnPassType,
+  customerEmail: string | undefined,
+  registrationTypeRaw: string | undefined
+): Promise<number[]> {
+  if (!customerEmail) return [];
+
+  try {
+    const lookup = await resolveAddOnPaymentLookup(customerEmail, passType);
+    if (lookup.lookupStatus !== 'ready' || !lookup.primary) return [];
+
+    const registrationType: AddOnRegistrationType =
+      passType === 'spinning_intensive'
+        ? 'single'
+        : parseAddOnRegistrationType(registrationTypeRaw);
+    const participants = getParticipantsForRegistrationType(lookup, registrationType);
+    return participants.map((participant) => participant.memberId);
+  } catch (error) {
+    console.warn('Could not resolve add-on member IDs from webhook metadata fallback', {
+      passType,
+      customerEmail,
+      error,
+    });
+    return [];
+  }
 }
 
 async function handleEvent(event: YocoEvent) {
@@ -119,6 +182,39 @@ async function handleEvent(event: YocoEvent) {
 
   switch (event.type) {
     case 'payment.succeeded': {
+      const source = event.payload.metadata?.source;
+      const addOnPassType = parseAddOnPassTypeFromSource(source);
+      if (addOnPassType) {
+        let memberIds = parseMemberIds(event.payload.metadata?.memberIds);
+        if (memberIds.length === 0) {
+          memberIds = await resolveAddOnMemberIdsFromMetadata(
+            addOnPassType,
+            event.payload.metadata?.customerEmail,
+            event.payload.metadata?.registrationType
+          );
+        }
+
+        if (memberIds.length === 0) {
+          console.warn('No add-on member IDs found for payment.succeeded webhook', {
+            eventId: event.id,
+            source,
+          });
+          return;
+        }
+
+        await updateWeekendAddOnPaymentStatusByMemberIds(
+          memberIds,
+          toWeekendAddOnPassType(addOnPassType),
+          'complete'
+        );
+
+        console.log('✅ Add-on payment succeeded - weekend_add_ons updated', {
+          eventId: event.id,
+          source,
+          memberIds,
+        });
+        return;
+      }
       const checkoutId = event.payload.metadata?.checkoutId;
       const paymentId = event.payload.id; // This is the Yoco payment ID
       const amount = event.payload.amount;
@@ -153,6 +249,7 @@ async function handleEvent(event: YocoEvent) {
 
       // Complete each registration by registration_id (precise, no cross-pass-type updates)
       await Promise.all(registrationIds.map(registrationId => completeRegistration(registrationId)));
+      await updateWeekendAddOnPaymentStatusByRegistrationIds(registrationIds, 'complete');
 
       console.log('✅ Payment succeeded - registrations completed', {
         checkoutId,
@@ -166,6 +263,39 @@ async function handleEvent(event: YocoEvent) {
     }
 
     case 'payment.failed': {
+      const source = event.payload.metadata?.source;
+      const addOnPassType = parseAddOnPassTypeFromSource(source);
+      if (addOnPassType) {
+        let memberIds = parseMemberIds(event.payload.metadata?.memberIds);
+        if (memberIds.length === 0) {
+          memberIds = await resolveAddOnMemberIdsFromMetadata(
+            addOnPassType,
+            event.payload.metadata?.customerEmail,
+            event.payload.metadata?.registrationType
+          );
+        }
+
+        if (memberIds.length === 0) {
+          console.warn('No add-on member IDs found for payment.failed webhook', {
+            eventId: event.id,
+            source,
+          });
+          return;
+        }
+
+        await updateWeekendAddOnPaymentStatusByMemberIds(
+          memberIds,
+          toWeekendAddOnPassType(addOnPassType),
+          'failed'
+        );
+
+        console.log('❌ Add-on payment failed - weekend_add_ons updated', {
+          eventId: event.id,
+          source,
+          memberIds,
+        });
+        return;
+      }
       const checkoutId = event.payload.metadata?.checkoutId;
 
       if (!checkoutId) {
@@ -184,6 +314,8 @@ async function handleEvent(event: YocoEvent) {
 
       // Mark registrations as failed
       await updateRegistrationPaymentStatusByOrder(orderId, 'failed');
+      const failedRegistrationIds = await getRegistrationIdsByOrderId(orderId);
+      await updateWeekendAddOnPaymentStatusByRegistrationIds(failedRegistrationIds, 'failed');
 
       console.log('❌ Payment failed - registrations marked as failed', { checkoutId, orderId });
       break;

@@ -22,6 +22,99 @@ export interface Member {
   created_at?: string;
 }
 
+export type WeekendAddOnPassType = 'spin' | 'spot';
+export type WeekendAddOnPaymentStatus = 'pending' | 'complete' | 'failed' | 'pay_later';
+
+export async function upsertWeekendAddOnEntry(params: {
+  memberId: number;
+  registrationId?: number | null;
+  passType: WeekendAddOnPassType;
+  paymentStatus: WeekendAddOnPaymentStatus;
+  note?: string | null;
+}): Promise<void> {
+
+  const sql = getDb();
+  const note = typeof params.note === 'string' ? params.note.trim() : null;
+  const registrationId =
+    typeof params.registrationId === 'number' && Number.isFinite(params.registrationId)
+      ? params.registrationId
+      : null;
+
+  const updated = await sql`
+    UPDATE weekend_add_ons
+    SET
+      registration_id = COALESCE(${registrationId}, registration_id),
+      payment_status = ${params.paymentStatus},
+      note = COALESCE(${note}, note),
+      updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
+    WHERE member_id = ${params.memberId}
+      AND pass_type = ${params.passType}
+    RETURNING id
+  `;
+
+  if (updated.length > 0) return;
+
+  await sql`
+    INSERT INTO weekend_add_ons (
+      member_id,
+      registration_id,
+      pass_type,
+      payment_status,
+      note,
+      created_at,
+      updated_at
+    )
+    VALUES (
+      ${params.memberId},
+      ${registrationId},
+      ${params.passType},
+      ${params.paymentStatus},
+      ${note},
+      now() AT TIME ZONE 'Africa/Johannesburg',
+      now() AT TIME ZONE 'Africa/Johannesburg'
+    )
+  `;
+}
+
+export async function updateWeekendAddOnPaymentStatusByRegistrationIds(
+  registrationIds: number[],
+  paymentStatus: WeekendAddOnPaymentStatus
+): Promise<void> {
+  if (!Array.isArray(registrationIds) || registrationIds.length === 0) return;
+  const sql = getDb();
+
+  for (const registrationId of registrationIds) {
+    await sql`
+      UPDATE weekend_add_ons
+      SET
+        payment_status = ${paymentStatus},
+        updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
+      WHERE registration_id = ${registrationId}
+    `;
+  }
+}
+
+export async function updateWeekendAddOnPaymentStatusByMemberIds(
+  memberIds: number[],
+  passType: WeekendAddOnPassType,
+  paymentStatus: WeekendAddOnPaymentStatus
+): Promise<void> {
+  if (!Array.isArray(memberIds) || memberIds.length === 0) return;
+
+  const sql = getDb();
+
+  for (const memberId of memberIds) {
+    await sql`
+      UPDATE weekend_add_ons
+      SET
+        payment_status = ${paymentStatus},
+        updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
+      WHERE member_id = ${memberId}
+        AND pass_type = ${passType}
+    `;
+  }
+}
+
 export interface Registration {
   id?: number;
   email: string;

@@ -270,6 +270,37 @@ function getStatusInfo(paymentStatus: string, registrationStatus: string, role: 
 
 
 function getWeekenderInfo(passType: string, workshopDay: string | null, partyAddOn: boolean | null) {
+  if (passType === 'spinning_intensive') {
+    return {
+      registrationLabel: 'Spinning Intensive Add-on',
+      eventDate: 'Weekender add-on session',
+      venueName: 'Hellenic Community Centre, Greenpoint',
+      venueAddress: 'Hellenic Community Centre, Greenpoint',
+      venueMapUrl: 'https://maps.app.goo.gl/rhtWRj4fmg1Pw8fw8',
+      details: [
+        'This is an add-on registration linked to your weekender booking.',
+        'Please keep your payment reference in case we need to verify details.',
+      ],
+      shoeTips: [],
+      shoeOptions: [],
+    };
+  }
+
+  if (passType === 'spotlight_critique') {
+    return {
+      registrationLabel: 'Spotlight Critique Add-on',
+      eventDate: 'Weekender add-on session',
+      venueName: 'Hellenic Community Centre, Greenpoint',
+      venueAddress: 'Hellenic Community Centre, Greenpoint',
+      venueMapUrl: 'https://maps.app.goo.gl/rhtWRj4fmg1Pw8fw8',
+      details: [
+        'This is an add-on registration linked to your weekender booking.',
+        'If this was a couple registration, both dancers should appear as paid once processing completes.',
+      ],
+      shoeTips: [],
+      shoeOptions: [],
+    };
+  }
   const passLabel =
     passType === 'weekend'
       ? 'Weekender Weekend Pass'
