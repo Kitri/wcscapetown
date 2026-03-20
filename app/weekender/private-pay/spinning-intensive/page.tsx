@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import AddOnPaymentPageClient from '../_components/AddOnPaymentPageClient';
 
 export const metadata: Metadata = {
@@ -11,5 +12,9 @@ export const metadata: Metadata = {
 };
 
 export default function SpinningIntensivePaymentPage() {
-  return <AddOnPaymentPageClient passType="spinning_intensive" />;
+  return (
+    <Suspense fallback={null}>
+      <AddOnPaymentPageClient passType="spinning_intensive" />
+    </Suspense>
+  );
 }

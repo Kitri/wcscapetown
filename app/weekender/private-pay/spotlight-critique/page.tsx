@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import AddOnPaymentPageClient from '../_components/AddOnPaymentPageClient';
 
 export const metadata: Metadata = {
@@ -11,5 +12,9 @@ export const metadata: Metadata = {
 };
 
 export default function SpotlightCritiquePaymentPage() {
-  return <AddOnPaymentPageClient passType="spotlight_critique" />;
+  return (
+    <Suspense fallback={null}>
+      <AddOnPaymentPageClient passType="spotlight_critique" />
+    </Suspense>
+  );
 }
