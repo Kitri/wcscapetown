@@ -714,25 +714,33 @@ export async function listWeekenderCheckIns(
         `;
   }
 
-  return rows.map((row) => ({
-    checkInEntryId: row.checkin_id == null ? null : Number(row.checkin_id),
-    memberId: Number(row.member_id),
-    registrationId: Number(row.registration_id),
-    name: String(row.name ?? '').trim(),
-    surname: String(row.surname ?? '').trim(),
-    email: String(row.email ?? '').trim(),
-    role: String(row.role ?? '').trim(),
-    level: Number(row.level ?? 0),
-    registrationType: String(row.registration_type ?? '').trim(),
-    passType: String(row.pass_type ?? '').trim(),
-    weekendDay: row.weekend_day ? String(row.weekend_day).trim() : null,
-    partyAddOn: Boolean(row.party_add_on),
-    spinningAddOn: Boolean(row.spinning_add_on),
-    spotlightAddOn: Boolean(row.spotlight_add_on),
-    colour: normalizeOptionalColour(row.colour),
-    checkedIn: Boolean(row.checked_in),
-    updatedAt: row.updated_at ? String(row.updated_at) : null,
-  }));
+  return rows.map((row) => {
+    const rawColour = row.colour;
+
+    return {
+      checkInEntryId: row.checkin_id == null ? null : Number(row.checkin_id),
+      memberId: Number(row.member_id),
+      registrationId: Number(row.registration_id),
+      name: String(row.name ?? '').trim(),
+      surname: String(row.surname ?? '').trim(),
+      email: String(row.email ?? '').trim(),
+      role: String(row.role ?? '').trim(),
+      level: Number(row.level ?? 0),
+      registrationType: String(row.registration_type ?? '').trim(),
+      passType: String(row.pass_type ?? '').trim(),
+      weekendDay: row.weekend_day ? String(row.weekend_day).trim() : null,
+      partyAddOn: Boolean(row.party_add_on),
+      spinningAddOn: Boolean(row.spinning_add_on),
+      spotlightAddOn: Boolean(row.spotlight_add_on),
+      colour: normalizeOptionalColour(
+        typeof rawColour === 'string' || rawColour == null
+          ? rawColour
+          : String(rawColour)
+      ),
+      checkedIn: Boolean(row.checked_in),
+      updatedAt: row.updated_at ? String(row.updated_at) : null,
+    };
+  });
 }
 
 export async function updateWeekenderCheckInColour(
