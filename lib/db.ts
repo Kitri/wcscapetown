@@ -39,41 +39,59 @@ export async function upsertWeekendAddOnEntry(params: {
     typeof params.registrationId === 'number' && Number.isFinite(params.registrationId)
       ? params.registrationId
       : null;
+  const tryUpsert = async (registrationIdForWrite: number | null): Promise<void> => {
+    const updated = await sql`
+      UPDATE weekend_add_ons
+      SET
+        registration_id = COALESCE(${registrationIdForWrite}, registration_id),
+        payment_status = ${params.paymentStatus},
+        note = COALESCE(${note}, note),
+        updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
+      WHERE member_id = ${params.memberId}
+        AND pass_type = ${params.passType}
+      RETURNING id
+    `;
 
-  const updated = await sql`
-    UPDATE weekend_add_ons
-    SET
-      registration_id = COALESCE(${registrationId}, registration_id),
-      payment_status = ${params.paymentStatus},
-      note = COALESCE(${note}, note),
-      updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
-    WHERE member_id = ${params.memberId}
-      AND pass_type = ${params.passType}
-    RETURNING id
-  `;
+    if (updated.length > 0) return;
 
-  if (updated.length > 0) return;
+    await sql`
+      INSERT INTO weekend_add_ons (
+        member_id,
+        registration_id,
+        pass_type,
+        payment_status,
+        note,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        ${params.memberId},
+        ${registrationIdForWrite},
+        ${params.passType},
+        ${params.paymentStatus},
+        ${note},
+        now() AT TIME ZONE 'Africa/Johannesburg',
+        now() AT TIME ZONE 'Africa/Johannesburg'
+      )
+    `;
+  };
 
-  await sql`
-    INSERT INTO weekend_add_ons (
-      member_id,
-      registration_id,
-      pass_type,
-      payment_status,
-      note,
-      created_at,
-      updated_at
-    )
-    VALUES (
-      ${params.memberId},
-      ${registrationId},
-      ${params.passType},
-      ${params.paymentStatus},
-      ${note},
-      now() AT TIME ZONE 'Africa/Johannesburg',
-      now() AT TIME ZONE 'Africa/Johannesburg'
-    )
-  `;
+  try {
+    await tryUpsert(registrationId);
+  } catch (error) {
+    const candidate = error as { code?: string; message?: string } | null;
+    const isRegistrationIdUniqueConflict =
+      candidate?.code === '23505' &&
+      String(candidate?.message ?? '').toLowerCase().includes('registration_id');
+
+    if (!isRegistrationIdUniqueConflict || registrationId == null) {
+      throw error;
+    }
+
+    // Some environments enforce registration_id uniqueness across weekend_add_ons.
+    // Retry without setting registration_id so checkout can still proceed.
+    await tryUpsert(null);
+  }
 }
 
 export async function updateWeekendAddOnPaymentStatusByRegistrationIds(

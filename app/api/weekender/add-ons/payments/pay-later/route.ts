@@ -115,6 +115,12 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('Add-on pay later error:', error);
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
       { error: 'Failed to save pay-later registration.' },
       { status: 500 }

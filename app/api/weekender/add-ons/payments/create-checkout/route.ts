@@ -159,6 +159,12 @@ export async function POST(request: NextRequest) {
     }
 
     console.error('Add-on payment checkout error:', error);
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
       { error: 'Failed to start payment checkout.' },
       { status: 500 }
