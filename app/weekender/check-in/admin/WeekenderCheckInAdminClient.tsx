@@ -23,6 +23,22 @@ type AdminListItem = {
   updatedAt: string | null;
 };
 
+type PartyAdminListItem = {
+  partyCheckInEntryId: number | null;
+  memberId: number;
+  registrationId: number;
+  name: string;
+  surname: string;
+  email: string;
+  role: string;
+  level: number;
+  registrationType: string;
+  passType: string;
+  partyAccessType: 'party_pass' | 'day_pass_add_on';
+  checkedIn: boolean;
+  updatedAt: string | null;
+};
+
 type ActionResponse = {
   success: boolean;
   message?: string;
@@ -34,6 +50,11 @@ function normalizeRole(role: string): string {
   if (raw === 'L' || raw === 'LEAD') return 'Lead';
   if (raw === 'F' || raw === 'FOLLOW') return 'Follow';
   return role || 'Unknown';
+}
+
+function partyAccessLabel(accessType: PartyAdminListItem['partyAccessType']): string {
+  if (accessType === 'party_pass') return 'Party Pass';
+  return 'Day Pass + Friday Party Add-on';
 }
 
 export default function WeekenderCheckInAdminClient({ initialAuthed }: { initialAuthed: boolean }) {
@@ -49,6 +70,11 @@ export default function WeekenderCheckInAdminClient({ initialAuthed }: { initial
   const [colourDrafts, setColourDrafts] = useState<Record<number, string>>({});
   const [savingColourId, setSavingColourId] = useState<number | null>(null);
   const [checkingInRegistrationId, setCheckingInRegistrationId] = useState<number | null>(null);
+  const [partyListQuery, setPartyListQuery] = useState('');
+  const [partyListLoading, setPartyListLoading] = useState(false);
+  const [partyListError, setPartyListError] = useState('');
+  const [partyListItems, setPartyListItems] = useState<PartyAdminListItem[]>([]);
+  const [checkingInPartyRegistrationId, setCheckingInPartyRegistrationId] = useState<number | null>(null);
 
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -56,6 +82,10 @@ export default function WeekenderCheckInAdminClient({ initialAuthed }: { initial
   const checkedInCount = useMemo(
     () => listItems.filter((item) => item.checkedIn).length,
     [listItems]
+  );
+  const partyCheckedInCount = useMemo(
+    () => partyListItems.filter((item) => item.checkedIn).length,
+    [partyListItems]
   );
 
 
@@ -92,6 +122,7 @@ export default function WeekenderCheckInAdminClient({ initialAuthed }: { initial
     setAuthed(false);
     setPasscode('');
     setListItems([]);
+    setPartyListItems([]);
     setColourDrafts({});
     setInfo('');
     setError('');
@@ -124,10 +155,34 @@ export default function WeekenderCheckInAdminClient({ initialAuthed }: { initial
     }
   }, []);
 
+  const loadPartyList = useCallback(async (query: string) => {
+    setPartyListError('');
+    setPartyListLoading(true);
+    try {
+      const response = await fetch(
+        `/api/weekender/check-in/admin/party/list?q=${encodeURIComponent(query)}`
+      );
+      const data = (await response.json()) as { items?: PartyAdminListItem[]; error?: string };
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load Friday party check-in list.');
+      }
+      setPartyListItems(data.items ?? []);
+    } catch (partyListLoadError) {
+      setPartyListError(
+        partyListLoadError instanceof Error
+          ? partyListLoadError.message
+          : 'Failed to load Friday party check-in list.'
+      );
+    } finally {
+      setPartyListLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (!authed) return;
     void loadList('');
-  }, [authed, loadList]);
+    void loadPartyList('');
+  }, [authed, loadList, loadPartyList]);
   async function checkInFromList(item: AdminListItem) {
     setError('');
     setInfo('');
@@ -159,6 +214,40 @@ export default function WeekenderCheckInAdminClient({ initialAuthed }: { initial
       setError(checkInError instanceof Error ? checkInError.message : 'Failed to check in member.');
     } finally {
       setCheckingInRegistrationId(null);
+    }
+  }
+
+  async function checkInPartyFromList(item: PartyAdminListItem) {
+    setError('');
+    setInfo('');
+    if (item.checkedIn) {
+      setInfo('Member is already checked in for Friday party.');
+      return;
+    }
+
+    setCheckingInPartyRegistrationId(item.registrationId);
+    try {
+      const response = await fetch('/api/weekender/check-in/admin/party/check-in', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          registrationId: item.registrationId,
+        }),
+      });
+      const data = (await response.json()) as ActionResponse;
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to check in member for Friday party.');
+      }
+      setInfo(data.message || 'Member checked in for Friday party.');
+      await loadPartyList(partyListQuery.trim());
+    } catch (checkInError) {
+      setError(
+        checkInError instanceof Error
+          ? checkInError.message
+          : 'Failed to check in member for Friday party.'
+      );
+    } finally {
+      setCheckingInPartyRegistrationId(null);
     }
   }
 
@@ -244,7 +333,9 @@ export default function WeekenderCheckInAdminClient({ initialAuthed }: { initial
         <div className="px-[5%] flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="font-spartan font-semibold text-2xl">Weekender Check-in Admin</h1>
-            <p className="text-white/80 text-sm">Checked in: {checkedInCount} member(s)</p>
+            <p className="text-white/80 text-sm">
+              Weekender checked in: {checkedInCount} • Friday party checked in: {partyCheckedInCount}
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -266,6 +357,30 @@ export default function WeekenderCheckInAdminClient({ initialAuthed }: { initial
 
       <section className="px-[5%] py-8 space-y-6">
         <div className="bg-white rounded-xl p-6 shadow-sm border border-text-dark/10">
+          <p className="font-semibold text-text-dark mb-3">Check-in sheets</p>
+          <div className="flex flex-wrap gap-3">
+            <a
+              href="#weekender-checkin-sheet"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-text-dark/20 bg-cloud-dancer/50 text-text-dark font-semibold hover:bg-cloud-dancer transition-colors"
+            >
+              Weekender sheet
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-text-dark/10">
+                {checkedInCount}
+              </span>
+            </a>
+            <a
+              href="#friday-party-checkin-sheet"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border-2 border-yellow-accent bg-yellow-accent/20 text-text-dark font-semibold hover:bg-yellow-accent/30 transition-colors"
+            >
+              Friday party sheet
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-text-dark/10">
+                {partyCheckedInCount}
+              </span>
+            </a>
+          </div>
+        </div>
+
+        <div id="weekender-checkin-sheet" className="bg-white rounded-xl p-6 shadow-sm border border-text-dark/10">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <p className="font-semibold text-text-dark">Registered members</p>
             <button
@@ -366,6 +481,87 @@ export default function WeekenderCheckInAdminClient({ initialAuthed }: { initial
                         {savingColourId === item.checkInEntryId ? 'Saving...' : 'Save'}
                       </button>
                     </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div id="friday-party-checkin-sheet" className="bg-white rounded-xl p-6 shadow-sm border border-text-dark/10">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <p className="font-semibold text-text-dark">Friday Night Party check-in sheet</p>
+            <button
+              type="button"
+              onClick={() => loadPartyList(partyListQuery.trim())}
+              disabled={partyListLoading}
+              className="text-sm underline text-text-dark/70 hover:text-text-dark disabled:opacity-50"
+            >
+              {partyListLoading ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 mb-4">
+            <input
+              type="text"
+              value={partyListQuery}
+              onChange={(event) => setPartyListQuery(event.target.value)}
+              placeholder="Search by name or email"
+              className="w-full px-4 py-3 rounded-lg border-2 border-text-dark/10 focus:border-yellow-accent focus:outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => loadPartyList(partyListQuery.trim())}
+              disabled={partyListLoading}
+              className="bg-text-dark/5 text-text-dark px-5 py-3 rounded-lg font-semibold border border-text-dark/10 hover:bg-text-dark/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Search
+            </button>
+          </div>
+
+          {partyListError && (
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+              {partyListError}
+            </div>
+          )}
+
+          {!partyListLoading && partyListItems.length === 0 && (
+            <p className="text-sm text-text-dark/70">No Friday party registrations found.</p>
+          )}
+
+          <div className="space-y-3">
+            {partyListItems.map((item) => (
+              <div
+                key={`party-${item.registrationId}`}
+                className="rounded-lg border border-text-dark/10 p-4 bg-cloud-dancer/30"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-text-dark">
+                      {item.name} {item.surname}
+                    </p>
+                    <p className="text-sm text-text-dark/70">{item.email}</p>
+                    <p className="text-sm text-text-dark/80">
+                      {partyAccessLabel(item.partyAccessType)} • Level {item.level} • {normalizeRole(item.role)}
+                    </p>
+                    <p className="text-sm text-text-dark/80">
+                      <span className="font-semibold">Checked in:</span> {item.checkedIn ? 'Yes' : 'No'}
+                    </p>
+                  </div>
+
+                  <div className="min-w-[220px]">
+                    <button
+                      type="button"
+                      onClick={() => checkInPartyFromList(item)}
+                      disabled={checkingInPartyRegistrationId === item.registrationId || item.checkedIn}
+                      className="w-full bg-yellow-accent text-text-dark px-3 py-2 rounded-lg text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {checkingInPartyRegistrationId === item.registrationId
+                        ? 'Checking in...'
+                        : item.checkedIn
+                          ? 'Checked in'
+                          : 'Check in'}
+                    </button>
                   </div>
                 </div>
               </div>

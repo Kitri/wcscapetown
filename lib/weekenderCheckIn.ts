@@ -11,6 +11,12 @@ type CheckInRow = {
   updated_at: string | null;
 };
 
+type PartyCheckInRow = {
+  id: number;
+  checked_in: boolean;
+  updated_at: string | null;
+};
+
 type DayPassDetails = {
   workshopDay: string | null;
   partyAddOn: boolean;
@@ -37,6 +43,15 @@ function isWeekendCheckinTableMissing(error: unknown): boolean {
   if (candidate.code === '42P01') return true;
   const message = String(candidate.message ?? '').toLowerCase();
   return message.includes('relation "weekend_checkin" does not exist');
+}
+
+function isWeekendPartyCheckinTableMissing(error: unknown): boolean {
+  const candidate = error as { code?: string; message?: string } | null;
+  if (!candidate) return false;
+
+  if (candidate.code === '42P01') return true;
+  const message = String(candidate.message ?? '').toLowerCase();
+  return message.includes('relation "weekend_party_checkin" does not exist');
 }
 
 export type WeekenderCheckInLookup = {
@@ -85,6 +100,22 @@ export type WeekenderCheckInAdminListItem = {
   spinningAddOn: boolean;
   spotlightAddOn: boolean;
   colour: string | null;
+  checkedIn: boolean;
+  updatedAt: string | null;
+};
+
+export type WeekenderPartyCheckInAdminListItem = {
+  partyCheckInEntryId: number | null;
+  memberId: number;
+  registrationId: number;
+  name: string;
+  surname: string;
+  email: string;
+  role: string;
+  level: number;
+  registrationType: string;
+  passType: string;
+  partyAccessType: 'party_pass' | 'day_pass_add_on';
   checkedIn: boolean;
   updatedAt: string | null;
 };
@@ -219,6 +250,29 @@ async function getCheckInByRegistrationId(registrationId: number): Promise<Check
   } catch (error) {
     if (isWeekendCheckinTableMissing(error)) {
       console.warn('weekend_checkin table is missing; treating as not checked in for lookup.');
+      return null;
+    }
+    throw error;
+  }
+}
+
+async function getPartyCheckInByRegistrationId(registrationId: number): Promise<PartyCheckInRow | null> {
+  const sql = getDb();
+  try {
+    const rows = await sql`
+      SELECT
+        id,
+        checked_in,
+        updated_at
+      FROM weekend_party_checkin
+      WHERE registration_id = ${registrationId}
+      LIMIT 1
+    `;
+
+    if (rows.length === 0) return null;
+    return rows[0] as PartyCheckInRow;
+  } catch (error) {
+    if (isWeekendPartyCheckinTableMissing(error)) {
       return null;
     }
     throw error;
@@ -381,6 +435,80 @@ export async function lookupWeekenderCheckInByEmail(
   return buildWeekenderCheckInLookup(row, normalizedEmail);
 }
 
+export async function lookupWeekenderPartyCheckInByRegistrationId(registrationId: number): Promise<{
+  memberId: number;
+  registrationId: number;
+  email: string;
+  name: string;
+  surname: string;
+  passType: string;
+  partyAccessType: 'party_pass' | 'day_pass_add_on';
+  checkIn: {
+    id: number;
+    checkedIn: boolean;
+    updatedAt: string | null;
+  } | null;
+} | null> {
+  if (!Number.isInteger(registrationId) || registrationId <= 0) return null;
+
+  const sql = getDb();
+  const rows = await sql`
+    SELECT
+      r.id AS registration_id,
+      r.member_id,
+      r.email,
+      r.pass_type,
+      m.name,
+      m.surname,
+      COALESCE(dp.party_add_on, false) AS party_add_on
+    FROM registrations r
+    INNER JOIN members m ON m.member_id = r.member_id
+    LEFT JOIN day_pass_details dp ON dp.registration_id = r.id
+    WHERE r.id = ${registrationId}
+      AND (
+        r.pass_type = 'party'
+        OR (
+          r.pass_type IN ('day', 'day_saturday', 'day_sunday')
+          AND COALESCE(dp.party_add_on, false) = true
+        )
+      )
+    LIMIT 1
+  `;
+
+  if (rows.length === 0) return null;
+
+  const row = rows[0] as {
+    registration_id: number;
+    member_id: number;
+    email: string;
+    pass_type: string;
+    name: string;
+    surname: string;
+    party_add_on: boolean;
+  };
+
+  const existingCheckIn = await getPartyCheckInByRegistrationId(Number(row.registration_id));
+
+  return {
+    memberId: Number(row.member_id),
+    registrationId: Number(row.registration_id),
+    email: String(row.email ?? '').trim(),
+    name: String(row.name ?? '').trim(),
+    surname: String(row.surname ?? '').trim(),
+    passType: String(row.pass_type ?? '').trim(),
+    partyAccessType: String(row.pass_type ?? '').trim() === 'party'
+      ? 'party_pass'
+      : 'day_pass_add_on',
+    checkIn: existingCheckIn
+      ? {
+        id: Number(existingCheckIn.id),
+        checkedIn: Boolean(existingCheckIn.checked_in),
+        updatedAt: existingCheckIn.updated_at ? String(existingCheckIn.updated_at) : null,
+      }
+      : null,
+  };
+}
+
 export async function upsertWeekenderCheckIn(params: {
   lookup: WeekenderCheckInLookup;
   checkedIn?: boolean;
@@ -436,6 +564,62 @@ export async function upsertWeekenderCheckIn(params: {
   } catch (error) {
     if (isWeekendCheckinTableMissing(error)) {
       throw new Error('Weekender check-in table is not configured in this environment.');
+    }
+    throw error;
+  }
+}
+
+export async function upsertWeekenderPartyCheckIn(params: {
+  memberId: number;
+  registrationId: number;
+  checkedIn?: boolean;
+}): Promise<void> {
+  const sql = getDb();
+  const checkedIn = params.checkedIn ?? true;
+  const persist = async () => {
+    await sql`
+      INSERT INTO weekend_party_checkin (
+        member_id,
+        registration_id,
+        checked_in,
+        created_at,
+        updated_at
+      )
+      VALUES (
+        ${params.memberId},
+        ${params.registrationId},
+        ${checkedIn},
+        now() AT TIME ZONE 'Africa/Johannesburg',
+        now() AT TIME ZONE 'Africa/Johannesburg'
+      )
+      ON CONFLICT (registration_id)
+      DO UPDATE SET
+        member_id = EXCLUDED.member_id,
+        checked_in = EXCLUDED.checked_in,
+        updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
+    `;
+  };
+
+  try {
+    await persist();
+  } catch (error) {
+    if (isWeekendPartyCheckinTableMissing(error)) {
+      try {
+        await sql`
+          CREATE TABLE IF NOT EXISTS weekend_party_checkin (
+            id SERIAL PRIMARY KEY,
+            member_id INTEGER NOT NULL REFERENCES members(member_id),
+            registration_id INTEGER NOT NULL UNIQUE REFERENCES registrations(id) ON DELETE CASCADE,
+            checked_in BOOLEAN DEFAULT FALSE,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+          )
+        `;
+        await persist();
+        return;
+      } catch {
+        throw new Error('Weekender party check-in table is not configured in this environment.');
+      }
     }
     throw error;
   }
@@ -741,6 +925,271 @@ export async function listWeekenderCheckIns(
       updatedAt: row.updated_at ? String(row.updated_at) : null,
     };
   });
+}
+
+export async function listWeekenderPartyCheckIns(
+  query: string
+): Promise<WeekenderPartyCheckInAdminListItem[]> {
+  const sql = getDb();
+  const q = String(query ?? '').trim().toLowerCase();
+  const pattern = `%${q}%`;
+  let rows: Array<Record<string, unknown>> = [];
+
+  try {
+    rows = q
+      ? await sql`
+          WITH party_registrations AS (
+            SELECT
+              r.id AS registration_id,
+              r.member_id,
+              r.email,
+              r.pass_type,
+              r.role,
+              r.level,
+              r.registration_type,
+              CASE
+                WHEN r.pass_type = 'party' THEN 'party_pass'
+                ELSE 'day_pass_add_on'
+              END AS party_access_type,
+              ROW_NUMBER() OVER (
+                PARTITION BY r.member_id
+                ORDER BY
+                  CASE
+                    WHEN r.registration_status = 'complete' AND r.payment_status = 'complete' THEN 1
+                    WHEN r.registration_status = 'pending' OR r.payment_status = 'pending' THEN 2
+                    WHEN r.registration_status = 'waitlist' THEN 3
+                    ELSE 4
+                  END,
+                  r.created_at DESC
+              ) AS rn
+            FROM registrations r
+            LEFT JOIN day_pass_details dp ON dp.registration_id = r.id
+            WHERE
+              r.pass_type = 'party'
+              OR (
+                r.pass_type IN ('day', 'day_saturday', 'day_sunday')
+                AND COALESCE(dp.party_add_on, false) = true
+              )
+          )
+          SELECT
+            wpc.id AS party_checkin_id,
+            pr.member_id,
+            pr.registration_id,
+            pr.pass_type,
+            pr.party_access_type,
+            COALESCE(wpc.checked_in, false) AS checked_in,
+            wpc.updated_at,
+            m.name,
+            m.surname,
+            pr.email,
+            pr.role,
+            pr.level,
+            pr.registration_type
+          FROM party_registrations pr
+          INNER JOIN members m ON m.member_id = pr.member_id
+          LEFT JOIN weekend_party_checkin wpc ON wpc.registration_id = pr.registration_id
+          WHERE
+            pr.rn = 1
+            AND (
+              LOWER(m.name || ' ' || m.surname) LIKE ${pattern}
+              OR LOWER(COALESCE(pr.email, '')) LIKE ${pattern}
+            )
+          ORDER BY COALESCE(wpc.checked_in, false) DESC, m.name ASC, m.surname ASC
+          LIMIT 500
+        `
+      : await sql`
+          WITH party_registrations AS (
+            SELECT
+              r.id AS registration_id,
+              r.member_id,
+              r.email,
+              r.pass_type,
+              r.role,
+              r.level,
+              r.registration_type,
+              CASE
+                WHEN r.pass_type = 'party' THEN 'party_pass'
+                ELSE 'day_pass_add_on'
+              END AS party_access_type,
+              ROW_NUMBER() OVER (
+                PARTITION BY r.member_id
+                ORDER BY
+                  CASE
+                    WHEN r.registration_status = 'complete' AND r.payment_status = 'complete' THEN 1
+                    WHEN r.registration_status = 'pending' OR r.payment_status = 'pending' THEN 2
+                    WHEN r.registration_status = 'waitlist' THEN 3
+                    ELSE 4
+                  END,
+                  r.created_at DESC
+              ) AS rn
+            FROM registrations r
+            LEFT JOIN day_pass_details dp ON dp.registration_id = r.id
+            WHERE
+              r.pass_type = 'party'
+              OR (
+                r.pass_type IN ('day', 'day_saturday', 'day_sunday')
+                AND COALESCE(dp.party_add_on, false) = true
+              )
+          )
+          SELECT
+            wpc.id AS party_checkin_id,
+            pr.member_id,
+            pr.registration_id,
+            pr.pass_type,
+            pr.party_access_type,
+            COALESCE(wpc.checked_in, false) AS checked_in,
+            wpc.updated_at,
+            m.name,
+            m.surname,
+            pr.email,
+            pr.role,
+            pr.level,
+            pr.registration_type
+          FROM party_registrations pr
+          INNER JOIN members m ON m.member_id = pr.member_id
+          LEFT JOIN weekend_party_checkin wpc ON wpc.registration_id = pr.registration_id
+          WHERE pr.rn = 1
+          ORDER BY COALESCE(wpc.checked_in, false) DESC, m.name ASC, m.surname ASC
+          LIMIT 500
+        `;
+  } catch (error) {
+    if (!isWeekendPartyCheckinTableMissing(error)) {
+      throw error;
+    }
+
+    rows = q
+      ? await sql`
+          WITH party_registrations AS (
+            SELECT
+              r.id AS registration_id,
+              r.member_id,
+              r.email,
+              r.pass_type,
+              r.role,
+              r.level,
+              r.registration_type,
+              CASE
+                WHEN r.pass_type = 'party' THEN 'party_pass'
+                ELSE 'day_pass_add_on'
+              END AS party_access_type,
+              ROW_NUMBER() OVER (
+                PARTITION BY r.member_id
+                ORDER BY
+                  CASE
+                    WHEN r.registration_status = 'complete' AND r.payment_status = 'complete' THEN 1
+                    WHEN r.registration_status = 'pending' OR r.payment_status = 'pending' THEN 2
+                    WHEN r.registration_status = 'waitlist' THEN 3
+                    ELSE 4
+                  END,
+                  r.created_at DESC
+              ) AS rn
+            FROM registrations r
+            LEFT JOIN day_pass_details dp ON dp.registration_id = r.id
+            WHERE
+              r.pass_type = 'party'
+              OR (
+                r.pass_type IN ('day', 'day_saturday', 'day_sunday')
+                AND COALESCE(dp.party_add_on, false) = true
+              )
+          )
+          SELECT
+            NULL::integer AS party_checkin_id,
+            pr.member_id,
+            pr.registration_id,
+            pr.pass_type,
+            pr.party_access_type,
+            false AS checked_in,
+            NULL::timestamptz AS updated_at,
+            m.name,
+            m.surname,
+            pr.email,
+            pr.role,
+            pr.level,
+            pr.registration_type
+          FROM party_registrations pr
+          INNER JOIN members m ON m.member_id = pr.member_id
+          WHERE
+            pr.rn = 1
+            AND (
+              LOWER(m.name || ' ' || m.surname) LIKE ${pattern}
+              OR LOWER(COALESCE(pr.email, '')) LIKE ${pattern}
+            )
+          ORDER BY m.name ASC, m.surname ASC
+          LIMIT 500
+        `
+      : await sql`
+          WITH party_registrations AS (
+            SELECT
+              r.id AS registration_id,
+              r.member_id,
+              r.email,
+              r.pass_type,
+              r.role,
+              r.level,
+              r.registration_type,
+              CASE
+                WHEN r.pass_type = 'party' THEN 'party_pass'
+                ELSE 'day_pass_add_on'
+              END AS party_access_type,
+              ROW_NUMBER() OVER (
+                PARTITION BY r.member_id
+                ORDER BY
+                  CASE
+                    WHEN r.registration_status = 'complete' AND r.payment_status = 'complete' THEN 1
+                    WHEN r.registration_status = 'pending' OR r.payment_status = 'pending' THEN 2
+                    WHEN r.registration_status = 'waitlist' THEN 3
+                    ELSE 4
+                  END,
+                  r.created_at DESC
+              ) AS rn
+            FROM registrations r
+            LEFT JOIN day_pass_details dp ON dp.registration_id = r.id
+            WHERE
+              r.pass_type = 'party'
+              OR (
+                r.pass_type IN ('day', 'day_saturday', 'day_sunday')
+                AND COALESCE(dp.party_add_on, false) = true
+              )
+          )
+          SELECT
+            NULL::integer AS party_checkin_id,
+            pr.member_id,
+            pr.registration_id,
+            pr.pass_type,
+            pr.party_access_type,
+            false AS checked_in,
+            NULL::timestamptz AS updated_at,
+            m.name,
+            m.surname,
+            pr.email,
+            pr.role,
+            pr.level,
+            pr.registration_type
+          FROM party_registrations pr
+          INNER JOIN members m ON m.member_id = pr.member_id
+          WHERE pr.rn = 1
+          ORDER BY m.name ASC, m.surname ASC
+          LIMIT 500
+        `;
+  }
+
+  return rows.map((row) => ({
+    partyCheckInEntryId: row.party_checkin_id == null ? null : Number(row.party_checkin_id),
+    memberId: Number(row.member_id),
+    registrationId: Number(row.registration_id),
+    name: String(row.name ?? '').trim(),
+    surname: String(row.surname ?? '').trim(),
+    email: String(row.email ?? '').trim(),
+    role: String(row.role ?? '').trim(),
+    level: Number(row.level ?? 0),
+    registrationType: String(row.registration_type ?? '').trim(),
+    passType: String(row.pass_type ?? '').trim(),
+    partyAccessType: String(row.party_access_type ?? '').trim() === 'party_pass'
+      ? 'party_pass'
+      : 'day_pass_add_on',
+    checkedIn: Boolean(row.checked_in),
+    updatedAt: row.updated_at ? String(row.updated_at) : null,
+  }));
 }
 
 export async function updateWeekenderCheckInColour(
