@@ -14,6 +14,7 @@ export async function POST(request: NextRequest) {
     const email = String(body?.email ?? '').trim();
     const name = String(body?.name ?? '').trim();
     const surname = String(body?.surname ?? '').trim();
+    const colour = typeof body?.colour === 'string' ? body.colour : undefined;
     const registrationId = Number(body?.registrationId);
 
     if (!Number.isInteger(registrationId) || registrationId <= 0) {
@@ -76,6 +77,7 @@ export async function POST(request: NextRequest) {
     await upsertWeekenderCheckIn({
       lookup,
       checkedIn: true,
+      ...(typeof colour === 'string' ? { colour } : {}),
     });
 
     return NextResponse.json({

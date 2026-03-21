@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Header from '@/components/Header';
+import { WEEKENDER_COLOUR_OPTIONS } from '@/lib/weekenderColourOptions';
 
 type LookupResponse = {
   found: boolean;
@@ -42,32 +43,6 @@ type ActionResponse = {
   error?: string;
 };
 type LookupMode = 'email' | 'name';
-const WEEKENDER_COLOUR_OPTIONS: Array<{ title: string; description: string }> = [
-  {
-    title: 'Blue (Flow)',
-    description: 'Smooth, clean movements with a flowy, chill vibe.',
-  },
-  {
-    title: 'Yellow (Joy)',
-    description: 'Fun, energetic and playful with a sense of humour.',
-  },
-  {
-    title: 'Red (Bold)',
-    description: 'Power movements with strong leverage and connection.',
-  },
-  {
-    title: 'Green (Blend Yellow and Blue)',
-    description: 'Graceful elegance meets joyful playfulness.',
-  },
-  {
-    title: 'Purple (Blend Red and Blue)',
-    description: 'Controlled power with refined, deliberate technique.',
-  },
-  {
-    title: 'Orange (Blend Red and Yellow)',
-    description: 'Explosive energy with powerful, charismatic presence.',
-  },
-];
 
 function normalizeRole(role: string): string {
   const raw = String(role ?? '').trim().toUpperCase();
@@ -84,11 +59,13 @@ export default function WeekenderSelfCheckInClient() {
   const [lookup, setLookup] = useState<LookupResponse | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [checkInLoading, setCheckInLoading] = useState(false);
+  const [selectedColour, setSelectedColour] = useState('');
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   function switchLookupMode(mode: LookupMode) {
     setLookupMode(mode);
     setLookup(null);
+    setSelectedColour('');
     setError('');
     setInfo('');
   }
@@ -129,6 +106,7 @@ export default function WeekenderSelfCheckInClient() {
       }
 
       setLookup(data);
+      setSelectedColour(data.checkIn.colour ?? '');
       setInfo(data.message || '');
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Failed to load registration details.');
@@ -159,8 +137,10 @@ export default function WeekenderSelfCheckInClient() {
         email?: string;
         name?: string;
         surname?: string;
+        colour?: string;
       } = {
         registrationId: lookup.registration.registrationId,
+        colour: selectedColour,
       };
 
       if (lookupMode === 'name') {
@@ -193,6 +173,7 @@ export default function WeekenderSelfCheckInClient() {
             ...prev.checkIn,
             exists: true,
             checkedIn: true,
+            colour: selectedColour.trim() || null,
             updatedAt: new Date().toISOString(),
           },
         };
@@ -349,6 +330,24 @@ export default function WeekenderSelfCheckInClient() {
                     <span className="font-semibold">Check-in status:</span>{' '}
                     {lookup.checkIn.checkedIn ? 'Checked in' : 'Not checked in'}
                   </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-text-dark/80 mb-1">
+                    Choose your colour
+                  </label>
+                  <select
+                    value={selectedColour}
+                    onChange={(event) => setSelectedColour(event.target.value)}
+                    disabled={lookup.checkIn.checkedIn || checkInLoading}
+                    className="w-full px-3 py-2 rounded-lg border border-text-dark/20 bg-white focus:border-yellow-accent focus:outline-none disabled:bg-text-dark/5 disabled:cursor-not-allowed"
+                  >
+                    <option value="">No colour selected</option>
+                    {WEEKENDER_COLOUR_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.title}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <button

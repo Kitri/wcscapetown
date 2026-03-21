@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { WEEKENDER_COLOUR_OPTIONS } from '@/lib/weekenderColourOptions';
 
 type AdminListItem = {
   checkInEntryId: number | null;
@@ -56,6 +57,10 @@ function partyAccessLabel(accessType: PartyAdminListItem['partyAccessType']): st
   if (accessType === 'party_pass') return 'Party Pass';
   return 'Day Pass + Friday Party Add-on';
 }
+
+const KNOWN_WEEKENDER_COLOUR_VALUES = new Set(
+  WEEKENDER_COLOUR_OPTIONS.map((option) => option.value)
+);
 
 export default function WeekenderCheckInAdminClient({ initialAuthed }: { initialAuthed: boolean }) {
   const [authed, setAuthed] = useState(initialAuthed);
@@ -422,69 +427,85 @@ export default function WeekenderCheckInAdminClient({ initialAuthed }: { initial
           )}
 
           <div className="space-y-3">
-            {listItems.map((item) => (
-              <div
-                key={item.registrationId}
-                className="rounded-lg border border-text-dark/10 p-4 bg-cloud-dancer/30"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-text-dark">
-                      {item.name} {item.surname}
-                    </p>
-                    <p className="text-sm text-text-dark/70">{item.email}</p>
-                    <p className="text-sm text-text-dark/80">
-                      {item.passType} • Level {item.level} • {normalizeRole(item.role)}
-                    </p>
-                    {item.weekendDay && (
-                      <p className="text-sm text-text-dark/70">Day: {item.weekendDay}</p>
-                    )}
-                    <p className="text-sm text-text-dark/80">
-                      <span className="font-semibold">Checked in:</span> {item.checkedIn ? 'Yes' : 'No'}
-                    </p>
-                  </div>
+            {listItems.map((item) => {
+              const draftColour = colourDrafts[item.registrationId] ?? '';
+              const hasCustomColour =
+                Boolean(draftColour) &&
+                !KNOWN_WEEKENDER_COLOUR_VALUES.has(draftColour);
 
-                  <div className="min-w-[220px]">
-                    <button
-                      type="button"
-                      onClick={() => checkInFromList(item)}
-                      disabled={checkingInRegistrationId === item.registrationId || item.checkedIn}
-                      className="mb-3 w-full bg-yellow-accent text-text-dark px-3 py-2 rounded-lg text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {checkingInRegistrationId === item.registrationId
-                        ? 'Checking in...'
-                        : item.checkedIn
-                          ? 'Checked in'
-                          : 'Check in'}
-                    </button>
-                    <label className="block text-xs font-semibold text-text-dark/70 mb-1">
-                      Colour
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={colourDrafts[item.registrationId] ?? ''}
-                        onChange={(event) =>
-                          setColourDrafts((prev) => ({
-                            ...prev,
-                            [item.registrationId]: event.target.value,
-                          }))
-                        }
-                        className="w-full px-3 py-2 rounded-lg border border-text-dark/20 focus:border-yellow-accent focus:outline-none"
-                      />
+              return (
+                <div
+                  key={item.registrationId}
+                  className="rounded-lg border border-text-dark/10 p-4 bg-cloud-dancer/30"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-text-dark">
+                        {item.name} {item.surname}
+                      </p>
+                      <p className="text-sm text-text-dark/70">{item.email}</p>
+                      <p className="text-sm text-text-dark/80">
+                        {item.passType} • Level {item.level} • {normalizeRole(item.role)}
+                      </p>
+                      {item.weekendDay && (
+                        <p className="text-sm text-text-dark/70">Day: {item.weekendDay}</p>
+                      )}
+                      <p className="text-sm text-text-dark/80">
+                        <span className="font-semibold">Checked in:</span> {item.checkedIn ? 'Yes' : 'No'}
+                      </p>
+                    </div>
+
+                    <div className="min-w-[220px]">
                       <button
                         type="button"
-                        onClick={() => saveColour(item)}
-                        disabled={savingColourId === item.checkInEntryId || !item.checkInEntryId}
-                        className="px-3 py-2 rounded-lg border border-text-dark/20 bg-white text-sm font-semibold hover:bg-text-dark/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                        onClick={() => checkInFromList(item)}
+                        disabled={checkingInRegistrationId === item.registrationId || item.checkedIn}
+                        className="mb-3 w-full bg-yellow-accent text-text-dark px-3 py-2 rounded-lg text-sm font-semibold hover:-translate-y-0.5 hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {savingColourId === item.checkInEntryId ? 'Saving...' : 'Save'}
+                        {checkingInRegistrationId === item.registrationId
+                          ? 'Checking in...'
+                          : item.checkedIn
+                            ? 'Checked in'
+                            : 'Check in'}
                       </button>
+                      <label className="block text-xs font-semibold text-text-dark/70 mb-1">
+                        Colour
+                      </label>
+                      <div className="flex gap-2">
+                        <select
+                          value={draftColour}
+                          onChange={(event) =>
+                            setColourDrafts((prev) => ({
+                              ...prev,
+                              [item.registrationId]: event.target.value,
+                            }))
+                          }
+                          className="w-full px-3 py-2 rounded-lg border border-text-dark/20 bg-white focus:border-yellow-accent focus:outline-none"
+                        >
+                          <option value="">No colour selected</option>
+                          {hasCustomColour && (
+                            <option value={draftColour}>{draftColour} (existing)</option>
+                          )}
+                          {WEEKENDER_COLOUR_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.title}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => saveColour(item)}
+                          disabled={savingColourId === item.checkInEntryId || !item.checkInEntryId}
+                          className="px-3 py-2 rounded-lg border border-text-dark/20 bg-white text-sm font-semibold hover:bg-text-dark/5 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {savingColourId === item.checkInEntryId ? 'Saving...' : 'Save'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
