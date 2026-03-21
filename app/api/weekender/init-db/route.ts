@@ -6,9 +6,6 @@ import { initializeDatabase } from '@/lib/db';
 export async function POST() {
   try {
     await initializeDatabase();
-    
-    console.log('✅ Database tables initialized');
-    
     return NextResponse.json({
       success: true,
       message: 'Database tables created successfully'
@@ -17,7 +14,7 @@ export async function POST() {
   } catch (error) {
     console.error('Error initializing database:', error);
     return NextResponse.json(
-      { error: 'Failed to initialize database', details: String(error) },
+      { error: 'Failed to initialize database' },
       { status: 500 }
     );
   }

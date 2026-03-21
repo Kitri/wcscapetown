@@ -38,7 +38,6 @@ describe("POST /api/check-in/auth", () => {
   beforeEach(() => {
     jest.resetModules();
     process.env.CHECKIN_PASSCODE = "1234";
-    process.env.NODE_ENV = "test";
   });
 
   it("grants access with correct passcode and sets auth cookie", async () => {

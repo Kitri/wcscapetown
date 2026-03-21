@@ -66,20 +66,17 @@ export async function POST(request: NextRequest) {
 
   // Reject if any required headers are missing
   if (!webhookId || !webhookTime || !webhookSig) {
-    console.warn('Yoco webhook missing headers');
     return NextResponse.json({ error: 'Missing headers' }, { status: 400 });
   }
 
   // Reject events older than 3 minutes (prevents replay attacks)
   const ageSeconds = Math.abs(Math.floor(Date.now() / 1000) - parseInt(webhookTime, 10));
   if (ageSeconds > 180) {
-    console.warn('Yoco webhook expired', { ageSeconds });
     return NextResponse.json({ error: 'Request expired' }, { status: 400 });
   }
 
   // Reject if signature doesn't match
   if (!verifySignature(rawBody, webhookId, webhookTime, webhookSig)) {
-    console.warn('Yoco webhook invalid signature');
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
   }
 
@@ -158,18 +155,12 @@ async function resolveAddOnMemberIdsFromMetadata(
         : parseAddOnRegistrationType(registrationTypeRaw);
     const participants = getParticipantsForRegistrationType(lookup, registrationType);
     return participants.map((participant) => participant.memberId);
-  } catch (error) {
-    console.warn('Could not resolve add-on member IDs from webhook metadata fallback', {
-      passType,
-      customerEmail,
-      error,
-    });
+  } catch {
     return [];
   }
 }
 
 async function handleEvent(event: YocoEvent) {
-  console.log(`Yoco event received: ${event.type} [${event.id}]`);
 
   // Log webhook event to blob storage (non-blocking)
   logApiResponse(
@@ -195,10 +186,6 @@ async function handleEvent(event: YocoEvent) {
         }
 
         if (memberIds.length === 0) {
-          console.warn('No add-on member IDs found for payment.succeeded webhook', {
-            eventId: event.id,
-            source,
-          });
           return;
         }
 
@@ -208,11 +195,6 @@ async function handleEvent(event: YocoEvent) {
           'complete'
         );
 
-        console.log('✅ Add-on payment succeeded - weekend_add_ons updated', {
-          eventId: event.id,
-          source,
-          memberIds,
-        });
         return;
       }
       const checkoutId = event.payload.metadata?.checkoutId;
@@ -221,11 +203,8 @@ async function handleEvent(event: YocoEvent) {
       const apiCreatedDate = event.payload.createdDate;
 
       if (!checkoutId) {
-        console.warn('No checkoutId in webhook metadata', { eventId: event.id });
         return;
       }
-
-      console.log('Processing payment.succeeded', { checkoutId, paymentId, amount });
 
       // Update payment_id, amount, and api_created_date in yoco_api_results
       if (paymentId) {
@@ -235,7 +214,6 @@ async function handleEvent(event: YocoEvent) {
       // Get orderId from yoco_api_results via checkoutId
       const orderId = await getOrderIdByCheckoutId(checkoutId);
       if (!orderId) {
-        console.warn('No orderId found for checkout', { checkoutId });
         return;
       }
 
@@ -243,7 +221,6 @@ async function handleEvent(event: YocoEvent) {
       const registrationIds = await getRegistrationIdsByOrderId(orderId);
 
       if (registrationIds.length === 0) {
-        console.warn('No registrations found for order', { orderId });
         return;
       }
 
@@ -251,14 +228,6 @@ async function handleEvent(event: YocoEvent) {
       await Promise.all(registrationIds.map(registrationId => completeRegistration(registrationId)));
       await updateWeekendAddOnPaymentStatusByRegistrationIds(registrationIds, 'complete');
 
-      console.log('✅ Payment succeeded - registrations completed', {
-        checkoutId,
-        orderId,
-        paymentId,
-        registrationIds,
-        registrationCount: registrationIds.length,
-        amount: amount / 100, // Convert from cents
-      });
       break;
     }
 
@@ -276,10 +245,6 @@ async function handleEvent(event: YocoEvent) {
         }
 
         if (memberIds.length === 0) {
-          console.warn('No add-on member IDs found for payment.failed webhook', {
-            eventId: event.id,
-            source,
-          });
           return;
         }
 
@@ -289,35 +254,25 @@ async function handleEvent(event: YocoEvent) {
           'failed'
         );
 
-        console.log('❌ Add-on payment failed - weekend_add_ons updated', {
-          eventId: event.id,
-          source,
-          memberIds,
-        });
         return;
       }
       const checkoutId = event.payload.metadata?.checkoutId;
 
       if (!checkoutId) {
-        console.warn('No checkoutId in failed payment webhook', { eventId: event.id });
         return;
       }
 
       // Get orderId from checkoutId
       const orderId = await getOrderIdByCheckoutId(checkoutId);
       if (!orderId) {
-        console.warn('No orderId found for failed checkout', { checkoutId });
         return;
       }
-
-      console.log('Processing payment.failed', { checkoutId, orderId });
 
       // Mark registrations as failed
       await updateRegistrationPaymentStatusByOrder(orderId, 'failed');
       const failedRegistrationIds = await getRegistrationIdsByOrderId(orderId);
       await updateWeekendAddOnPaymentStatusByRegistrationIds(failedRegistrationIds, 'failed');
 
-      console.log('❌ Payment failed - registrations marked as failed', { checkoutId, orderId });
       break;
     }
 
@@ -325,7 +280,6 @@ async function handleEvent(event: YocoEvent) {
       const checkoutId = event.payload.metadata?.checkoutId;
 
       if (checkoutId) {
-        console.log('Payment cancelled', { checkoutId });
         // Don't update status — user might retry
       }
       break;
@@ -333,7 +287,6 @@ async function handleEvent(event: YocoEvent) {
 
     default:
       // Ignore other event types — return 200 so Yoco doesn't retry
-      console.log('Unhandled event type:', event.type);
       break;
   }
 }

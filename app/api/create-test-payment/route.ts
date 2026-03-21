@@ -94,15 +94,9 @@ export async function POST(request: NextRequest) {
       // Set expiry: 1 hour (payments should complete quickly)
       await kv.expire(`payment:${reference}`, 3600);
     } catch (kvError) {
-      // Log KV error but don't fail the payment - KV might not be configured locally
-      console.warn('KV storage warning (payment will still work):', kvError);
+      // Don't fail the payment flow if KV is temporarily unavailable
+      console.error('KV storage error while persisting test payment metadata:', kvError);
     }
-
-    console.log('✅ Payment checkout created:', {
-      reference,
-      name: trimmedName,
-      checkoutId: yocoData.id
-    });
 
     // 5. Return checkout URL to frontend
     return NextResponse.json({
