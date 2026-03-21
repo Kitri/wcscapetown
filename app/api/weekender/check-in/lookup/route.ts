@@ -1,24 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { lookupWeekenderCheckInByEmail } from '@/lib/weekenderCheckIn';
+import {
+  lookupWeekenderCheckInByEmail,
+  lookupWeekenderCheckInByNameAndSurname,
+} from '@/lib/weekenderCheckIn';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const email = String(body?.email ?? '').trim();
+    const lookupMode = body?.lookupMode === 'name' ? 'name' : 'email';
+    let lookup: Awaited<ReturnType<typeof lookupWeekenderCheckInByEmail>> = null;
 
-    if (!email) {
-      return NextResponse.json(
-        { error: 'Email address is required.' },
-        { status: 400 }
-      );
-    }
+    if (lookupMode === 'name') {
+      const name = String(body?.name ?? '').trim();
+      const surname = String(body?.surname ?? '').trim();
 
-    const lookup = await lookupWeekenderCheckInByEmail(email);
-    if (!lookup) {
-      return NextResponse.json(
-        { error: 'No weekender registration found for this email address.' },
-        { status: 404 }
-      );
+      if (!name || !surname) {
+        return NextResponse.json(
+          { error: 'Name and surname are required.' },
+          { status: 400 }
+        );
+      }
+
+      lookup = await lookupWeekenderCheckInByNameAndSurname(name, surname);
+      if (!lookup) {
+        return NextResponse.json(
+          { error: 'No weekender registration found for this name and surname.' },
+          { status: 404 }
+        );
+      }
+    } else {
+      const email = String(body?.email ?? '').trim();
+
+      if (!email) {
+        return NextResponse.json(
+          { error: 'Email address is required.' },
+          { status: 400 }
+        );
+      }
+
+      lookup = await lookupWeekenderCheckInByEmail(email);
+      if (!lookup) {
+        return NextResponse.json(
+          { error: 'No weekender registration found for this email address.' },
+          { status: 404 }
+        );
+      }
     }
 
     const message = lookup.checkIn?.checkedIn

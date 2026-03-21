@@ -372,21 +372,19 @@ export async function lookupWeekenderCheckInByRegistrationId(
   const sql = getDb();
   const rows = await sql`
     SELECT
-      r.id AS registration_id,
-      r.member_id,
-      r.email,
-      r.pass_type,
-      r.role,
-      r.level,
-      r.registration_type,
-      r.payment_status,
-      r.registration_status,
-      m.name,
-      m.surname
-    FROM registrations r
-    INNER JOIN members m ON m.member_id = r.member_id
-    WHERE r.id = ${registrationId}
-      AND r.pass_type IN ('weekend', 'day', 'day_saturday', 'day_sunday', 'party')
+      awr.id AS registration_id,
+      awr.member_id,
+      awr.email,
+      awr.pass_type,
+      awr.role,
+      awr.level,
+      awr.registration_type,
+      awr.payment_status,
+      awr.registration_status,
+      awr.name,
+      awr.surname
+    FROM all_weekender_registrations awr
+    WHERE awr.id = ${registrationId}
     LIMIT 1
   `;
 
@@ -404,35 +402,73 @@ export async function lookupWeekenderCheckInByEmail(
   const sql = getDb();
   const rows = await sql`
     SELECT
-      r.id AS registration_id,
-      r.member_id,
-      r.email,
-      r.pass_type,
-      r.role,
-      r.level,
-      r.registration_type,
-      r.payment_status,
-      r.registration_status,
-      m.name,
-      m.surname
-    FROM registrations r
-    INNER JOIN members m ON m.member_id = r.member_id
-    WHERE LOWER(TRIM(r.email)) = LOWER(TRIM(${normalizedEmail}))
-      AND r.pass_type IN ('weekend', 'day', 'day_saturday', 'day_sunday', 'party')
+      awr.id AS registration_id,
+      awr.member_id,
+      awr.email,
+      awr.pass_type,
+      awr.role,
+      awr.level,
+      awr.registration_type,
+      awr.payment_status,
+      awr.registration_status,
+      awr.name,
+      awr.surname
+    FROM all_weekender_registrations awr
+    WHERE LOWER(TRIM(awr.email)) = LOWER(TRIM(${normalizedEmail}))
     ORDER BY
       CASE
-        WHEN r.registration_status = 'complete' AND r.payment_status = 'complete' THEN 1
-        WHEN r.registration_status = 'pending' OR r.payment_status = 'pending' THEN 2
-        WHEN r.registration_status = 'waitlist' THEN 3
-        ELSE 4
+        WHEN awr.registration_status = 'complete' AND awr.payment_status = 'complete' THEN 1
+        WHEN awr.registration_status = 'pending' OR awr.payment_status = 'pending' THEN 2
+        ELSE 3
       END,
-      r.created_at DESC
+      awr.created_at DESC
     LIMIT 1
   `;
 
   if (rows.length === 0) return null;
   const row = rows[0] as WeekenderRegistrationRow;
   return buildWeekenderCheckInLookup(row, normalizedEmail);
+}
+
+export async function lookupWeekenderCheckInByNameAndSurname(
+  name: string,
+  surname: string
+): Promise<WeekenderCheckInLookup | null> {
+  const normalizedName = String(name ?? '').trim();
+  const normalizedSurname = String(surname ?? '').trim();
+  if (!normalizedName || !normalizedSurname) return null;
+
+  const sql = getDb();
+  const rows = await sql`
+    SELECT
+      awr.id AS registration_id,
+      awr.member_id,
+      awr.email,
+      awr.pass_type,
+      awr.role,
+      awr.level,
+      awr.registration_type,
+      awr.payment_status,
+      awr.registration_status,
+      awr.name,
+      awr.surname
+    FROM all_weekender_registrations awr
+    WHERE
+      LOWER(TRIM(awr.name)) = LOWER(TRIM(${normalizedName}))
+      AND LOWER(TRIM(awr.surname)) = LOWER(TRIM(${normalizedSurname}))
+    ORDER BY
+      CASE
+        WHEN awr.registration_status = 'complete' AND awr.payment_status = 'complete' THEN 1
+        WHEN awr.registration_status = 'pending' OR awr.payment_status = 'pending' THEN 2
+        ELSE 3
+      END,
+      awr.created_at DESC
+    LIMIT 1
+  `;
+
+  if (rows.length === 0) return null;
+  const row = rows[0] as WeekenderRegistrationRow;
+  return buildWeekenderCheckInLookup(row, '');
 }
 
 export async function lookupWeekenderPartyCheckInByRegistrationId(registrationId: number): Promise<{
@@ -454,22 +490,20 @@ export async function lookupWeekenderPartyCheckInByRegistrationId(registrationId
   const sql = getDb();
   const rows = await sql`
     SELECT
-      r.id AS registration_id,
-      r.member_id,
-      r.email,
-      r.pass_type,
-      m.name,
-      m.surname,
-      COALESCE(dp.party_add_on, false) AS party_add_on
-    FROM registrations r
-    INNER JOIN members m ON m.member_id = r.member_id
-    LEFT JOIN day_pass_details dp ON dp.registration_id = r.id
-    WHERE r.id = ${registrationId}
+      awr.id AS registration_id,
+      awr.member_id,
+      awr.email,
+      awr.pass_type,
+      awr.name,
+      awr.surname,
+      COALESCE(awr.party_add_on, false) AS party_add_on
+    FROM all_weekender_registrations awr
+    WHERE awr.id = ${registrationId}
       AND (
-        r.pass_type = 'party'
+        awr.pass_type = 'party'
         OR (
-          r.pass_type IN ('day', 'day_saturday', 'day_sunday')
-          AND COALESCE(dp.party_add_on, false) = true
+          awr.pass_type IN ('day', 'day_saturday', 'day_sunday')
+          AND COALESCE(awr.party_add_on, false) = true
         )
       )
     LIMIT 1
@@ -635,48 +669,25 @@ export async function listWeekenderCheckIns(
   try {
     rows = q
       ? await sql`
-          WITH ranked_registrations AS (
-            SELECT
-              r.id AS registration_id,
-              r.member_id,
-              r.email,
-              r.pass_type,
-              r.role,
-              r.level,
-              r.registration_type,
-              ROW_NUMBER() OVER (
-                PARTITION BY r.member_id
-                ORDER BY
-                  CASE
-                    WHEN r.registration_status = 'complete' AND r.payment_status = 'complete' THEN 1
-                    WHEN r.registration_status = 'pending' OR r.payment_status = 'pending' THEN 2
-                    WHEN r.registration_status = 'waitlist' THEN 3
-                    ELSE 4
-                  END,
-                  r.created_at DESC
-              ) AS rn
-            FROM registrations r
-            WHERE r.pass_type IN ('weekend', 'day', 'day_saturday', 'day_sunday', 'party')
-          )
           SELECT
             wc.id AS checkin_id,
-            rr.member_id,
-            rr.registration_id,
-            rr.pass_type,
+            awr.member_id,
+            awr.id AS registration_id,
+            awr.pass_type,
             COALESCE(
               NULLIF(wc.weekend_day, ''),
-              NULLIF(dp.workshop_day, ''),
+              NULLIF(awr.workshop_day, ''),
               CASE
-                WHEN rr.pass_type = 'day_saturday' THEN 'Saturday'
-                WHEN rr.pass_type = 'day_sunday' THEN 'Sunday'
+                WHEN awr.pass_type = 'day_saturday' THEN 'Saturday'
+                WHEN awr.pass_type = 'day_sunday' THEN 'Sunday'
                 ELSE NULL
               END
             ) AS weekend_day,
             COALESCE(
               wc.party_add_on,
               CASE
-                WHEN rr.pass_type = 'party' THEN true
-                ELSE COALESCE(dp.party_add_on, false)
+                WHEN awr.pass_type = 'party' THEN true
+                ELSE COALESCE(awr.party_add_on, false)
               END
             ) AS party_add_on,
             COALESCE(wc.spinning_add_on, false) AS spinning_add_on,
@@ -684,68 +695,40 @@ export async function listWeekenderCheckIns(
             wc.colour,
             COALESCE(wc.checked_in, false) AS checked_in,
             wc.updated_at,
-            m.name,
-            m.surname,
-            rr.email,
-            rr.role,
-            rr.level,
-            rr.registration_type
-          FROM ranked_registrations rr
-          INNER JOIN members m ON m.member_id = rr.member_id
-          LEFT JOIN day_pass_details dp ON dp.registration_id = rr.registration_id
-          LEFT JOIN weekend_checkin wc ON wc.registration_id = rr.registration_id
+            awr.name,
+            awr.surname,
+            awr.email,
+            awr.role,
+            awr.level,
+            awr.registration_type
+          FROM all_weekender_registrations awr
+          LEFT JOIN weekend_checkin wc ON wc.registration_id = awr.id
           WHERE
-            rr.rn = 1
-            AND (
-              LOWER(m.name || ' ' || m.surname) LIKE ${pattern}
-              OR LOWER(COALESCE(rr.email, '')) LIKE ${pattern}
-            )
-          ORDER BY COALESCE(wc.checked_in, false) DESC, m.name ASC, m.surname ASC
+            LOWER(COALESCE(awr.name, '') || ' ' || COALESCE(awr.surname, '')) LIKE ${pattern}
+            OR LOWER(COALESCE(awr.email, '')) LIKE ${pattern}
+          ORDER BY COALESCE(wc.checked_in, false) DESC, awr.name ASC, awr.surname ASC, awr.created_at DESC
           LIMIT 500
         `
       : await sql`
-          WITH ranked_registrations AS (
-            SELECT
-              r.id AS registration_id,
-              r.member_id,
-              r.email,
-              r.pass_type,
-              r.role,
-              r.level,
-              r.registration_type,
-              ROW_NUMBER() OVER (
-                PARTITION BY r.member_id
-                ORDER BY
-                  CASE
-                    WHEN r.registration_status = 'complete' AND r.payment_status = 'complete' THEN 1
-                    WHEN r.registration_status = 'pending' OR r.payment_status = 'pending' THEN 2
-                    WHEN r.registration_status = 'waitlist' THEN 3
-                    ELSE 4
-                  END,
-                  r.created_at DESC
-              ) AS rn
-            FROM registrations r
-            WHERE r.pass_type IN ('weekend', 'day', 'day_saturday', 'day_sunday', 'party')
-          )
           SELECT
             wc.id AS checkin_id,
-            rr.member_id,
-            rr.registration_id,
-            rr.pass_type,
+            awr.member_id,
+            awr.id AS registration_id,
+            awr.pass_type,
             COALESCE(
               NULLIF(wc.weekend_day, ''),
-              NULLIF(dp.workshop_day, ''),
+              NULLIF(awr.workshop_day, ''),
               CASE
-                WHEN rr.pass_type = 'day_saturday' THEN 'Saturday'
-                WHEN rr.pass_type = 'day_sunday' THEN 'Sunday'
+                WHEN awr.pass_type = 'day_saturday' THEN 'Saturday'
+                WHEN awr.pass_type = 'day_sunday' THEN 'Sunday'
                 ELSE NULL
               END
             ) AS weekend_day,
             COALESCE(
               wc.party_add_on,
               CASE
-                WHEN rr.pass_type = 'party' THEN true
-                ELSE COALESCE(dp.party_add_on, false)
+                WHEN awr.pass_type = 'party' THEN true
+                ELSE COALESCE(awr.party_add_on, false)
               END
             ) AS party_add_on,
             COALESCE(wc.spinning_add_on, false) AS spinning_add_on,
@@ -753,18 +736,15 @@ export async function listWeekenderCheckIns(
             wc.colour,
             COALESCE(wc.checked_in, false) AS checked_in,
             wc.updated_at,
-            m.name,
-            m.surname,
-            rr.email,
-            rr.role,
-            rr.level,
-            rr.registration_type
-          FROM ranked_registrations rr
-          INNER JOIN members m ON m.member_id = rr.member_id
-          LEFT JOIN day_pass_details dp ON dp.registration_id = rr.registration_id
-          LEFT JOIN weekend_checkin wc ON wc.registration_id = rr.registration_id
-          WHERE rr.rn = 1
-          ORDER BY COALESCE(wc.checked_in, false) DESC, m.name ASC, m.surname ASC
+            awr.name,
+            awr.surname,
+            awr.email,
+            awr.role,
+            awr.level,
+            awr.registration_type
+          FROM all_weekender_registrations awr
+          LEFT JOIN weekend_checkin wc ON wc.registration_id = awr.id
+          ORDER BY COALESCE(wc.checked_in, false) DESC, awr.name ASC, awr.surname ASC, awr.created_at DESC
           LIMIT 500
         `;
   } catch (error) {
@@ -774,126 +754,72 @@ export async function listWeekenderCheckIns(
 
     rows = q
       ? await sql`
-          WITH ranked_registrations AS (
-            SELECT
-              r.id AS registration_id,
-              r.member_id,
-              r.email,
-              r.pass_type,
-              r.role,
-              r.level,
-              r.registration_type,
-              ROW_NUMBER() OVER (
-                PARTITION BY r.member_id
-                ORDER BY
-                  CASE
-                    WHEN r.registration_status = 'complete' AND r.payment_status = 'complete' THEN 1
-                    WHEN r.registration_status = 'pending' OR r.payment_status = 'pending' THEN 2
-                    WHEN r.registration_status = 'waitlist' THEN 3
-                    ELSE 4
-                  END,
-                  r.created_at DESC
-              ) AS rn
-            FROM registrations r
-            WHERE r.pass_type IN ('weekend', 'day', 'day_saturday', 'day_sunday', 'party')
-          )
           SELECT
             NULL::integer AS checkin_id,
-            rr.member_id,
-            rr.registration_id,
-            rr.pass_type,
+            awr.member_id,
+            awr.id AS registration_id,
+            awr.pass_type,
             COALESCE(
-              NULLIF(dp.workshop_day, ''),
+              NULLIF(awr.workshop_day, ''),
               CASE
-                WHEN rr.pass_type = 'day_saturday' THEN 'Saturday'
-                WHEN rr.pass_type = 'day_sunday' THEN 'Sunday'
+                WHEN awr.pass_type = 'day_saturday' THEN 'Saturday'
+                WHEN awr.pass_type = 'day_sunday' THEN 'Sunday'
                 ELSE NULL
               END
             ) AS weekend_day,
             CASE
-              WHEN rr.pass_type = 'party' THEN true
-              ELSE COALESCE(dp.party_add_on, false)
+              WHEN awr.pass_type = 'party' THEN true
+              ELSE COALESCE(awr.party_add_on, false)
             END AS party_add_on,
             false AS spinning_add_on,
             false AS spotlight_add_on,
             NULL::text AS colour,
             false AS checked_in,
             NULL::timestamptz AS updated_at,
-            m.name,
-            m.surname,
-            rr.email,
-            rr.role,
-            rr.level,
-            rr.registration_type
-          FROM ranked_registrations rr
-          INNER JOIN members m ON m.member_id = rr.member_id
-          LEFT JOIN day_pass_details dp ON dp.registration_id = rr.registration_id
+            awr.name,
+            awr.surname,
+            awr.email,
+            awr.role,
+            awr.level,
+            awr.registration_type
+          FROM all_weekender_registrations awr
           WHERE
-            rr.rn = 1
-            AND (
-              LOWER(m.name || ' ' || m.surname) LIKE ${pattern}
-              OR LOWER(COALESCE(rr.email, '')) LIKE ${pattern}
-            )
-          ORDER BY m.name ASC, m.surname ASC
+            LOWER(COALESCE(awr.name, '') || ' ' || COALESCE(awr.surname, '')) LIKE ${pattern}
+            OR LOWER(COALESCE(awr.email, '')) LIKE ${pattern}
+          ORDER BY awr.name ASC, awr.surname ASC, awr.created_at DESC
           LIMIT 500
         `
       : await sql`
-          WITH ranked_registrations AS (
-            SELECT
-              r.id AS registration_id,
-              r.member_id,
-              r.email,
-              r.pass_type,
-              r.role,
-              r.level,
-              r.registration_type,
-              ROW_NUMBER() OVER (
-                PARTITION BY r.member_id
-                ORDER BY
-                  CASE
-                    WHEN r.registration_status = 'complete' AND r.payment_status = 'complete' THEN 1
-                    WHEN r.registration_status = 'pending' OR r.payment_status = 'pending' THEN 2
-                    WHEN r.registration_status = 'waitlist' THEN 3
-                    ELSE 4
-                  END,
-                  r.created_at DESC
-              ) AS rn
-            FROM registrations r
-            WHERE r.pass_type IN ('weekend', 'day', 'day_saturday', 'day_sunday', 'party')
-          )
           SELECT
             NULL::integer AS checkin_id,
-            rr.member_id,
-            rr.registration_id,
-            rr.pass_type,
+            awr.member_id,
+            awr.id AS registration_id,
+            awr.pass_type,
             COALESCE(
-              NULLIF(dp.workshop_day, ''),
+              NULLIF(awr.workshop_day, ''),
               CASE
-                WHEN rr.pass_type = 'day_saturday' THEN 'Saturday'
-                WHEN rr.pass_type = 'day_sunday' THEN 'Sunday'
+                WHEN awr.pass_type = 'day_saturday' THEN 'Saturday'
+                WHEN awr.pass_type = 'day_sunday' THEN 'Sunday'
                 ELSE NULL
               END
             ) AS weekend_day,
             CASE
-              WHEN rr.pass_type = 'party' THEN true
-              ELSE COALESCE(dp.party_add_on, false)
+              WHEN awr.pass_type = 'party' THEN true
+              ELSE COALESCE(awr.party_add_on, false)
             END AS party_add_on,
             false AS spinning_add_on,
             false AS spotlight_add_on,
             NULL::text AS colour,
             false AS checked_in,
             NULL::timestamptz AS updated_at,
-            m.name,
-            m.surname,
-            rr.email,
-            rr.role,
-            rr.level,
-            rr.registration_type
-          FROM ranked_registrations rr
-          INNER JOIN members m ON m.member_id = rr.member_id
-          LEFT JOIN day_pass_details dp ON dp.registration_id = rr.registration_id
-          WHERE rr.rn = 1
-          ORDER BY m.name ASC, m.surname ASC
+            awr.name,
+            awr.surname,
+            awr.email,
+            awr.role,
+            awr.level,
+            awr.registration_type
+          FROM all_weekender_registrations awr
+          ORDER BY awr.name ASC, awr.surname ASC, awr.created_at DESC
           LIMIT 500
         `;
   }
@@ -938,118 +864,69 @@ export async function listWeekenderPartyCheckIns(
   try {
     rows = q
       ? await sql`
-          WITH party_registrations AS (
-            SELECT
-              r.id AS registration_id,
-              r.member_id,
-              r.email,
-              r.pass_type,
-              r.role,
-              r.level,
-              r.registration_type,
-              CASE
-                WHEN r.pass_type = 'party' THEN 'party_pass'
-                ELSE 'day_pass_add_on'
-              END AS party_access_type,
-              ROW_NUMBER() OVER (
-                PARTITION BY r.member_id
-                ORDER BY
-                  CASE
-                    WHEN r.registration_status = 'complete' AND r.payment_status = 'complete' THEN 1
-                    WHEN r.registration_status = 'pending' OR r.payment_status = 'pending' THEN 2
-                    WHEN r.registration_status = 'waitlist' THEN 3
-                    ELSE 4
-                  END,
-                  r.created_at DESC
-              ) AS rn
-            FROM registrations r
-            LEFT JOIN day_pass_details dp ON dp.registration_id = r.id
-            WHERE
-              r.pass_type = 'party'
-              OR (
-                r.pass_type IN ('day', 'day_saturday', 'day_sunday')
-                AND COALESCE(dp.party_add_on, false) = true
-              )
-          )
           SELECT
             wpc.id AS party_checkin_id,
-            pr.member_id,
-            pr.registration_id,
-            pr.pass_type,
-            pr.party_access_type,
+            awr.member_id,
+            awr.id AS registration_id,
+            awr.pass_type,
+            CASE
+              WHEN awr.pass_type = 'party' THEN 'party_pass'
+              ELSE 'day_pass_add_on'
+            END AS party_access_type,
             COALESCE(wpc.checked_in, false) AS checked_in,
             wpc.updated_at,
-            m.name,
-            m.surname,
-            pr.email,
-            pr.role,
-            pr.level,
-            pr.registration_type
-          FROM party_registrations pr
-          INNER JOIN members m ON m.member_id = pr.member_id
-          LEFT JOIN weekend_party_checkin wpc ON wpc.registration_id = pr.registration_id
+            awr.name,
+            awr.surname,
+            awr.email,
+            awr.role,
+            awr.level,
+            awr.registration_type
+          FROM all_weekender_registrations awr
+          LEFT JOIN weekend_party_checkin wpc ON wpc.registration_id = awr.id
           WHERE
-            pr.rn = 1
-            AND (
-              LOWER(m.name || ' ' || m.surname) LIKE ${pattern}
-              OR LOWER(COALESCE(pr.email, '')) LIKE ${pattern}
+            (
+              awr.pass_type = 'party'
+              OR (
+                awr.pass_type IN ('day', 'day_saturday', 'day_sunday')
+                AND COALESCE(awr.party_add_on, false) = true
+              )
             )
-          ORDER BY COALESCE(wpc.checked_in, false) DESC, m.name ASC, m.surname ASC
+            AND (
+              LOWER(COALESCE(awr.name, '') || ' ' || COALESCE(awr.surname, '')) LIKE ${pattern}
+              OR LOWER(COALESCE(awr.email, '')) LIKE ${pattern}
+            )
+          ORDER BY COALESCE(wpc.checked_in, false) DESC, awr.name ASC, awr.surname ASC, awr.created_at DESC
           LIMIT 500
         `
       : await sql`
-          WITH party_registrations AS (
-            SELECT
-              r.id AS registration_id,
-              r.member_id,
-              r.email,
-              r.pass_type,
-              r.role,
-              r.level,
-              r.registration_type,
-              CASE
-                WHEN r.pass_type = 'party' THEN 'party_pass'
-                ELSE 'day_pass_add_on'
-              END AS party_access_type,
-              ROW_NUMBER() OVER (
-                PARTITION BY r.member_id
-                ORDER BY
-                  CASE
-                    WHEN r.registration_status = 'complete' AND r.payment_status = 'complete' THEN 1
-                    WHEN r.registration_status = 'pending' OR r.payment_status = 'pending' THEN 2
-                    WHEN r.registration_status = 'waitlist' THEN 3
-                    ELSE 4
-                  END,
-                  r.created_at DESC
-              ) AS rn
-            FROM registrations r
-            LEFT JOIN day_pass_details dp ON dp.registration_id = r.id
-            WHERE
-              r.pass_type = 'party'
-              OR (
-                r.pass_type IN ('day', 'day_saturday', 'day_sunday')
-                AND COALESCE(dp.party_add_on, false) = true
-              )
-          )
           SELECT
             wpc.id AS party_checkin_id,
-            pr.member_id,
-            pr.registration_id,
-            pr.pass_type,
-            pr.party_access_type,
+            awr.member_id,
+            awr.id AS registration_id,
+            awr.pass_type,
+            CASE
+              WHEN awr.pass_type = 'party' THEN 'party_pass'
+              ELSE 'day_pass_add_on'
+            END AS party_access_type,
             COALESCE(wpc.checked_in, false) AS checked_in,
             wpc.updated_at,
-            m.name,
-            m.surname,
-            pr.email,
-            pr.role,
-            pr.level,
-            pr.registration_type
-          FROM party_registrations pr
-          INNER JOIN members m ON m.member_id = pr.member_id
-          LEFT JOIN weekend_party_checkin wpc ON wpc.registration_id = pr.registration_id
-          WHERE pr.rn = 1
-          ORDER BY COALESCE(wpc.checked_in, false) DESC, m.name ASC, m.surname ASC
+            awr.name,
+            awr.surname,
+            awr.email,
+            awr.role,
+            awr.level,
+            awr.registration_type
+          FROM all_weekender_registrations awr
+          LEFT JOIN weekend_party_checkin wpc ON wpc.registration_id = awr.id
+          WHERE
+            (
+              awr.pass_type = 'party'
+              OR (
+                awr.pass_type IN ('day', 'day_saturday', 'day_sunday')
+                AND COALESCE(awr.party_add_on, false) = true
+              )
+            )
+          ORDER BY COALESCE(wpc.checked_in, false) DESC, awr.name ASC, awr.surname ASC, awr.created_at DESC
           LIMIT 500
         `;
   } catch (error) {
@@ -1059,116 +936,67 @@ export async function listWeekenderPartyCheckIns(
 
     rows = q
       ? await sql`
-          WITH party_registrations AS (
-            SELECT
-              r.id AS registration_id,
-              r.member_id,
-              r.email,
-              r.pass_type,
-              r.role,
-              r.level,
-              r.registration_type,
-              CASE
-                WHEN r.pass_type = 'party' THEN 'party_pass'
-                ELSE 'day_pass_add_on'
-              END AS party_access_type,
-              ROW_NUMBER() OVER (
-                PARTITION BY r.member_id
-                ORDER BY
-                  CASE
-                    WHEN r.registration_status = 'complete' AND r.payment_status = 'complete' THEN 1
-                    WHEN r.registration_status = 'pending' OR r.payment_status = 'pending' THEN 2
-                    WHEN r.registration_status = 'waitlist' THEN 3
-                    ELSE 4
-                  END,
-                  r.created_at DESC
-              ) AS rn
-            FROM registrations r
-            LEFT JOIN day_pass_details dp ON dp.registration_id = r.id
-            WHERE
-              r.pass_type = 'party'
-              OR (
-                r.pass_type IN ('day', 'day_saturday', 'day_sunday')
-                AND COALESCE(dp.party_add_on, false) = true
-              )
-          )
           SELECT
             NULL::integer AS party_checkin_id,
-            pr.member_id,
-            pr.registration_id,
-            pr.pass_type,
-            pr.party_access_type,
+            awr.member_id,
+            awr.id AS registration_id,
+            awr.pass_type,
+            CASE
+              WHEN awr.pass_type = 'party' THEN 'party_pass'
+              ELSE 'day_pass_add_on'
+            END AS party_access_type,
             false AS checked_in,
             NULL::timestamptz AS updated_at,
-            m.name,
-            m.surname,
-            pr.email,
-            pr.role,
-            pr.level,
-            pr.registration_type
-          FROM party_registrations pr
-          INNER JOIN members m ON m.member_id = pr.member_id
+            awr.name,
+            awr.surname,
+            awr.email,
+            awr.role,
+            awr.level,
+            awr.registration_type
+          FROM all_weekender_registrations awr
           WHERE
-            pr.rn = 1
-            AND (
-              LOWER(m.name || ' ' || m.surname) LIKE ${pattern}
-              OR LOWER(COALESCE(pr.email, '')) LIKE ${pattern}
+            (
+              awr.pass_type = 'party'
+              OR (
+                awr.pass_type IN ('day', 'day_saturday', 'day_sunday')
+                AND COALESCE(awr.party_add_on, false) = true
+              )
             )
-          ORDER BY m.name ASC, m.surname ASC
+            AND (
+              LOWER(COALESCE(awr.name, '') || ' ' || COALESCE(awr.surname, '')) LIKE ${pattern}
+              OR LOWER(COALESCE(awr.email, '')) LIKE ${pattern}
+            )
+          ORDER BY awr.name ASC, awr.surname ASC, awr.created_at DESC
           LIMIT 500
         `
       : await sql`
-          WITH party_registrations AS (
-            SELECT
-              r.id AS registration_id,
-              r.member_id,
-              r.email,
-              r.pass_type,
-              r.role,
-              r.level,
-              r.registration_type,
-              CASE
-                WHEN r.pass_type = 'party' THEN 'party_pass'
-                ELSE 'day_pass_add_on'
-              END AS party_access_type,
-              ROW_NUMBER() OVER (
-                PARTITION BY r.member_id
-                ORDER BY
-                  CASE
-                    WHEN r.registration_status = 'complete' AND r.payment_status = 'complete' THEN 1
-                    WHEN r.registration_status = 'pending' OR r.payment_status = 'pending' THEN 2
-                    WHEN r.registration_status = 'waitlist' THEN 3
-                    ELSE 4
-                  END,
-                  r.created_at DESC
-              ) AS rn
-            FROM registrations r
-            LEFT JOIN day_pass_details dp ON dp.registration_id = r.id
-            WHERE
-              r.pass_type = 'party'
-              OR (
-                r.pass_type IN ('day', 'day_saturday', 'day_sunday')
-                AND COALESCE(dp.party_add_on, false) = true
-              )
-          )
           SELECT
             NULL::integer AS party_checkin_id,
-            pr.member_id,
-            pr.registration_id,
-            pr.pass_type,
-            pr.party_access_type,
+            awr.member_id,
+            awr.id AS registration_id,
+            awr.pass_type,
+            CASE
+              WHEN awr.pass_type = 'party' THEN 'party_pass'
+              ELSE 'day_pass_add_on'
+            END AS party_access_type,
             false AS checked_in,
             NULL::timestamptz AS updated_at,
-            m.name,
-            m.surname,
-            pr.email,
-            pr.role,
-            pr.level,
-            pr.registration_type
-          FROM party_registrations pr
-          INNER JOIN members m ON m.member_id = pr.member_id
-          WHERE pr.rn = 1
-          ORDER BY m.name ASC, m.surname ASC
+            awr.name,
+            awr.surname,
+            awr.email,
+            awr.role,
+            awr.level,
+            awr.registration_type
+          FROM all_weekender_registrations awr
+          WHERE
+            (
+              awr.pass_type = 'party'
+              OR (
+                awr.pass_type IN ('day', 'day_saturday', 'day_sunday')
+                AND COALESCE(awr.party_add_on, false) = true
+              )
+            )
+          ORDER BY awr.name ASC, awr.surname ASC, awr.created_at DESC
           LIMIT 500
         `;
   }

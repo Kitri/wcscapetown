@@ -1,31 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  lookupWeekenderCheckInByEmail,
+  lookupWeekenderCheckInByRegistrationId,
   upsertWeekenderCheckIn,
 } from '@/lib/weekenderCheckIn';
+
+function normalizeLookupText(value: string): string {
+  return String(value ?? '').trim().toLowerCase();
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const email = String(body?.email ?? '').trim();
+    const name = String(body?.name ?? '').trim();
+    const surname = String(body?.surname ?? '').trim();
     const registrationId = Number(body?.registrationId);
 
-    if (!email || !Number.isInteger(registrationId) || registrationId <= 0) {
+    if (!Number.isInteger(registrationId) || registrationId <= 0) {
       return NextResponse.json(
-        { error: 'Email and registration ID are required.' },
+        { error: 'Registration ID is required.' },
         { status: 400 }
       );
     }
 
-    const lookup = await lookupWeekenderCheckInByEmail(email);
+    if (!email && !(name && surname)) {
+      return NextResponse.json(
+        { error: 'Email or name and surname are required.' },
+        { status: 400 }
+      );
+    }
+
+    if ((name && !surname) || (!name && surname)) {
+      return NextResponse.json(
+        { error: 'Both name and surname are required when using name lookup.' },
+        { status: 400 }
+      );
+    }
+
+    const lookup = await lookupWeekenderCheckInByRegistrationId(registrationId);
     if (!lookup) {
       return NextResponse.json(
-        { error: 'No weekender registration found for this email address.' },
+        { error: 'No weekender registration found for this registration ID.' },
         { status: 404 }
       );
     }
 
-    if (lookup.registration.registrationId !== registrationId) {
+    if (email && normalizeLookupText(lookup.member.email) !== normalizeLookupText(email)) {
+      return NextResponse.json(
+        { error: 'Registration details are out of date. Please reload registration details.' },
+        { status: 409 }
+      );
+    }
+
+    if (
+      name &&
+      surname &&
+      (
+        normalizeLookupText(lookup.member.name) !== normalizeLookupText(name) ||
+        normalizeLookupText(lookup.member.surname) !== normalizeLookupText(surname)
+      )
+    ) {
       return NextResponse.json(
         { error: 'Registration details are out of date. Please reload registration details.' },
         { status: 409 }
@@ -38,7 +72,6 @@ export async function POST(request: NextRequest) {
         message: 'You are already checked in.',
       });
     }
-
 
     await upsertWeekenderCheckIn({
       lookup,

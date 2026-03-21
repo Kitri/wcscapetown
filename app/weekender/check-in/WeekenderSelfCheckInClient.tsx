@@ -41,6 +41,33 @@ type ActionResponse = {
   message?: string;
   error?: string;
 };
+type LookupMode = 'email' | 'name';
+const WEEKENDER_COLOUR_OPTIONS: Array<{ title: string; description: string }> = [
+  {
+    title: 'Blue (Flow)',
+    description: 'Smooth, clean movements with a flowy, chill vibe.',
+  },
+  {
+    title: 'Yellow (Joy)',
+    description: 'Fun, energetic and playful with a sense of humour.',
+  },
+  {
+    title: 'Red (Bold)',
+    description: 'Power movements with strong leverage and connection.',
+  },
+  {
+    title: 'Green (Blend Yellow and Blue)',
+    description: 'Graceful elegance meets joyful playfulness.',
+  },
+  {
+    title: 'Purple (Blend Red and Blue)',
+    description: 'Controlled power with refined, deliberate technique.',
+  },
+  {
+    title: 'Orange (Blend Red and Yellow)',
+    description: 'Explosive energy with powerful, charismatic presence.',
+  },
+];
 
 function normalizeRole(role: string): string {
   const raw = String(role ?? '').trim().toUpperCase();
@@ -50,12 +77,21 @@ function normalizeRole(role: string): string {
 }
 
 export default function WeekenderSelfCheckInClient() {
+  const [lookupMode, setLookupMode] = useState<LookupMode>('email');
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [surname, setSurname] = useState('');
   const [lookup, setLookup] = useState<LookupResponse | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [checkInLoading, setCheckInLoading] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
+  function switchLookupMode(mode: LookupMode) {
+    setLookupMode(mode);
+    setLookup(null);
+    setError('');
+    setInfo('');
+  }
 
   async function loadRegistration() {
     setError('');
@@ -63,17 +99,28 @@ export default function WeekenderSelfCheckInClient() {
     setLookup(null);
 
     const trimmedEmail = email.trim();
-    if (!trimmedEmail) {
+    const trimmedName = name.trim();
+    const trimmedSurname = surname.trim();
+
+    if (lookupMode === 'email' && !trimmedEmail) {
       setError('Please enter your email address first.');
       return;
     }
+    if (lookupMode === 'name' && (!trimmedName || !trimmedSurname)) {
+      setError('Please enter both name and surname first.');
+      return;
+    }
+
+    const payload = lookupMode === 'name'
+      ? { lookupMode: 'name' as const, name: trimmedName, surname: trimmedSurname }
+      : { lookupMode: 'email' as const, email: trimmedEmail };
 
     setLookupLoading(true);
     try {
       const response = await fetch('/api/weekender/check-in/lookup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmedEmail }),
+        body: JSON.stringify(payload),
       });
 
       const data = (await response.json()) as LookupResponse & { error?: string };
@@ -107,13 +154,25 @@ export default function WeekenderSelfCheckInClient() {
 
     setCheckInLoading(true);
     try {
+      const payload: {
+        registrationId: number;
+        email?: string;
+        name?: string;
+        surname?: string;
+      } = {
+        registrationId: lookup.registration.registrationId,
+      };
+
+      if (lookupMode === 'name') {
+        payload.name = lookup.member.name || name.trim();
+        payload.surname = lookup.member.surname || surname.trim();
+      } else {
+        payload.email = lookup.member.email || email.trim();
+      }
       const response = await fetch('/api/weekender/check-in/self-check-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: lookup.member.email || email.trim(),
-          registrationId: lookup.registration.registrationId,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = (await response.json()) as ActionResponse;
@@ -155,7 +214,8 @@ export default function WeekenderSelfCheckInClient() {
               Weekender Check-in
             </h1>
             <p className="text-lg text-white/80 max-w-3xl mx-auto">
-              Enter your email address to load your registration details, then check in.
+              Use your email address by default. If two people share one email, switch to
+              <span className="font-semibold"> use name and surname</span>.
             </p>
           </div>
         </section>
@@ -163,13 +223,89 @@ export default function WeekenderSelfCheckInClient() {
         <section className="px-[5%] py-12">
           <div className="max-w-3xl mx-auto bg-white rounded-xl p-6 md:p-8 shadow-sm border border-text-dark/10">
             <div>
-              <label className="block text-sm font-medium text-text-dark mb-1">Email address</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                className="w-full px-4 py-3 rounded-lg border-2 border-text-dark/10 focus:border-yellow-accent focus:outline-none"
-              />
+              <p className="block text-sm font-medium text-text-dark mb-2">Lookup option</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => switchLookupMode('email')}
+                  className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-all ${
+                    lookupMode === 'email'
+                      ? 'bg-text-dark text-white border-text-dark'
+                      : 'bg-white text-text-dark border-text-dark/20 hover:border-text-dark/40'
+                  }`}
+                >
+                  Email (default)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => switchLookupMode('name')}
+                  className={`px-3 py-1.5 rounded-full border text-sm font-medium transition-all ${
+                    lookupMode === 'name'
+                      ? 'bg-text-dark text-white border-text-dark'
+                      : 'bg-white text-text-dark border-text-dark/20 hover:border-text-dark/40'
+                  }`}
+                >
+                  Use name and surname
+                </button>
+              </div>
+            </div>
+
+            {lookupMode === 'email' ? (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-text-dark mb-1">Email address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  className="w-full px-4 py-3 rounded-lg border-2 border-text-dark/10 focus:border-yellow-accent focus:outline-none"
+                />
+              </div>
+            ) : (
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-text-dark mb-1">Name</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border-2 border-text-dark/10 focus:border-yellow-accent focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-text-dark mb-1">Surname</label>
+                  <input
+                    type="text"
+                    value={surname}
+                    onChange={(event) => setSurname(event.target.value)}
+                    className="w-full px-4 py-3 rounded-lg border-2 border-text-dark/10 focus:border-yellow-accent focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            <p className="mt-2 text-xs text-text-dark/70">
+              Email lookup is the default. Use name and surname if more than one person registered with the same email.
+            </p>
+            <div className="mt-5 rounded-lg border border-text-dark/10 bg-cloud-dancer/40 p-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <p className="font-semibold text-text-dark">Find my colour</p>
+                <a
+                  href="https://dancer-spectrum-visualizer.replit.app/colour-wheel"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center rounded-md border border-text-dark/20 bg-white px-3 py-2 text-sm font-medium text-text-dark hover:border-text-dark/40"
+                >
+                  Open colour wheel
+                </a>
+              </div>
+              <ul className="mt-3 space-y-1.5 text-sm text-text-dark/85">
+                {WEEKENDER_COLOUR_OPTIONS.map((option) => (
+                  <li key={option.title}>
+                    <span className="font-semibold text-text-dark">{option.title}:</span>{' '}
+                    {option.description}
+                  </li>
+                ))}
+              </ul>
             </div>
 
             <button
