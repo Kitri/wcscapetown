@@ -29,8 +29,6 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-8">
           <Link href="/" className="text-text-dark hover:text-yellow-accent transition-colors">Home</Link>
           <Link href="/whats-on" className="text-text-dark hover:text-pink-accent transition-colors">What&apos;s On</Link>
-          <Link href="/weekender" className="text-text-dark hover:text-yellow-accent transition-colors">March Weekender</Link>
-          <Link href="/check-registration" className="text-text-dark hover:text-purple-accent transition-colors">Check my registration</Link>
           <Link href="/about-us" className="text-text-dark hover:text-yellow-accent transition-colors">About Us</Link>
           <Link href="/community-culture" className="text-text-dark hover:text-pink-accent transition-colors">Community Culture</Link>
           <Link href="/contact" className="text-text-dark hover:text-pink-accent transition-colors">Contact</Link>
@@ -71,20 +69,6 @@ export default function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               What&apos;s On
-            </Link>
-            <Link 
-              href="/weekender" 
-              className="text-text-dark hover:text-yellow-accent transition-colors text-lg"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              March Weekender
-            </Link>
-            <Link
-              href="/check-registration"
-              className="text-text-dark hover:text-purple-accent transition-colors text-lg"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Check my registration
             </Link>
             <Link 
               href="/about-us" 

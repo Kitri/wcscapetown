@@ -1,5 +1,4 @@
 import Header from "@/components/Header";
-import Link from "next/link";
 
 export default function WhatsOn() {
   return (
@@ -13,8 +12,22 @@ export default function WhatsOn() {
               What&apos;s On
             </h1>
             <p className="text-lg md:text-xl text-text-dark/80">
-              West Coast Swing classes & socials
+              West Coast Swing classes and socials
             </p>
+            <div className="flex items-center justify-center gap-3 mt-3 text-sm text-text-dark/60">
+              <span>Contact us for more info:</span>
+              <a href="https://www.facebook.com/wcscapetown" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:opacity-70 transition-opacity" aria-label="Facebook">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="fill-pink-accent">
+                  <path d="M12 2.04C6.5 2.04 2 6.53 2 12.06C2 17.06 5.66 21.21 10.44 21.96V14.96H7.9V12.06H10.44V9.85C10.44 7.34 11.93 5.96 14.22 5.96C15.31 5.96 16.45 6.15 16.45 6.15V8.62H15.19C13.95 8.62 13.56 9.39 13.56 10.18V12.06H16.34L15.89 14.96H13.56V21.96A10 10 0 0 0 22 12.06C22 6.53 17.5 2.04 12 2.04Z" />
+                </svg>
+              </a>
+              <a href="https://www.instagram.com/wcscapetown" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:opacity-70 transition-opacity" aria-label="Instagram">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="fill-pink-accent">
+                  <path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z" />
+                </svg>
+              </a>
+              <a href="mailto:hello@wcscapetown.co.za" className="text-pink-accent hover:underline text-sm">hello@wcscapetown.co.za</a>
+            </div>
           </div>
         </section>
 
@@ -31,25 +44,21 @@ export default function WhatsOn() {
                 <h3 className="font-spartan font-semibold text-lg mb-2">Level 1 & 2 Classes & Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">7-10 PM</p>
                 <p className="text-sm text-text-dark/70">Havana Nights, Plumstead</p>
-                <p className="text-xs mt-2 font-semibold text-pink-accent">
-                  ⚠️ 16 & 23 March: All-level class, 7:30–8:30 PM
-                </p>
+                <p className="text-xs mt-2 font-semibold text-yellow-accent">Next class: 6 April</p>
                 <p className="text-xs mt-1 text-text-dark/60">
                   See level descriptions below
                 </p>
               </a>
               
               {/* Tuesday Classes */}
-              <a href="#tuesday-classes" className="group border-2 border-purple-accent/30 hover:border-purple-accent rounded-xl p-6 text-center transition-all hover:shadow-lg relative overflow-hidden">
-                <div className="absolute top-2 right-2 bg-purple-accent text-white px-2 py-1 rounded text-xs font-semibold">
-                  NEW!
-                </div>
+              <a href="#tuesday-classes" className="group border-2 border-purple-accent/30 hover:border-purple-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-purple-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
                   EVERY TUESDAY
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">Level 1 Class & Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">7:30-10 PM</p>
                 <p className="text-sm text-text-dark/70">Pinelands Bowling Club</p>
+                <p className="text-xs mt-2 font-semibold text-purple-accent">Next class: 7 April</p>
               </a>
 
               {/* Wednesday Down to Earth Market */}
@@ -60,25 +69,13 @@ export default function WhatsOn() {
                 <h3 className="font-spartan font-semibold text-lg mb-2">Casual Dancing</h3>
                 <p className="text-sm text-text-dark/70 mb-1">6-8 PM</p>
                 <p className="text-sm text-text-dark/70">Down to Earth Market</p>
-                <p className="text-xs italic mt-3 text-text-dark/60">Informal hangout</p>
+                <p className="text-xs mt-2 font-semibold text-text-dark/50">Next: 1 April</p>
+                <p className="text-xs italic mt-1 text-text-dark/60">Informal hangout</p>
               </a>
             </div>
 
             <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Upcoming Events</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-              {/* WCS Weekender - Featured with gradient background */}
-              <Link href="/weekender" className="group relative overflow-hidden rounded-xl p-6 text-center transition-all hover:shadow-xl bg-gradient-to-br from-pink-accent/10 via-pink-accent/5 to-transparent border-2 border-pink-accent/50 hover:border-pink-accent">
-                <div className="absolute top-2 right-2 bg-pink-accent text-white px-2 py-1 rounded text-xs font-semibold">
-                  🌟 FEATURED
-                </div>
-                <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
-                  MAR 20-22
-                </div>
-                <h3 className="font-spartan font-semibold text-lg mb-2">WCS Weekender</h3>
-                <p className="text-sm text-text-dark/70 mb-1">International Pros</p>
-                <p className="text-xs italic mt-2 text-pink-accent font-semibold">Learn more on weekender page</p>
-              </Link>
-
               {/* Monthly Social */}
               <a href="#monthly-social" className="group border-2 border-pink-accent/30 hover:border-pink-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
@@ -87,19 +84,9 @@ export default function WhatsOn() {
                 <h3 className="font-spartan font-semibold text-lg mb-2">Monthly Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
                 <p className="text-xs italic mt-2 text-text-dark/60">Date TBC (April 2026)</p>
-                <p className="text-xs mt-2 text-text-dark/60">No monthly social in March (Weekender month)</p>
               </a>
             </div>
 
-            {/* Quick Book Buttons */}
-            <div className="flex flex-wrap justify-center gap-4 mt-8">
-              <Link
-                href="/bookweekender"
-                className="bg-pink-accent text-white px-6 py-3 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all"
-              >
-                Book Weekender
-              </Link>
-            </div>
           </div>
         </section>
 
@@ -115,15 +102,6 @@ export default function WhatsOn() {
             <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] text-center mb-6">
               Monday Classes & Social
             </h2>
-
-            <div className="bg-yellow-accent/20 border-2 border-yellow-accent rounded-xl p-6 md:p-8 mb-8 text-center">
-              <p className="text-lg md:text-xl font-semibold mb-2">
-                ⚠️ Mondays 16 & 23 March
-              </p>
-              <p className="text-base md:text-lg">
-                All-level class from 7:30 – 8:30 PM. There is no Level 1 and Level 2 class, and class starts at 7:30.
-              </p>
-            </div>
 
             <div className="grid md:grid-cols-2 gap-8">
               {/* Left Column - Class Flow */}
@@ -375,7 +353,6 @@ export default function WhatsOn() {
                   <div>
                     <p className="font-semibold mb-1">📅 When</p>
                     <p>Date TBC (April 2026)</p>
-                    <p className="text-sm text-text-dark/70">No monthly social in March due to the Weekender.</p>
                   </div>
                   <div>
                     <p className="font-semibold mb-1">🕗 Time</p>
