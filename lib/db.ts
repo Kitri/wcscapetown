@@ -22,7 +22,7 @@ export interface Member {
   created_at?: string;
 }
 
-export type WeekendAddOnPassType = 'spin' | 'spot';
+export type WeekendAddOnPassType = 'spin' | 'spot' | 'tshirt';
 export type WeekendAddOnPaymentStatus = 'pending' | 'complete' | 'failed' | 'pay_later';
 
 export async function upsertWeekendAddOnEntry(params: {
@@ -129,6 +129,24 @@ export async function updateWeekendAddOnPaymentStatusByMemberIds(
         updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
       WHERE member_id = ${memberId}
         AND pass_type = ${passType}
+    `;
+  }
+}
+
+export async function updateAllPendingWeekendAddOnsByMemberIds(
+  memberIds: number[]
+): Promise<void> {
+  if (!Array.isArray(memberIds) || memberIds.length === 0) return;
+  const sql = getDb();
+
+  for (const memberId of memberIds) {
+    await sql`
+      UPDATE weekend_add_ons
+      SET
+        payment_status = 'complete',
+        updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
+      WHERE member_id = ${memberId}
+        AND payment_status = 'pending'
     `;
   }
 }

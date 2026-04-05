@@ -8,6 +8,7 @@ import {
   getRegistrationIdsByOrderId,
   updateWeekendAddOnPaymentStatusByRegistrationIds,
   updateWeekendAddOnPaymentStatusByMemberIds,
+  updateAllPendingWeekendAddOnsByMemberIds,
 } from '@/lib/db';
 import { logApiResponse } from '@/lib/blobLogger';
 import {
@@ -174,6 +175,16 @@ async function handleEvent(event: YocoEvent) {
   switch (event.type) {
     case 'payment.succeeded': {
       const source = event.payload.metadata?.source;
+
+      // Handle outstanding add-on payments (combined spin/spot/tshirt checkout)
+      if (source === 'addon_pay_outstanding') {
+        const memberIds = parseMemberIds(event.payload.metadata?.memberIds);
+        if (memberIds.length > 0) {
+          await updateAllPendingWeekendAddOnsByMemberIds(memberIds);
+        }
+        return;
+      }
+
       const addOnPassType = parseAddOnPassTypeFromSource(source);
       if (addOnPassType) {
         let memberIds = parseMemberIds(event.payload.metadata?.memberIds);
@@ -233,6 +244,28 @@ async function handleEvent(event: YocoEvent) {
 
     case 'payment.failed': {
       const source = event.payload.metadata?.source;
+
+      // Handle outstanding add-on payment failures
+      if (source === 'addon_pay_outstanding') {
+        const memberIds = parseMemberIds(event.payload.metadata?.memberIds);
+        if (memberIds.length > 0) {
+          // Mark pending entries as failed
+          const { getDb } = await import('@/lib/db');
+          const sql = getDb();
+          for (const memberId of memberIds) {
+            await sql`
+              UPDATE weekend_add_ons
+              SET
+                payment_status = 'failed',
+                updated_at = now() AT TIME ZONE 'Africa/Johannesburg'
+              WHERE member_id = ${memberId}
+                AND payment_status = 'pending'
+            `;
+          }
+        }
+        return;
+      }
+
       const addOnPassType = parseAddOnPassTypeFromSource(source);
       if (addOnPassType) {
         let memberIds = parseMemberIds(event.payload.metadata?.memberIds);
