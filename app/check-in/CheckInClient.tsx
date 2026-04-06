@@ -169,6 +169,40 @@ function normalizePensionerStudent(v: string): "pensioner" | "student" | "" {
   return "";
 }
 
+function isLevel2Member(level: string): boolean {
+  const v = (level ?? "").trim().toLowerCase();
+  if (!v) return false;
+  return v === "2" || v === "level 2" || v.includes("2");
+}
+
+function isWelcomingCommitteeFreeEntry(entryType: string, reason: string): boolean {
+  const entry = (entryType ?? "").trim().toLowerCase();
+  const why = (reason ?? "").trim().toLowerCase();
+  return (
+    entry.includes("door volunteer") ||
+    why.includes("door volunteer") ||
+    why.includes("welcoming committee")
+  );
+}
+
+function isNewcomerTeacherReason(reason: string): boolean {
+  return (reason ?? "").trim().toLowerCase().includes("newcomer teacher");
+}
+
+function getZaMinutesSinceMidnight(date: Date = new Date()): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: ZA_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return 24 * 60;
+  return hour * 60 + minute;
+}
+
 async function fetchJson<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
   const res = await fetch(input, init);
   if (!res.ok) {
@@ -594,7 +628,7 @@ function AddNewPersonForm({
           <div className="bg-pink-accent/10 border-2 border-pink-accent/40 rounded-xl p-4">
             <div className="font-semibold text-pink-accent">First timer note</div>
             <div className="text-sm text-text-dark/80">
-              They should not join Level 1 tonight, they can from next week. This is to ensure some base level of skill
+              Newcomers will be taken separately at the same time as Level 1.
             </div>
           </div>
         )}
@@ -775,12 +809,6 @@ export default function CheckInClient({
     null
   );
 
-  // For special cases like Door Volunteer (custom payment)
-  const [customAmount, setCustomAmount] = useState("0");
-  const [customPaidVia, setCustomPaidVia] = useState<"Cash" | "Yoco" | null>(
-    null
-  );
-
   const [comment, setComment] = useState("");
 
   const [checkingIn, setCheckingIn] = useState(false);
@@ -809,14 +837,16 @@ export default function CheckInClient({
 
   const searchAbortRef = useRef<AbortController | null>(null);
   const isBootcampMode = selectedEvent === "Bootcamp";
+  const isSelectedLevel2 = useMemo(() => {
+    if (!selected) return false;
+    return isLevel2Member(selected.level);
+  }, [selected]);
 
   // Check if member qualifies for Level 2 Tuesday discount
   const isLevel2TuesdayDiscount = useMemo(() => {
     if (!costs?.isTuesday) return false;
-    if (!selected) return false;
-    const level = (selected.level ?? "").toLowerCase();
-    return level.includes("2") || level === "level 2";
-  }, [costs?.isTuesday, selected]);
+    return isSelectedLevel2;
+  }, [costs?.isTuesday, isSelectedLevel2]);
 
   const typeOptions = useMemo(() => {
     // Level 2 Tuesday discount: only show Standard entry and Social only
@@ -845,15 +875,28 @@ export default function CheckInClient({
 
   const isDoorVolunteer = useMemo(() => {
     if (!effectiveFreeEntry?.applies) return false;
-    return String(effectiveFreeEntry.entry_type)
-      .toLowerCase()
-      .includes("door volunteer");
+    return isWelcomingCommitteeFreeEntry(
+      effectiveFreeEntry.entry_type,
+      effectiveFreeEntry.reason
+    );
+  }, [effectiveFreeEntry]);
+  const isWelcomingCommitteeMember = useMemo(() => {
+    if (!freeEntry?.applies) return false;
+    return isWelcomingCommitteeFreeEntry(freeEntry.entry_type, freeEntry.reason);
+  }, [freeEntry]);
+
+  const isNewcomerTeacher = useMemo(() => {
+    if (!effectiveFreeEntry?.applies) return false;
+    return isNewcomerTeacherReason(effectiveFreeEntry.reason);
   }, [effectiveFreeEntry]);
 
-  const customAmountNumber = useMemo(() => {
-    const n = Number(String(customAmount).trim());
-    return Number.isFinite(n) ? n : NaN;
-  }, [customAmount]);
+  const welcomingCommitteeAmount = useMemo(() => {
+    const standardEntry = Number(costs?.costs?.["Standard entry"] ?? NaN);
+    if (Number.isFinite(standardEntry) && standardEntry > 0) {
+      return Math.round((standardEntry / 2) * 100) / 100;
+    }
+    return selectedEvent.toLowerCase().includes("monday") ? 50 : 0;
+  }, [costs, selectedEvent]);
 
   const freeEntryPaidAmount = useMemo(() => {
     if (!effectiveFreeEntry?.applies) return 0;
@@ -865,15 +908,29 @@ export default function CheckInClient({
     return Boolean(effectiveFreeEntry?.applies && !isDoorVolunteer && freeEntryPaidAmount > 0);
   }, [effectiveFreeEntry, isDoorVolunteer, freeEntryPaidAmount]);
 
+  const showMondayLevel2Warning = useMemo(() => {
+    if (!selected || freeEntryLoading) return false;
+    if (!selectedEvent.toLowerCase().includes("monday")) return false;
+    if (selectedDateISO !== getZaTodayISO()) return false;
+    if (isSelectedLevel2) return false;
+    if (isWelcomingCommitteeMember) return false;
+    return getZaMinutesSinceMidnight() < 19 * 60 + 15;
+  }, [
+    freeEntryLoading,
+    isSelectedLevel2,
+    isWelcomingCommitteeMember,
+    selected,
+    selectedDateISO,
+    selectedEvent,
+  ]);
+
   const checkinEnabled = useMemo(() => {
     if (!selected) return false;
     if (alreadyCheckedIn) return false;
 
     if (effectiveFreeEntry?.applies) {
       if (isDoorVolunteer) {
-        if (!Number.isFinite(customAmountNumber)) return false;
-        // paid_via optional if amount is 0
-        return customAmountNumber === 0 ? true : Boolean(customPaidVia);
+        return welcomingCommitteeAmount === 0 ? true : Boolean(selectedPaidVia);
       }
       if (freeEntryNeedsPayment) {
         return Boolean(selectedPaidVia);
@@ -885,14 +942,13 @@ export default function CheckInClient({
     return Boolean(selectedType && selectedPaidVia);
   }, [
     alreadyCheckedIn,
-    customAmountNumber,
-    customPaidVia,
     effectiveFreeEntry,
     freeEntryNeedsPayment,
     isDoorVolunteer,
     selected,
     selectedPaidVia,
     selectedType,
+    welcomingCommitteeAmount,
   ]);
 
   useEffect(() => {
@@ -991,8 +1047,6 @@ export default function CheckInClient({
 
     setSelectedType(null);
     setSelectedPaidVia(null);
-    setCustomAmount("0");
-    setCustomPaidVia(null);
     setComment("");
 
     setIgnoreFreeEntry(false);
@@ -1022,8 +1076,6 @@ export default function CheckInClient({
     setFreeEntry(null);
     setSelectedType(null);
     setSelectedPaidVia(null);
-    setCustomAmount("0");
-    setCustomPaidVia(null);
     setComment("");
     setIgnoreFreeEntry(false);
     setBanner(null);
@@ -1065,11 +1117,9 @@ export default function CheckInClient({
         ? isDoorVolunteer
           ? {
               member_id: selected.member_id,
-              type: "Custom",
-              paid_via: customPaidVia ?? "",
-              paid_amount: Number.isFinite(customAmountNumber)
-                ? customAmountNumber
-                : 0,
+              type: effectiveFreeEntry.entry_type || "Welcoming committee",
+              paid_via: welcomingCommitteeAmount > 0 ? (selectedPaidVia ?? "") : "",
+              paid_amount: welcomingCommitteeAmount,
               comment: comment.trim(),
               free_entry_reason: effectiveFreeEntry.reason ?? "",
             }
@@ -1651,7 +1701,7 @@ export default function CheckInClient({
               <div className="mt-4 bg-pink-accent/10 border-2 border-pink-accent/40 rounded-xl p-4">
                 <div className="font-semibold text-pink-accent">First timer</div>
                 <div className="text-text-dark/80">
-                  They should not join Level 1 tonight, they can from next week. This is to ensure some base level of skill
+                  Newcomers will be taken separately at the same time as Level 1.
                 </div>
               </div>
             )}
@@ -1664,46 +1714,50 @@ export default function CheckInClient({
 
             {freeEntryLoading && <div className="text-text-dark/70">Loading…</div>}
 
+            {showMondayLevel2Warning && (
+              <div className="rounded-xl p-4 mb-4 border bg-orange-500/10 border-orange-500/40">
+                <div className="font-semibold text-lg">Early arrival — marked as Level 1</div>
+                <div className="mt-2 text-text-dark/80">
+                  This member is marked as Level 1 and arrived before 19:15. Please check
+                  they are here for Level 1. If they are here for Level 2, ask whether
+                  they have teacher approval, as Level 2 approval is not yet recorded in
+                  the system.
+                </div>
+              </div>
+            )}
+
             {!freeEntryLoading && effectiveFreeEntry?.applies && (
               <>
                 {isDoorVolunteer ? (
                   <div className="rounded-xl p-4 mb-4 border bg-orange-500/10 border-orange-500/40">
                     <div>
-                      <div className="font-semibold text-lg">
-                        Welcoming committee, custom payment
-                      </div>
+                      <div className="font-semibold text-lg">Welcoming committee</div>
                       <div className="mt-2 text-text-dark/80">
-                        Please ask Monique or Mercia to do this check in.
+                        Welcoming committee pays half of standard entry (Monday class and
+                        social is {formatZar(50)}).
                       </div>
                     </div>
 
                     <div className="mt-4 bg-white rounded-xl border border-text-dark/10 p-4">
-                      <label className="block space-y-2">
-                        <div className="font-semibold">Custom amount</div>
-                        <input
-                          value={customAmount}
-                          onChange={(e) => setCustomAmount(e.target.value)}
-                          inputMode="decimal"
-                          className="w-full px-4 py-3 rounded-xl border-2 border-text-dark/20 text-lg bg-white"
-                        />
-                      </label>
+                      <div className="font-semibold mb-2">
+                        Amount due: {formatZar(welcomingCommitteeAmount)}
+                      </div>
 
                       <div className="mt-4">
-                        <div className="font-semibold mb-2">Payment method (optional if R0)</div>
+                        <div className="font-semibold mb-2">
+                          Payment method
+                          {welcomingCommitteeAmount > 0 ? "" : " (optional if R0)"}
+                        </div>
                         <div className="flex gap-3 flex-wrap">
                           <PillButton
-                            selected={customPaidVia === "Cash"}
-                            onClick={() =>
-                              setCustomPaidVia((v) => (v === "Cash" ? null : "Cash"))
-                            }
+                            selected={selectedPaidVia === "Cash"}
+                            onClick={() => setSelectedPaidVia("Cash")}
                           >
                             Cash
                           </PillButton>
                           <PillButton
-                            selected={customPaidVia === "Yoco"}
-                            onClick={() =>
-                              setCustomPaidVia((v) => (v === "Yoco" ? null : "Yoco"))
-                            }
+                            selected={selectedPaidVia === "Yoco"}
+                            onClick={() => setSelectedPaidVia("Yoco")}
                           >
                             Yoco
                           </PillButton>
@@ -1726,7 +1780,9 @@ export default function CheckInClient({
                   <div
                     className={
                       "rounded-xl p-4 mb-4 border " +
-                      (String(effectiveFreeEntry.entry_type).toLowerCase().includes("monthly")
+                      (isNewcomerTeacher
+                        ? "bg-purple-accent/10 border-purple-accent/40"
+                        : String(effectiveFreeEntry.entry_type).toLowerCase().includes("monthly")
                         ? "bg-blue-500/10 border-blue-500/40"
                         : String(effectiveFreeEntry.entry_type).toLowerCase().includes("teach")
                           ? "bg-purple-accent/10 border-purple-accent/40"
@@ -1734,7 +1790,9 @@ export default function CheckInClient({
                     }
                   >
                     <div className="font-semibold text-lg">
-                      {String(effectiveFreeEntry.entry_type)
+                      {isNewcomerTeacher
+                        ? "Newcomer teacher"
+                        : String(effectiveFreeEntry.entry_type)
                         .toLowerCase()
                         .includes("monthly")
                         ? "Paid for month"
@@ -1744,10 +1802,17 @@ export default function CheckInClient({
                           ? "Teacher"
                           : "Free entry"}
                     </div>
-                    {effectiveFreeEntry.details && (
+                    {isNewcomerTeacher ? (
+                      <div className="mt-2 text-text-dark/80">
+                        This person is listed as the newcomer teacher for Monday.
+                        There should only be one newcomer teacher each Monday.
+                      </div>
+                    ) : (
+                      effectiveFreeEntry.details && (
                       <div className="mt-2 text-text-dark/80">
                         {effectiveFreeEntry.details}
                       </div>
+                      )
                     )}
                     {freeEntryNeedsPayment && (
                       <div className="mt-4 bg-white rounded-xl border border-text-dark/10 p-4">
