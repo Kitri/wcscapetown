@@ -79,11 +79,11 @@ export default function WhatsOn() {
               {/* Monthly Social */}
               <a href="#monthly-social" className="group border-2 border-pink-accent/30 hover:border-pink-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
-                  APRIL • TBC
+                  SATURDAY • 25 APRIL
                 </div>
-                <h3 className="font-spartan font-semibold text-lg mb-2">Monthly Social</h3>
+                <h3 className="font-spartan font-semibold text-lg mb-2">WCS + Blues Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs italic mt-2 text-text-dark/60">Date TBC (April 2026)</p>
+                <p className="text-xs italic mt-2 text-text-dark/60">WCS taster class 8pm; social 8:30pm</p>
               </a>
             </div>
 
@@ -328,11 +328,11 @@ export default function WhatsOn() {
         >
           <div className="max-w-[900px] mx-auto">
             <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] text-center mb-6">
-              Monthly Social
+              WCS + Blues Social
             </h2>
             
             <p className="text-lg md:text-xl text-center mb-8 max-w-[600px] mx-auto">
-              Pure WCS. All night.
+              WCS + Blues social.
             </p>
             
             {/* Bonus Taster Class Highlight */}
@@ -352,12 +352,12 @@ export default function WhatsOn() {
                 <div className="space-y-4 text-base md:text-lg">
                   <div>
                     <p className="font-semibold mb-1">📅 When</p>
-                    <p>Date TBC (April 2026)</p>
+                    <p>Saturday, 25 April</p>
                   </div>
                   <div>
                     <p className="font-semibold mb-1">🕗 Time</p>
-                     <p><b>Taster Class:</b>20:00</p>
-                    <p><b>Social:</b>20:30</p>
+                     <p><b>WCS taster class:</b> 8pm</p>
+                    <p><b>Social:</b> 8:30pm</p>
                   </div>
                   <div>
                     <p className="font-semibold mb-1">💰 Cost</p>
