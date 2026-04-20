@@ -83,7 +83,7 @@ export default function WhatsOn() {
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">WCS + Blues Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs italic mt-2 text-text-dark/60">WCS taster class 8pm; social 8:30pm</p>
+                <p className="text-xs italic mt-2 text-text-dark/60">WCS & Blues tasters 8pm; social 8:30pm</p>
               </a>
             </div>
 
@@ -338,10 +338,10 @@ export default function WhatsOn() {
             {/* Bonus Taster Class Highlight */}
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
               <p className="text-lg md:text-xl font-semibold mb-2">
-                🎓 Bonus: Taster Class
+                🎓 Bonus: WCS & Blues Taster Classes
               </p>
               <p className="text-base md:text-lg">
-                Perfect for absolute beginners!
+                One WCS taster and one Blues taster before social.
               </p>
             </div>
 
@@ -356,7 +356,8 @@ export default function WhatsOn() {
                   </div>
                   <div>
                     <p className="font-semibold mb-1">🕗 Time</p>
-                     <p><b>WCS taster class:</b> 8pm</p>
+                     <p><b>WCS taster:</b> 8pm</p>
+                    <p><b>Blues taster:</b> 8pm</p>
                     <p><b>Social:</b> 8:30pm</p>
                   </div>
                   <div>
