@@ -81,7 +81,7 @@ export default function WhatsOn() {
                 <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
                   MAY • TBC
                 </div>
-                <h3 className="font-spartan font-semibold text-lg mb-2">WCS + Blues Social</h3>
+                <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
                 <p className="text-xs italic mt-2 text-text-dark/60">Date & time TBC (May)</p>
               </a>
@@ -328,17 +328,17 @@ export default function WhatsOn() {
         >
           <div className="max-w-[900px] mx-auto">
             <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] text-center mb-6">
-              WCS + Blues Social
+              WCS Social
             </h2>
             
             <p className="text-lg md:text-xl text-center mb-8 max-w-[600px] mx-auto">
-              WCS + Blues social.
+              Pure WCS social.
             </p>
             
             {/* Bonus Taster Class Highlight */}
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
               <p className="text-lg md:text-xl font-semibold mb-2">
-                🎓 Bonus: WCS & Blues Taster Classes (TBC)
+                🎓 Bonus: WCS Taster Class (TBC)
               </p>
               <p className="text-base md:text-lg">
                 Taster details to be confirmed.
