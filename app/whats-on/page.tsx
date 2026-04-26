@@ -79,11 +79,11 @@ export default function WhatsOn() {
               {/* Monthly Social */}
               <a href="#monthly-social" className="group border-2 border-pink-accent/30 hover:border-pink-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
-                  SATURDAY • 25 APRIL
+                  MAY • TBC
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">WCS + Blues Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs italic mt-2 text-text-dark/60">WCS & Blues tasters 8pm; social 8:30pm</p>
+                <p className="text-xs italic mt-2 text-text-dark/60">Date & time TBC (May)</p>
               </a>
             </div>
 
@@ -338,10 +338,10 @@ export default function WhatsOn() {
             {/* Bonus Taster Class Highlight */}
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
               <p className="text-lg md:text-xl font-semibold mb-2">
-                🎓 Bonus: WCS & Blues Taster Classes
+                🎓 Bonus: WCS & Blues Taster Classes (TBC)
               </p>
               <p className="text-base md:text-lg">
-                One WCS taster and one Blues taster before social.
+                Taster details to be confirmed.
               </p>
             </div>
 
@@ -352,13 +352,11 @@ export default function WhatsOn() {
                 <div className="space-y-4 text-base md:text-lg">
                   <div>
                     <p className="font-semibold mb-1">📅 When</p>
-                    <p>Saturday, 25 April</p>
+                    <p>May (Date TBC)</p>
                   </div>
                   <div>
                     <p className="font-semibold mb-1">🕗 Time</p>
-                     <p><b>WCS taster:</b> 8pm</p>
-                    <p><b>Blues taster:</b> 8pm</p>
-                    <p><b>Social:</b> 8:30pm</p>
+                     <p>TBC</p>
                   </div>
                   <div>
                     <p className="font-semibold mb-1">💰 Cost</p>
