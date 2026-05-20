@@ -79,11 +79,12 @@ export default function WhatsOn() {
               {/* Monthly Social */}
               <a href="#monthly-social" className="group border-2 border-pink-accent/30 hover:border-pink-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
-                  MAY • TBC
+                  23 MAY
                 </div>
-                <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social</h3>
+                <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social — Early 2000s</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs italic mt-2 text-text-dark/60">Date & time TBC (May)</p>
+                <p className="text-xs mt-1 text-text-dark/60">8:00 – 10:00 PM • R50 entry</p>
+                <p className="text-xs italic mt-1 text-text-dark/60">Taster class at 8 PM</p>
               </a>
             </div>
 
@@ -328,20 +329,27 @@ export default function WhatsOn() {
         >
           <div className="max-w-[900px] mx-auto">
             <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] text-center mb-6">
-              WCS Social
+              WCS Social — Early 2000s
             </h2>
             
-            <p className="text-lg md:text-xl text-center mb-8 max-w-[600px] mx-auto">
-              Pure WCS social.
-            </p>
-            
-            {/* Bonus Taster Class Highlight */}
+            {/* Theme poster */}
+            <div className="bg-pink-accent/10 border-2 border-pink-accent/40 rounded-xl p-6 md:p-8 mb-8 text-center max-w-[700px] mx-auto">
+              <p className="text-lg md:text-xl font-semibold mb-3">🕹️ We&apos;re rewinding to the early 2000s.</p>
+              <p className="text-base md:text-lg text-text-dark/80 mb-2">
+                Get ready for Y2K energy but with your favourite modern WCS tunes.
+              </p>
+              <p className="text-base text-text-dark/70 italic">
+                Denim is strongly encouraged. Fashion regrets are optional. Immaculate WCS vibes are mandatory.
+              </p>
+            </div>
+
+            {/* Taster Class Highlight */}
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
               <p className="text-lg md:text-xl font-semibold mb-2">
-                🎓 Bonus: WCS Taster Class (TBC)
+                🎓 Bonus: WCS Taster Class
               </p>
               <p className="text-base md:text-lg">
-                Taster details to be confirmed.
+                Free taster class kicking off the evening at 8:00 PM — perfect for newcomers!
               </p>
             </div>
 
@@ -352,11 +360,12 @@ export default function WhatsOn() {
                 <div className="space-y-4 text-base md:text-lg">
                   <div>
                     <p className="font-semibold mb-1">📅 When</p>
-                    <p>May (Date TBC)</p>
+                    <p>Friday, 23 May 2025</p>
                   </div>
                   <div>
                     <p className="font-semibold mb-1">🕗 Time</p>
-                     <p>TBC</p>
+                    <p>8:00 – 10:00 PM</p>
+                    <p className="text-sm text-text-dark/60 mt-1">Taster class at 8:00 PM</p>
                   </div>
                   <div>
                     <p className="font-semibold mb-1">💰 Cost</p>
