@@ -1,6 +1,18 @@
 import Header from "@/components/Header";
+import PinelandsInterestForm from "@/components/PinelandsInterestForm";
+
+function getNextMonday(): string {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  // If today is Monday show today (class is tonight); otherwise advance to the next Monday
+  const daysUntil = dayOfWeek === 1 ? 0 : (1 - dayOfWeek + 7) % 7;
+  const nextMonday = new Date(now);
+  nextMonday.setDate(now.getDate() + daysUntil);
+  return nextMonday.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+}
 
 export default function WhatsOn() {
+  const nextMonday = getNextMonday();
   return (
     <>
       <Header />
@@ -44,21 +56,20 @@ export default function WhatsOn() {
                 <h3 className="font-spartan font-semibold text-lg mb-2">Level 1 & 2 Classes & Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">7-10 PM</p>
                 <p className="text-sm text-text-dark/70">Havana Nights, Plumstead</p>
-                <p className="text-xs mt-2 font-semibold text-yellow-accent">Next class: 6 April</p>
+                <p className="text-xs mt-2 font-semibold text-yellow-accent">Next class: {nextMonday}</p>
                 <p className="text-xs mt-1 text-text-dark/60">
                   See level descriptions below
                 </p>
               </a>
               
               {/* Tuesday Classes */}
-              <a href="#tuesday-classes" className="group border-2 border-purple-accent/30 hover:border-purple-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
-                <div className="inline-block bg-purple-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
-                  EVERY TUESDAY
+              <a href="#tuesday-classes" className="group border-2 border-purple-accent/20 hover:border-purple-accent/50 rounded-xl p-6 text-center transition-all hover:shadow-lg">
+                <div className="inline-block bg-purple-accent/40 text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
+                  ON HOLD
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">Level 1 Class & Social</h3>
-                <p className="text-sm text-text-dark/70 mb-1">7:30-10 PM</p>
-                <p className="text-sm text-text-dark/70">Pinelands Bowling Club</p>
-                <p className="text-xs mt-2 font-semibold text-purple-accent">Next class: 7 April</p>
+                <p className="text-sm text-text-dark/70 mb-1">Pinelands Bowling Club</p>
+                <p className="text-xs mt-2 text-text-dark/50 italic">Classes stopped for now</p>
               </a>
 
               {/* Wednesday Down to Earth Market */}
@@ -79,12 +90,11 @@ export default function WhatsOn() {
               {/* Monthly Social */}
               <a href="#monthly-social" className="group border-2 border-pink-accent/30 hover:border-pink-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
-                  23 MAY
+                  JUNE • TBC
                 </div>
-                <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social — Early 2000s</h3>
+                <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs mt-1 text-text-dark/60">8:00 – 10:00 PM • R50 entry</p>
-                <p className="text-xs italic mt-1 text-text-dark/60">Taster class at 8 PM</p>
+                <p className="text-xs italic mt-2 text-text-dark/60">Date & time TBC (June)</p>
               </a>
             </div>
 
@@ -170,66 +180,51 @@ export default function WhatsOn() {
         >
           <div className="max-w-[900px] mx-auto">
             <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] text-center mb-6">
-              Tuesday Classes & Social
+              Tuesday Classes — Pinelands
             </h2>
-            
-            {/* Tuesday class announcement */}
-            <div className="bg-purple-accent/20 border-2 border-purple-accent rounded-xl p-6 md:p-8 mb-8 text-center">
+
+            {/* Stopped notice */}
+            <div className="bg-purple-accent/10 border-2 border-purple-accent/40 rounded-xl p-6 md:p-8 mb-8 text-center">
               <p className="text-lg md:text-xl font-semibold mb-2">
-                ✨ Tuesday Level 1 Class
+                😴 Tuesday classes are on hold for now
               </p>
-              <p className="text-base md:text-lg">
-                Join us every Tuesday at Pinelands Bowling Club
+              <p className="text-base md:text-lg text-text-dark/70">
+                We&apos;ve paused the Pinelands Tuesday classes for winter. We&apos;re hoping to bring them back for summer — want us to let you know when they&apos;re back?
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Left Column - Class Flow */}
+            <div className="grid md:grid-cols-2 gap-8 items-start">
+              {/* Left — what the classes were */}
               <div>
-                <h3 className="font-spartan font-semibold text-xl mb-4">Class Flow</h3>
+                <h3 className="font-spartan font-semibold text-xl mb-4">What the classes were</h3>
                 <div className="space-y-3">
-                  <div className="bg-white/60 rounded-lg p-4 border-l-4 border-purple-accent">
+                  <div className="bg-white/60 rounded-lg p-4 border-l-4 border-purple-accent/40">
                     <p className="font-semibold">Level 1 Class</p>
                     <p className="text-sm text-text-dark/70">7:30 – 8:30 PM</p>
                   </div>
-                  <div className="bg-white/60 rounded-lg p-4 border-l-4 border-purple-accent">
+                  <div className="bg-white/60 rounded-lg p-4 border-l-4 border-purple-accent/40">
                     <p className="font-semibold">Social Dance</p>
                     <p className="text-sm text-text-dark/70">8:30 – 10:00 PM</p>
                   </div>
                 </div>
+                <div className="mt-4 text-sm text-text-dark/60">
+                  <p className="mb-1">
+                    <span className="font-medium">📍</span>{" "}
+                    <a href="https://maps.app.goo.gl/XcDwvvbCxAjjJSXA6" target="_blank" rel="noopener noreferrer" className="text-purple-accent hover:text-pink-accent underline">
+                      Pinelands Bowling Club
+                    </a>
+                    , Cape Town
+                  </p>
+                </div>
               </div>
 
-              {/* Right Column - Details */}
+              {/* Right — interest form */}
               <div>
-                <h3 className="font-spartan font-semibold text-xl mb-4">Details</h3>
-                <div className="space-y-4 text-base md:text-lg">
-                  <div>
-                    <p className="font-semibold mb-1">📅 When</p>
-                    <p>Every Tuesday</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-1">🕗 Time</p>
-                    <p>7:30 – 10:00 PM</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-1">📍 Where</p>
-                    <p>
-                      <a href="https://maps.app.goo.gl/XcDwvvbCxAjjJSXA6" target="_blank" rel="noopener noreferrer" className="text-purple-accent hover:text-pink-accent underline">
-                        Pinelands Bowling Club
-                      </a>
-                      <br />Pinelands, Cape Town
-                    </p>
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-1">💰 Cost</p>
-                    <div className="text-sm md:text-base space-y-1">
-                      <p>R100 per person (class & social)</p>
-                      <p>R50 for social only</p>
-                      <p className="text-purple-accent font-semibold">R150 for Monday + Tuesday (both classes & socials)</p>
-                      <p className="text-text-dark/70 italic">R300 for 4 classes (Tuesdays only)</p>
-                    </div>
-                  </div>
-                </div>
+                <h3 className="font-spartan font-semibold text-xl mb-2">Want them back?</h3>
+                <p className="text-sm text-text-dark/70 mb-4">
+                  Let us know you&apos;re interested and we&apos;ll reach out when Tuesday classes start up again.
+                </p>
+                <PinelandsInterestForm />
               </div>
             </div>
           </div>
@@ -329,27 +324,16 @@ export default function WhatsOn() {
         >
           <div className="max-w-[900px] mx-auto">
             <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] text-center mb-6">
-              WCS Social — Early 2000s
+              WCS Social
             </h2>
-            
-            {/* Theme poster */}
-            <div className="bg-pink-accent/10 border-2 border-pink-accent/40 rounded-xl p-6 md:p-8 mb-8 text-center max-w-[700px] mx-auto">
-              <p className="text-lg md:text-xl font-semibold mb-3">🕹️ We&apos;re rewinding to the early 2000s.</p>
-              <p className="text-base md:text-lg text-text-dark/80 mb-2">
-                Get ready for Y2K energy but with your favourite modern WCS tunes.
-              </p>
-              <p className="text-base text-text-dark/70 italic">
-                Denim is strongly encouraged. Fashion regrets are optional. Immaculate WCS vibes are mandatory.
-              </p>
-            </div>
 
             {/* Taster Class Highlight */}
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
               <p className="text-lg md:text-xl font-semibold mb-2">
-                🎓 Bonus: WCS Taster Class
+                🎓 Bonus: WCS Taster Class (TBC)
               </p>
               <p className="text-base md:text-lg">
-                Free taster class kicking off the evening at 8:00 PM — perfect for newcomers!
+                Taster details to be confirmed.
               </p>
             </div>
 
@@ -360,12 +344,11 @@ export default function WhatsOn() {
                 <div className="space-y-4 text-base md:text-lg">
                   <div>
                     <p className="font-semibold mb-1">📅 When</p>
-                    <p>Friday, 23 May 2025</p>
+                    <p>June (Date TBC)</p>
                   </div>
                   <div>
                     <p className="font-semibold mb-1">🕗 Time</p>
-                    <p>8:00 – 10:00 PM</p>
-                    <p className="text-sm text-text-dark/60 mt-1">Taster class at 8:00 PM</p>
+                    <p>TBC</p>
                   </div>
                   <div>
                     <p className="font-semibold mb-1">💰 Cost</p>
