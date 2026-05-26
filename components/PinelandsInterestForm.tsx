@@ -2,9 +2,18 @@
 
 import { useState, FormEvent } from "react";
 
+const EXPERIENCE_OPTIONS = [
+  "New to WCS",
+  "Never done WCS",
+  "Experienced WCS dancer",
+  "An out of town visitor",
+];
+
 export default function PinelandsInterestForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [experience, setExperience] = useState("");
+  const [comments, setComments] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -21,6 +30,8 @@ export default function PinelandsInterestForm() {
         body: JSON.stringify({
           name: name.trim(),
           email: email.trim(),
+          experience,
+          comments: comments.trim(),
         }),
       });
 
@@ -79,6 +90,40 @@ export default function PinelandsInterestForm() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="your@email.com"
           className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 bg-white focus:border-purple-accent focus:outline-none"
+        />
+      </div>
+      <div>
+        <p className="block text-sm font-medium mb-2 text-text-dark/80">I am...</p>
+        <div className="flex flex-col gap-2">
+          {EXPERIENCE_OPTIONS.map((option) => (
+            <label key={option} className="flex items-center gap-3 cursor-pointer group">
+              <input
+                type="radio"
+                name="experience"
+                value={option}
+                checked={experience === option}
+                onChange={() => setExperience(option)}
+                className="w-4 h-4 accent-purple-accent cursor-pointer"
+              />
+              <span className="text-sm text-text-dark/80 group-hover:text-text-dark transition-colors">
+                {option}
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+      <div>
+        <label htmlFor="pinelands-comments" className="block text-sm font-medium mb-1 text-text-dark/80">
+          Anything else? <span className="text-text-dark/40 font-normal">(optional)</span>
+        </label>
+        <textarea
+          id="pinelands-comments"
+          name="comments"
+          value={comments}
+          onChange={(e) => setComments(e.target.value)}
+          placeholder="Any questions, preferences, or other thoughts..."
+          rows={3}
+          className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 bg-white focus:border-purple-accent focus:outline-none resize-none"
         />
       </div>
       {error && (

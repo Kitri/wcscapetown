@@ -32,6 +32,8 @@ export async function POST(request: Request) {
   }
 
   const name = isNonEmptyString(data.name) ? data.name.trim().slice(0, 100) : "";
+  const experience = isNonEmptyString(data.experience) ? data.experience.trim().slice(0, 100) : "";
+  const comments = isNonEmptyString(data.comments) ? data.comments.trim().slice(0, 1000) : "";
   const timestamp = new Date().toISOString();
 
   const sheetId = process.env.SHEET_ID_PINELANDS_INTEREST;
@@ -40,8 +42,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    await appendToSheet(sheetId, "Sheet1!A:C", [
-      [timestamp, name, email],
+    await appendToSheet(sheetId, "Sheet1!A:E", [
+      [timestamp, name, email, experience, comments],
     ]);
 
     return NextResponse.json({ success: true });
