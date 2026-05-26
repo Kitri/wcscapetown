@@ -3,9 +3,9 @@
 import { useState, FormEvent } from "react";
 
 const EXPERIENCE_OPTIONS = [
-  "New to WCS",
   "Never done WCS",
-  "Experienced WCS dancer",
+  "A little bit of WCS experience",
+  "Comfortable with WCS",
   "An out of town visitor",
 ];
 
@@ -94,20 +94,28 @@ export default function PinelandsInterestForm() {
       </div>
       <div>
         <p className="block text-sm font-medium mb-2 text-text-dark/80">I am...</p>
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-2 gap-3">
           {EXPERIENCE_OPTIONS.map((option) => (
-            <label key={option} className="flex items-center gap-3 cursor-pointer group">
+            <label
+              key={option}
+              className={`
+                block border-[3px] rounded-xl p-4 cursor-pointer transition-all duration-200 text-sm font-medium
+                ${
+                  experience === option
+                    ? "bg-purple-accent/20 border-purple-accent text-text-dark"
+                    : "bg-white border-gray-200 hover:border-purple-accent hover:-translate-y-0.5 hover:shadow-md hover:shadow-purple-accent/20"
+                }
+              `}
+            >
               <input
                 type="radio"
                 name="experience"
                 value={option}
                 checked={experience === option}
                 onChange={() => setExperience(option)}
-                className="w-4 h-4 accent-purple-accent cursor-pointer"
+                className="hidden"
               />
-              <span className="text-sm text-text-dark/80 group-hover:text-text-dark transition-colors">
-                {option}
-              </span>
+              {option}
             </label>
           ))}
         </div>
