@@ -53,6 +53,7 @@ const MONTHLY_TYPES = [
   "Pensioner monthly",
   "Student monthly",
 ] as const;
+const THURSDAY_TYPES = ["Practice"] as const;
 
 const LEVEL_2_TUESDAY_PRICE = 50;
 
@@ -837,6 +838,7 @@ export default function CheckInClient({
 
   const searchAbortRef = useRef<AbortController | null>(null);
   const isBootcampMode = selectedEvent === "Bootcamp";
+  const isThursdayEvent = selectedEvent.startsWith("Thursday");
   const isSelectedLevel2 = useMemo(() => {
     if (!selected) return false;
     return isLevel2Member(selected.level);
@@ -849,6 +851,10 @@ export default function CheckInClient({
   }, [costs?.isTuesday, isSelectedLevel2]);
 
   const typeOptions = useMemo(() => {
+    // Thursday practice: only Practice and Social
+    if (isThursdayEvent) {
+      return [...THURSDAY_TYPES];
+    }
     // Level 2 Tuesday discount: only show Standard entry and Social only
     if (isLevel2TuesdayDiscount) {
       return ["Standard entry", "Social only"] as const;
@@ -856,7 +862,7 @@ export default function CheckInClient({
     const base = [...BASE_TYPES];
     const monthly = costs?.showMonthly ? [...MONTHLY_TYPES] : [];
     return [...base, ...monthly];
-  }, [costs?.showMonthly, isLevel2TuesdayDiscount]);
+  }, [costs?.showMonthly, isLevel2TuesdayDiscount, isThursdayEvent]);
 
   const payableAmount = useMemo(() => {
     if (!selectedType) return 0;
@@ -891,12 +897,11 @@ export default function CheckInClient({
   }, [effectiveFreeEntry]);
 
   const welcomingCommitteeAmount = useMemo(() => {
-    const standardEntry = Number(costs?.costs?.["Standard entry"] ?? NaN);
-    if (Number.isFinite(standardEntry) && standardEntry > 0) {
-      return Math.round((standardEntry / 2) * 100) / 100;
-    }
-    return selectedEvent.toLowerCase().includes("monday") ? 50 : 0;
-  }, [costs, selectedEvent]);
+    if (!selected) return 0;
+    const isPensionerOrStudent =
+      normalizePensionerStudent(selected.pensionerStudent) !== "";
+    return isPensionerOrStudent ? 40 : 50;
+  }, [selected]);
 
   const freeEntryPaidAmount = useMemo(() => {
     if (!effectiveFreeEntry?.applies) return 0;
@@ -1117,7 +1122,7 @@ export default function CheckInClient({
         ? isDoorVolunteer
           ? {
               member_id: selected.member_id,
-              type: effectiveFreeEntry.entry_type || "Welcoming committee",
+              type: effectiveFreeEntry.entry_type || "Door volunteer",
               paid_via: welcomingCommitteeAmount > 0 ? (selectedPaidVia ?? "") : "",
               paid_amount: welcomingCommitteeAmount,
               comment: comment.trim(),
@@ -1731,10 +1736,11 @@ export default function CheckInClient({
                 {isDoorVolunteer ? (
                   <div className="rounded-xl p-4 mb-4 border bg-orange-500/10 border-orange-500/40">
                     <div>
-                      <div className="font-semibold text-lg">Welcoming committee</div>
+                      <div className="font-semibold text-lg">Door volunteer</div>
                       <div className="mt-2 text-text-dark/80">
-                        Welcoming committee pays half of standard entry (Monday class and
-                        social is {formatZar(50)}).
+                        Door volunteers pay 50% of entry ({normalizePensionerStudent(selected?.pensionerStudent ?? "")
+                          ? `${formatZar(40)} — pensioner/student rate`
+                          : formatZar(50)}).
                       </div>
                     </div>
 

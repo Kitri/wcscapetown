@@ -74,6 +74,16 @@ function matchesApplicableDate(
     return v === todayISO ? 3 : 0;
   }
 
+  // Year only (e.g. "2026")
+  // Same event-filter logic as month-year: if event filters are set, let them decide;
+  // otherwise legacy behavior (Monday only). Lower priority than month-year.
+  if (/^\d{4}$/.test(v)) {
+    const todayYear = todayISO.slice(0, 4);
+    if (v !== todayYear) return 0;
+    if (opts.hasEventFilters) return 1;
+    return ctx.isMonday ? 1 : 0;
+  }
+
   // Month-year (e.g. "February 2026")
   // - If this row has event filters (Monday/Tues/Social columns), let the event filters decide the day.
   // - If it has NO event filters, keep the legacy behavior: apply only on Mondays.
@@ -135,6 +145,16 @@ function parseAmount(raw: string): number {
 
 function isTeacherEntryType(rawType: string): boolean {
   return (rawType ?? "").trim().toLowerCase().includes("teach");
+}
+
+function isDoorVolunteerEntry(entryType: string, reason: string): boolean {
+  const entry = (entryType ?? "").trim().toLowerCase();
+  const why = (reason ?? "").trim().toLowerCase();
+  return (
+    entry.includes("door volunteer") ||
+    why.includes("door volunteer") ||
+    why.includes("welcoming committee")
+  );
 }
 
 async function getTuesdayComboForMember(memberId: number, thursdayDate: Date): Promise<FreeEntryMatch | null> {
@@ -240,7 +260,17 @@ export async function GET(request: Request) {
         priority,
       };
 
-      if (!best || match.priority > best.priority) {
+      // Prefer door volunteer entries over monthly at the same priority
+      const matchIsDoorVol = isDoorVolunteerEntry(match.entry_type, match.reason);
+      const bestIsDoorVol = best
+        ? isDoorVolunteerEntry(best.entry_type, best.reason)
+        : false;
+
+      if (
+        !best ||
+        match.priority > best.priority ||
+        (match.priority === best.priority && matchIsDoorVol && !bestIsDoorVol)
+      ) {
         best = match;
       }
     }

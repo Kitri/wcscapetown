@@ -18,6 +18,7 @@ const ALLOWED_TYPE_CANONICAL: Record<string, string> = {
   "pensioner monthly": "Pensioner monthly",
   "student monthly": "Student monthly",
   "social only": "Social only",
+  practice: "Practice",
 };
 
 function normalizeType(raw: string): string {
