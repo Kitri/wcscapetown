@@ -11,8 +11,19 @@ function getNextMonday(): string {
   return nextMonday.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
 }
 
+function getNextWednesday(): string {
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  // If today is Wednesday show today (market is tonight); otherwise advance to the next Wednesday
+  const daysUntil = dayOfWeek === 3 ? 0 : (3 - dayOfWeek + 7) % 7;
+  const nextWednesday = new Date(now);
+  nextWednesday.setDate(now.getDate() + daysUntil);
+  return nextWednesday.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+}
+
 export default function WhatsOn() {
   const nextMonday = getNextMonday();
+  const nextWednesday = getNextWednesday();
   return (
     <>
       <Header />
@@ -81,7 +92,7 @@ export default function WhatsOn() {
                 <h3 className="font-spartan font-semibold text-lg mb-2">Casual Dancing</h3>
                 <p className="text-sm text-text-dark/70 mb-1">6-8 PM</p>
                 <p className="text-sm text-text-dark/70">Down to Earth Market</p>
-                <p className="text-xs mt-2 font-semibold text-text-dark/50">Next: 1 April</p>
+                <p className="text-xs mt-2 font-semibold text-text-dark/50">Next: {nextWednesday}</p>
                 <p className="text-xs italic mt-1 text-text-dark/60">Informal hangout</p>
               </a>
             </div>
@@ -125,6 +136,10 @@ export default function WhatsOn() {
                     <p className="text-sm text-text-dark/70">7:00 – 7:45 PM (teacher approval)</p>
                   </div>
                   <div className="bg-white/60 rounded-lg p-4">
+                    <p className="font-semibold">Newcomers Class</p>
+                    <p className="text-sm text-text-dark/70">7:45 – 8:30 PM (never danced WCS? start here)</p>
+                  </div>
+                  <div className="bg-white/60 rounded-lg p-4">
                     <p className="font-semibold">Level 1 Class</p>
                     <p className="text-sm text-text-dark/70">7:45 – 8:30 PM (all welcome)</p>
                   </div>
@@ -143,6 +158,10 @@ export default function WhatsOn() {
               <div>
                 <h3 className="font-spartan font-semibold text-xl mb-4">Details</h3>
                 <div className="space-y-4 text-base md:text-lg">
+                  <div className="bg-yellow-accent/20 rounded-lg p-4">
+                    <p className="font-semibold text-sm mb-1">🌟 Newcomers welcome</p>
+                    <p className="text-sm text-text-dark/80">Never danced WCS before? Join us from 7:45 PM for a dedicated newcomers class — no partner or experience needed.</p>
+                  </div>
                   <div>
                     <p className="font-semibold mb-1">📅 When</p>
                     <p>Every Monday</p>
