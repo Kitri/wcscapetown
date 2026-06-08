@@ -57,6 +57,7 @@ export default function WhatsOn() {
                 <p className="text-sm text-text-dark/70 mb-1">7-10 PM</p>
                 <p className="text-sm text-text-dark/70">Havana Nights, Plumstead</p>
                 <p className="text-xs mt-2 font-semibold text-yellow-accent">Next class: {nextMonday}</p>
+                <p className="text-xs mt-1 text-red-500 font-semibold">⚠️ No class 15 June — next class 22 June</p>
                 <p className="text-xs mt-1 text-text-dark/60">
                   See level descriptions below
                 </p>
@@ -90,11 +91,11 @@ export default function WhatsOn() {
               {/* Monthly Social */}
               <a href="#monthly-social" className="group border-2 border-pink-accent/30 hover:border-pink-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
-                  JUNE • TBC
+                  SAT 13 JUNE
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs italic mt-2 text-text-dark/60">Date & time TBC (June)</p>
+                <p className="text-xs italic mt-2 text-text-dark/60">Saturday, 13 June — taster class then social</p>
               </a>
             </div>
 
@@ -330,10 +331,10 @@ export default function WhatsOn() {
             {/* Taster Class Highlight */}
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
               <p className="text-lg md:text-xl font-semibold mb-2">
-                🎓 Bonus: WCS Taster Class (TBC)
+                🎓 WCS Taster Class included
               </p>
               <p className="text-base md:text-lg">
-                Taster details to be confirmed.
+                Taster class before the social — same format as usual.
               </p>
             </div>
 
@@ -344,11 +345,11 @@ export default function WhatsOn() {
                 <div className="space-y-4 text-base md:text-lg">
                   <div>
                     <p className="font-semibold mb-1">📅 When</p>
-                    <p>June (Date TBC)</p>
+                    <p>Saturday, 13 June</p>
                   </div>
                   <div>
                     <p className="font-semibold mb-1">🕗 Time</p>
-                    <p>TBC</p>
+                    <p>Taster class, then social</p>
                   </div>
                   <div>
                     <p className="font-semibold mb-1">💰 Cost</p>

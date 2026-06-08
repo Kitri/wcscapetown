@@ -10,6 +10,11 @@ export default function Home() {
   return (
     <>
       <Header />
+      {/* Temporary notice banner */}
+      <div className="bg-pink-accent text-white text-center px-4 py-3 text-sm font-medium">
+        📢 No class or social Monday 15 June — but join us for social on Saturday 13 June!{" "}
+        <a href="/whats-on#monthly-social" className="underline hover:opacity-80 font-semibold">More info →</a>
+      </div>
       <main>
         <Hero />
         <WhatIsWCS />
