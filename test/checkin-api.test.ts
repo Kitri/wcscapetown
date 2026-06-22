@@ -255,6 +255,114 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
       paid_amount_override: 25,
     });
   });
+
+  it("applies a session-count free entry while sessions remain and shows the remaining count", async () => {
+    const { GET } = await import("../app/api/check-in/free-entry/route");
+
+    mockGetSheetValues.mockImplementation(async (_sheetId: string, range: string) => {
+      if (range === "'Free Entry'!A:I") {
+        return [
+          ["member_id", "name", "entry_type", "applicable_date", "details", "reason"],
+          ["123", "Test Member", "Free session", "5 sessions", "Welcome pass", "welcome 5-pass", "", "", ""],
+        ];
+      }
+      if (range === "Attendance!A:H") {
+        // 2 of 5 already used -> this is session 3, 3 remaining
+        return [
+          ["member_id", "date", "event", "paid_via", "paid_amount", "type", "comment", "free_entry_reason"],
+          ["123", "2026-01-05", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
+          ["123", "2026-01-12", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
+        ];
+      }
+      return [];
+    });
+
+    const req = new Request(
+      "http://localhost/api/check-in/free-entry?member_id=123",
+      { method: "GET" }
+    );
+
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toMatchObject({
+      applies: true,
+      entry_type: "Free session",
+      reason: "welcome 5-pass",
+    });
+    expect(data.details).toContain("free session 3 of 5");
+    expect(data.details).toContain("3 remaining");
+  });
+
+  it("labels the final remaining session as the last free session", async () => {
+    const { GET } = await import("../app/api/check-in/free-entry/route");
+
+    mockGetSheetValues.mockImplementation(async (_sheetId: string, range: string) => {
+      if (range === "'Free Entry'!A:I") {
+        return [
+          ["member_id", "name", "entry_type", "applicable_date", "details", "reason"],
+          ["123", "Test Member", "Free session", "5 sessions", "", "welcome 5-pass", "", "", ""],
+        ];
+      }
+      if (range === "Attendance!A:H") {
+        // 4 of 5 already used -> this is the 5th and last session
+        return [
+          ["123", "2026-01-05", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
+          ["123", "2026-01-12", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
+          ["123", "2026-01-19", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
+          ["123", "2026-01-26", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
+        ];
+      }
+      return [];
+    });
+
+    const req = new Request(
+      "http://localhost/api/check-in/free-entry?member_id=123",
+      { method: "GET" }
+    );
+
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.applies).toBe(true);
+    expect(data.details).toContain("free session 5 of 5");
+    expect(data.details).toContain("last free session");
+  });
+
+  it("stops applying once the session allowance is used up (token not misread as a date)", async () => {
+    const { GET } = await import("../app/api/check-in/free-entry/route");
+
+    mockGetSheetValues.mockImplementation(async (_sheetId: string, range: string) => {
+      if (range === "'Free Entry'!A:I") {
+        return [
+          ["member_id", "name", "entry_type", "applicable_date", "details", "reason"],
+          ["123", "Test Member", "Free session", "2 sessions", "", "welcome 2-pass", "", "", ""],
+        ];
+      }
+      if (range === "Attendance!A:H") {
+        // Both sessions already used
+        return [
+          ["123", "2026-01-05", "Monday Plumstead", "", "0", "Free session", "", "welcome 2-pass"],
+          ["123", "2026-01-12", "Monday Plumstead", "", "0", "Free session", "", "welcome 2-pass"],
+        ];
+      }
+      return [];
+    });
+
+    const req = new Request(
+      "http://localhost/api/check-in/free-entry?member_id=123",
+      { method: "GET" }
+    );
+
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data.applies).toBe(false);
+    expect(data.today).toBe("2026-02-03");
+  });
 });
 
 describe("POST /api/check-in/members (new member registration)", () => {

@@ -59,6 +59,58 @@ function parseMemberId(raw: string): number {
   return Number.isFinite(id) ? id : NaN;
 }
 
+// Priority for session-count rules: above year / "All Mondays" (1), below an
+// exact ISO date (3); same tier as a month-year match (2).
+const SESSION_PRIORITY = 2;
+
+// Recognise a session-count token in the applicable_date column, e.g.
+// "5 sessions", "1 session", or "Sessions: 5". Returns the allowance (N), or
+// null when the value is not a session token (so date parsing can handle it).
+function parseSessionLimit(applicable: string): number | null {
+  const v = (applicable ?? "").trim();
+  if (!v) return null;
+
+  const trailing = v.match(/^(\d+)\s*sessions?$/i);
+  const leading = v.match(/^sessions?\s*:?\s*(\d+)$/i);
+  const digits = trailing?.[1] ?? leading?.[1];
+  if (!digits) return null;
+
+  const n = Number(digits);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+// Count how many times a member has already used a given session-based free
+// entry. Matches on the rule's reason (Attendance col H) when the rule has one,
+// otherwise on the entry type (col F) — both are written when a free check-in
+// is recorded, so either uniquely identifies the grant.
+function countConsumedSessions(
+  attendanceRows: string[][],
+  memberId: number,
+  reason: string,
+  entryType: string
+): number {
+  const reasonKey = reason.trim().toLowerCase();
+  const typeKey = entryType.trim().toLowerCase();
+  const useReason = reasonKey.length > 0;
+
+  let count = 0;
+  for (const row of attendanceRows) {
+    const firstCell = (row[0] ?? "").trim().toLowerCase();
+    if (!firstCell || firstCell === "member_id") continue;
+
+    const id = parseMemberId(row[0] ?? "");
+    if (!Number.isFinite(id) || id !== memberId) continue;
+
+    if (useReason) {
+      if ((row[7] ?? "").trim().toLowerCase() === reasonKey) count += 1;
+    } else if (typeKey && (row[5] ?? "").trim().toLowerCase() === typeKey) {
+      count += 1;
+    }
+  }
+
+  return count;
+}
+
 function matchesApplicableDate(
   applicable: string,
   todayISO: string,
@@ -230,6 +282,20 @@ export async function GET(request: Request) {
 
     let best: (FreeEntryMatch & { priority: number }) | null = null;
 
+    // Session-count rules need the member's attendance history to know how many
+    // free sessions have already been used. Load it lazily (once) so date-only
+    // lookups don't trigger an extra Sheets read.
+    let attendanceRowsCache: string[][] | null = null;
+    const loadAttendanceRows = async (): Promise<string[][]> => {
+      if (!attendanceRowsCache) {
+        attendanceRowsCache = await getSheetValues(
+          CHECKIN_SPREADSHEET_ID,
+          "Attendance!A:H"
+        );
+      }
+      return attendanceRowsCache;
+    };
+
     for (const row of rows) {
       const firstCell = (row[0] ?? "").trim().toLowerCase();
       if (firstCell === "member_id") continue;
@@ -241,24 +307,63 @@ export async function GET(request: Request) {
       // Check event filter if an event is specified
       if (eventParam && !matchesEvent(row, eventParam)) continue;
 
-      const hasEventFilters =
-        parseBoolean(row[6] ?? "") ||
-        parseBoolean(row[7] ?? "") ||
-        parseBoolean(row[8] ?? "");
+      let match: (FreeEntryMatch & { priority: number }) | null = null;
 
-      const priority = matchesApplicableDate(applicable_date ?? "", todayISO, ctx, {
-        hasEventFilters,
-      });
-      if (!priority) continue;
+      const sessionLimit = parseSessionLimit(applicable_date ?? "");
+      if (sessionLimit !== null) {
+        // Session-count rule: applies until the allowance is used up.
+        const ruleReason = (reason ?? "").trim();
+        const ruleEntryType = (entry_type ?? "").trim();
+        const consumed = countConsumedSessions(
+          await loadAttendanceRows(),
+          id,
+          ruleReason,
+          ruleEntryType
+        );
+        const remaining = sessionLimit - consumed;
 
-      const match: FreeEntryMatch & { priority: number } = {
-        member_id: id,
-        entry_type: (entry_type ?? "").trim(),
-        details: (details ?? "").trim(),
-        reason: (reason ?? "").trim(),
-        applicable_date: (applicable_date ?? "").trim(),
-        priority,
-      };
+        if (remaining > 0) {
+          const sessionNumber = consumed + 1;
+          const usage =
+            remaining === 1
+              ? `free session ${sessionNumber} of ${sessionLimit} \u2014 last free session`
+              : `free session ${sessionNumber} of ${sessionLimit} \u2014 ${remaining} remaining`;
+          const baseDetails = (details ?? "").trim();
+
+          match = {
+            member_id: id,
+            entry_type: ruleEntryType || "Free entry",
+            details: baseDetails ? `${baseDetails} (${usage})` : `(${usage})`,
+            reason: ruleReason,
+            applicable_date: (applicable_date ?? "").trim(),
+            priority: SESSION_PRIORITY,
+          };
+        }
+        // remaining <= 0: allowance used up — leave match null so the operator
+        // falls through to normal paid entry (silent fallback).
+      } else {
+        const hasEventFilters =
+          parseBoolean(row[6] ?? "") ||
+          parseBoolean(row[7] ?? "") ||
+          parseBoolean(row[8] ?? "");
+
+        const priority = matchesApplicableDate(applicable_date ?? "", todayISO, ctx, {
+          hasEventFilters,
+        });
+
+        if (priority) {
+          match = {
+            member_id: id,
+            entry_type: (entry_type ?? "").trim(),
+            details: (details ?? "").trim(),
+            reason: (reason ?? "").trim(),
+            applicable_date: (applicable_date ?? "").trim(),
+            priority,
+          };
+        }
+      }
+
+      if (!match) continue;
 
       // Prefer door volunteer entries over monthly at the same priority
       const matchIsDoorVol = isDoorVolunteerEntry(match.entry_type, match.reason);
