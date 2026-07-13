@@ -1,29 +1,20 @@
 import Header from "@/components/Header";
-import PinelandsInterestForm from "@/components/PinelandsInterestForm";
 
-function getNextMonday(): string {
-  const now = new Date();
-  const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-  // If today is Monday show today (class is tonight); otherwise advance to the next Monday
-  const daysUntil = dayOfWeek === 1 ? 0 : (1 - dayOfWeek + 7) % 7;
-  const nextMonday = new Date(now);
-  nextMonday.setDate(now.getDate() + daysUntil);
-  return nextMonday.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
-}
+export const dynamic = "force-dynamic";
 
-function getNextWednesday(): string {
+function getNextOccurrence(targetDay: number): string {
   const now = new Date();
-  const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-  // If today is Wednesday show today (market is tonight); otherwise advance to the next Wednesday
-  const daysUntil = dayOfWeek === 3 ? 0 : (3 - dayOfWeek + 7) % 7;
-  const nextWednesday = new Date(now);
-  nextWednesday.setDate(now.getDate() + daysUntil);
-  return nextWednesday.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+  const dayOfWeek = now.getDay();
+  if (dayOfWeek === targetDay) return "Tonight!";
+  const daysUntil = (targetDay - dayOfWeek + 7) % 7;
+  const next = new Date(now);
+  next.setDate(now.getDate() + daysUntil);
+  return next.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
 }
 
 export default function WhatsOn() {
-  const nextMonday = getNextMonday();
-  const nextWednesday = getNextWednesday();
+  const nextMonday = getNextOccurrence(1);
+  const nextWednesday = getNextOccurrence(3);
   return (
     <>
       <Header />
@@ -58,7 +49,7 @@ export default function WhatsOn() {
         <section className="px-[5%] py-[40px] bg-white">
           <div className="max-w-[1100px] mx-auto">
             <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Regular Events</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
               {/* Monday Classes */}
               <a href="#monday-classes" className="group border-2 border-yellow-accent/30 hover:border-yellow-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-yellow-accent text-text-dark px-4 py-2 rounded-full font-semibold text-xs mb-3">
@@ -67,23 +58,14 @@ export default function WhatsOn() {
                 <h3 className="font-spartan font-semibold text-lg mb-2">Level 1 & 2 Classes & Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">7-10 PM</p>
                 <p className="text-sm text-text-dark/70">Havana Nights, Plumstead</p>
-                <p className="text-xs mt-2 font-semibold text-yellow-accent">Next class: {nextMonday}</p>
-                <p className="text-xs mt-1 text-red-500 font-semibold">⚠️ No class 15 June — next class 22 June</p>
+                <p className="text-xs mt-2 font-semibold text-yellow-accent">
+                  {nextMonday === "Tonight!" ? "🎉 Tonight!" : `Next class: ${nextMonday}`}
+                </p>
                 <p className="text-xs mt-1 text-text-dark/60">
                   See level descriptions below
                 </p>
               </a>
               
-              {/* Tuesday Classes */}
-              <a href="#tuesday-classes" className="group border-2 border-purple-accent/20 hover:border-purple-accent/50 rounded-xl p-6 text-center transition-all hover:shadow-lg">
-                <div className="inline-block bg-purple-accent/40 text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
-                  ON HOLD
-                </div>
-                <h3 className="font-spartan font-semibold text-lg mb-2">Level 1 Class & Social</h3>
-                <p className="text-sm text-text-dark/70 mb-1">Pinelands Bowling Club</p>
-                <p className="text-xs mt-2 text-text-dark/50 italic">Classes stopped for now</p>
-              </a>
-
               {/* Wednesday Down to Earth Market */}
               <a href="#down-to-earth" className="group border-2 border-text-dark/20 hover:border-text-dark/40 rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-text-dark/10 text-text-dark px-4 py-2 rounded-full font-semibold text-xs mb-3">
@@ -92,7 +74,9 @@ export default function WhatsOn() {
                 <h3 className="font-spartan font-semibold text-lg mb-2">Casual Dancing</h3>
                 <p className="text-sm text-text-dark/70 mb-1">6-8 PM</p>
                 <p className="text-sm text-text-dark/70">Down to Earth Market</p>
-                <p className="text-xs mt-2 font-semibold text-text-dark/50">Next: {nextWednesday}</p>
+                <p className="text-xs mt-2 font-semibold text-text-dark/50">
+                  {nextWednesday === "Tonight!" ? "🎉 Tonight!" : `Next: ${nextWednesday}`}
+                </p>
                 <p className="text-xs italic mt-1 text-text-dark/60">Informal hangout</p>
               </a>
             </div>
@@ -102,11 +86,11 @@ export default function WhatsOn() {
               {/* Monthly Social */}
               <a href="#monthly-social" className="group border-2 border-pink-accent/30 hover:border-pink-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
-                  SAT 13 JUNE
+                  SAT 18 JULY
                 </div>
-                <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social</h3>
+                <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social — Cowboys & Fishnets</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs italic mt-2 text-text-dark/60">Saturday, 13 June — taster class then social</p>
+                <p className="text-xs italic mt-2 text-text-dark/60">Saturday, 18 July · 8–11 PM — WCS line dance class at 9 PM</p>
               </a>
             </div>
 
@@ -183,68 +167,10 @@ export default function WhatsOn() {
                     <p className="font-semibold mb-1">💰 Cost</p>
                     <div className="text-sm md:text-base space-y-1">
                       <p>R100 per person (class & social)</p>
-                      <p className="text-purple-accent font-semibold">R150 for Monday + Tuesday (both classes & socials)</p>
-                      <p className="text-text-dark/70 italic">R300 for the month (Mondays only) </p>
+                      <p className="text-text-dark/70 italic">R300 for the month (Mondays only)</p>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Tuesday Classes - Full Details */}
-        <section 
-          id="tuesday-classes"
-          className="px-[5%] py-[50px] bg-cloud-dancer"
-        >
-          <div className="max-w-[900px] mx-auto">
-            <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] text-center mb-6">
-              Tuesday Classes — Pinelands
-            </h2>
-
-            {/* Stopped notice */}
-            <div className="bg-purple-accent/10 border-2 border-purple-accent/40 rounded-xl p-6 md:p-8 mb-8 text-center">
-              <p className="text-lg md:text-xl font-semibold mb-2">
-                😴 Tuesday classes are on hold for now
-              </p>
-              <p className="text-base md:text-lg text-text-dark/70">
-                We&apos;ve paused the Pinelands Tuesday classes for winter. We&apos;re hoping to bring them back for summer — want us to let you know when they&apos;re back?
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8 items-start">
-              {/* Left — what the classes were */}
-              <div>
-                <h3 className="font-spartan font-semibold text-xl mb-4">What the classes were</h3>
-                <div className="space-y-3">
-                  <div className="bg-white/60 rounded-lg p-4 border-l-4 border-purple-accent/40">
-                    <p className="font-semibold">Level 1 Class</p>
-                    <p className="text-sm text-text-dark/70">7:30 – 8:30 PM</p>
-                  </div>
-                  <div className="bg-white/60 rounded-lg p-4 border-l-4 border-purple-accent/40">
-                    <p className="font-semibold">Social Dance</p>
-                    <p className="text-sm text-text-dark/70">8:30 – 10:00 PM</p>
-                  </div>
-                </div>
-                <div className="mt-4 text-sm text-text-dark/60">
-                  <p className="mb-1">
-                    <span className="font-medium">📍</span>{" "}
-                    <a href="https://maps.app.goo.gl/XcDwvvbCxAjjJSXA6" target="_blank" rel="noopener noreferrer" className="text-purple-accent hover:text-pink-accent underline">
-                      Pinelands Bowling Club
-                    </a>
-                    , Cape Town
-                  </p>
-                </div>
-              </div>
-
-              {/* Right — interest form */}
-              <div>
-                <h3 className="font-spartan font-semibold text-xl mb-2">Want them back?</h3>
-                <p className="text-sm text-text-dark/70 mb-4">
-                  Let us know you&apos;re interested and we&apos;ll reach out when Tuesday classes start up again.
-                </p>
-                <PinelandsInterestForm />
               </div>
             </div>
           </div>
@@ -347,13 +273,13 @@ export default function WhatsOn() {
               WCS Social
             </h2>
 
-            {/* Taster Class Highlight */}
+            {/* Theme & Line Dance Highlight */}
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
               <p className="text-lg md:text-xl font-semibold mb-2">
-                🎓 WCS Taster Class included
+                🤠 Theme: Cowboys & Fishnets
               </p>
               <p className="text-base md:text-lg">
-                Taster class before the social — same format as usual.
+                Dress the part! WCS line dance class at 9 PM — same great social as usual.
               </p>
             </div>
 
@@ -364,11 +290,16 @@ export default function WhatsOn() {
                 <div className="space-y-4 text-base md:text-lg">
                   <div>
                     <p className="font-semibold mb-1">📅 When</p>
-                    <p>Saturday, 13 June</p>
+                    <p>Saturday, 18 July</p>
                   </div>
                   <div>
                     <p className="font-semibold mb-1">🕗 Time</p>
-                    <p>Taster class, then social</p>
+                    <p>8:00 – 11:00 PM</p>
+                    <p className="text-sm text-text-dark/70">WCS line dance class at 9:00 PM</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold mb-1">🤠 Theme</p>
+                    <p>Cowboys & Fishnets</p>
                   </div>
                   <div>
                     <p className="font-semibold mb-1">💰 Cost</p>
