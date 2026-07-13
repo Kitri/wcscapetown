@@ -83,15 +83,16 @@ export default function WhatsOn() {
             </div>
 
             <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Upcoming Events</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
-              {/* Monthly Social */}
-              <a href="#monthly-social" className="group border-2 border-pink-accent/30 hover:border-pink-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
-                <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
-                  SAT 18 JULY
-                </div>
-                <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social — Cowboys & Fishnets</h3>
-                <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs italic mt-2 text-text-dark/60">Saturday, 18 July · 8–11 PM — WCS line dance class at 9 PM</p>
+            <div className="flex justify-center">
+              {/* Monthly Social - poster card */}
+              <a href="#monthly-social" className="group block rounded-2xl overflow-hidden border-2 border-pink-accent/30 hover:border-pink-accent transition-all hover:shadow-xl max-w-[340px] w-full">
+                <Image
+                  src="/images/social-18jul-26.JPG"
+                  alt="Cowboys & Fishnets WCS Social — 18 July"
+                  width={500}
+                  height={600}
+                  className="w-full h-auto"
+                />
               </a>
             </div>
 
@@ -273,17 +274,6 @@ export default function WhatsOn() {
             <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] text-center mb-6">
               WCS Social
             </h2>
-
-            {/* Poster */}
-            <div className="flex justify-center mb-8">
-              <Image
-                src="/images/social-18jul-26.JPG"
-                alt="Cowboys & Fishnets WCS Social — 18 July, 8–11 PM, Scout Hall Claremont"
-                width={500}
-                height={600}
-                className="w-full max-w-[420px] h-auto rounded-2xl shadow-lg"
-              />
-            </div>
 
             {/* Theme callout */}
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
