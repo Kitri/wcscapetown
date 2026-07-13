@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Header from "@/components/Header";
 
 export const dynamic = "force-dynamic";
@@ -273,60 +274,66 @@ export default function WhatsOn() {
               WCS Social
             </h2>
 
-            {/* Theme & Line Dance Highlight */}
-            <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
-              <p className="text-lg md:text-xl font-semibold mb-2">
-                🤠 Theme: Cowboys & Fishnets
-              </p>
-              <p className="text-base md:text-lg">
-                Dress the part! WCS line dance class at 9 PM — same great social as usual.
-              </p>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Left Column - Event Details */}
-              <div>
-                <h3 className="font-spartan font-semibold text-xl mb-4">Event Details</h3>
-                <div className="space-y-4 text-base md:text-lg">
-                  <div>
-                    <p className="font-semibold mb-1">📅 When</p>
-                    <p>Saturday, 18 July</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-1">🕗 Time</p>
-                    <p>8:00 – 11:00 PM</p>
-                    <p className="text-sm text-text-dark/70">WCS line dance class at 9:00 PM</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-1">🤠 Theme</p>
-                    <p>Cowboys & Fishnets</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold mb-1">💰 Cost</p>
-                    <p>R50 per person</p>
-                  </div>
-                </div>
+            <div className="grid md:grid-cols-2 gap-10 items-start">
+              {/* Left — Poster */}
+              <div className="flex justify-center">
+                <Image
+                  src="/images/social-18jul-26.JPG"
+                  alt="Cowboys & Fishnets WCS Social — 18 July, 8–11 PM, Scout Hall Claremont"
+                  width={500}
+                  height={600}
+                  className="w-full max-w-[420px] h-auto rounded-2xl shadow-lg"
+                />
               </div>
 
-              {/* Right Column - Venue & Parking */}
-              <div>
-                <h3 className="font-spartan font-semibold text-xl mb-4">Venue & Parking</h3>
-                <div className="space-y-4 text-base md:text-lg">
-                  <div>
-                    <p className="font-semibold mb-1">📍 Venue</p>
-                    <p>
-                      <a href="https://maps.app.goo.gl/JVyfLAohdRTqQvcg8" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">
-                        Scout Hall
-                      </a>
-                      <br />17 Bowwood Rd, Claremont<br />Cape Town
-                    </p>
+              {/* Right — Details */}
+              <div className="space-y-6">
+                {/* Theme callout */}
+                <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-5 text-center">
+                  <p className="text-lg font-semibold mb-1">🤠 Theme: Cowboys &amp; Fishnets</p>
+                  <p className="text-sm text-text-dark/80">Dress the part! WCS line dance class at 9 PM.</p>
+                </div>
+
+                {/* Event details */}
+                <div>
+                  <h3 className="font-spartan font-semibold text-xl mb-3">Event Details</h3>
+                  <div className="space-y-3 text-base">
+                    <div>
+                      <p className="font-semibold mb-0.5">📅 When</p>
+                      <p>Saturday, 18 July</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold mb-0.5">🕗 Time</p>
+                      <p>8:00 – 11:00 PM</p>
+                      <p className="text-sm text-text-dark/70">WCS line dance class at 9:00 PM</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold mb-0.5">💰 Cost</p>
+                      <p>R50 per person</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold mb-1">🏎️ Parking</p>
-                    <p className="text-sm text-text-dark/80">
-                      Scout Hall is on the corner of Bowwood and Thelma. 
-                      <a href="https://maps.app.goo.gl/dW2qw4e79TymZuzU9" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline"> Parking</a> is in Thelma, just after the building before the tennis courts. Look for a wired gate with a small purple sign: &quot;SCOUTS - Scout Hall Parking only&quot;.
-                    </p>
+                </div>
+
+                {/* Venue & Parking */}
+                <div>
+                  <h3 className="font-spartan font-semibold text-xl mb-3">Venue &amp; Parking</h3>
+                  <div className="space-y-3 text-base">
+                    <div>
+                      <p className="font-semibold mb-0.5">📍 Venue</p>
+                      <p>
+                        <a href="https://maps.app.goo.gl/JVyfLAohdRTqQvcg8" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">
+                          Scout Hall
+                        </a>
+                        <br />17 Bowwood Rd, Claremont<br />Cape Town
+                      </p>
+                    </div>
+                    <div>
+                      <p className="font-semibold mb-0.5">🏎️ Parking</p>
+                      <p className="text-sm text-text-dark/80">
+                        Scout Hall is on the corner of Bowwood and Thelma.{" "}
+                        <a href="https://maps.app.goo.gl/dW2qw4e79TymZuzU9" target="_blank" rel="noopener noreferrer" className="text-pink-accent hover:text-yellow-accent underline">Parking</a>{" "}is in Thelma, just after the building before the tennis courts. Look for a wired gate with a small purple sign: &quot;SCOUTS - Scout Hall Parking only&quot;.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
