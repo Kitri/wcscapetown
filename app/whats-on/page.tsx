@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Header from "@/components/Header";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +50,7 @@ export default function WhatsOn() {
         <section className="px-[5%] py-[40px] bg-white">
           <div className="max-w-[1100px] mx-auto">
             <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Regular Events</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
               {/* Monday Classes */}
               <a href="#monday-classes" className="group border-2 border-yellow-accent/30 hover:border-yellow-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-yellow-accent text-text-dark px-4 py-2 rounded-full font-semibold text-xs mb-3">
@@ -79,10 +80,7 @@ export default function WhatsOn() {
                 </p>
                 <p className="text-xs italic mt-1 text-text-dark/60">Informal hangout</p>
               </a>
-            </div>
 
-            <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Upcoming Events</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Monthly Social */}
               <a href="#monthly-social" className="group border-2 border-pink-accent/30 hover:border-pink-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
@@ -90,17 +88,41 @@ export default function WhatsOn() {
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs italic mt-2 text-text-dark/60">Date TBD — watch this space</p>
+                <p className="text-xs mt-2 font-semibold text-pink-accent">Next: August — date TBC</p>
               </a>
+            </div>
 
-              {/* Workshop Save the Date */}
-              <a href="#workshop" className="group border-2 border-purple-accent/30 hover:border-purple-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
-                <div className="inline-block bg-purple-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
-                  SAVE THE DATE
+            <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Upcoming Events</h2>
+            <div className="flex justify-center">
+              {/* Workshop */}
+              <a
+                href="/swingstrong"
+                className="group rounded-2xl overflow-hidden transition-all hover:shadow-xl w-full max-w-2xl border-2 flex flex-col md:flex-row"
+                style={{ borderColor: 'rgba(0,180,154,0.4)', backgroundColor: 'rgba(0,180,154,0.04)' }}
+              >
+                {/* Text side */}
+                <div className="flex-1 p-6 md:p-8 flex flex-col justify-center">
+                  <div className="inline-block text-white px-4 py-1.5 rounded-full font-semibold text-xs mb-4 self-start" style={{ backgroundColor: '#00B49A' }}>
+                    INTERNATIONAL WORKSHOP · 6 SEPT
+                  </div>
+                  <h3 className="font-spartan font-semibold text-2xl mb-1">Swing Strong</h3>
+                  <p className="text-sm text-text-dark/60 mb-1">Mobility &amp; Movement for West Coast Swing</p>
+                  <p className="text-base font-medium text-text-dark/80 mb-3">Jeff Mumford · Cape Town</p>
+                  <p className="text-sm text-text-dark/60 mb-4">Sunday, 6 September · 11:30–15:30 · R350 pp · Pinelands</p>
+                  <span className="inline-block self-start text-white text-sm font-semibold px-5 py-2 rounded-lg" style={{ backgroundColor: '#00B49A' }}>
+                    Find out more &amp; register →
+                  </span>
                 </div>
-                <h3 className="font-spartan font-semibold text-lg mb-2">4-Hour WCS Workshop</h3>
-                <p className="text-sm text-text-dark/70 mb-1">Saturday, 6 September</p>
-                <p className="text-xs italic mt-2 text-text-dark/60">11:00 – 15:30 · Details to be confirmed</p>
+                {/* Image side */}
+                <div className="md:w-[240px] shrink-0 h-[200px] md:h-auto overflow-hidden">
+                  <Image
+                    src="/images/jeff_3.jpeg"
+                    alt="Jeff Mumford performing West Coast Swing"
+                    width={480}
+                    height={640}
+                    className="w-full h-full object-cover object-top"
+                  />
+                </div>
               </a>
             </div>
 
@@ -334,45 +356,6 @@ export default function WhatsOn() {
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Workshop - Save the Date */}
-        <section
-          id="workshop"
-          className="px-[5%] py-[50px] bg-cloud-dancer"
-        >
-          <div className="max-w-[900px] mx-auto text-center">
-            <div className="inline-block bg-purple-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-6">
-              SAVE THE DATE
-            </div>
-            <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] mb-4">
-              4-Hour WCS Workshop
-            </h2>
-            <p className="text-lg md:text-xl text-text-dark/80 mb-8 max-w-[600px] mx-auto">
-              A dedicated half-day workshop for West Coast Swing — more details coming soon!
-            </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-[700px] mx-auto mb-8">
-              <div className="bg-white rounded-xl p-5">
-                <p className="text-2xl mb-2">📅</p>
-                <p className="font-semibold">Saturday, 6 September</p>
-              </div>
-              <div className="bg-white rounded-xl p-5">
-                <p className="text-2xl mb-2">🕐</p>
-                <p className="font-semibold">11:00 – 15:30</p>
-              </div>
-              <div className="bg-white rounded-xl p-5">
-                <p className="text-2xl mb-2">📍</p>
-                <p className="font-semibold">Venue TBC</p>
-              </div>
-            </div>
-
-            <div className="bg-purple-accent/10 border-2 border-purple-accent/30 rounded-xl p-6 max-w-[500px] mx-auto">
-              <p className="text-base text-text-dark/80">
-                ✨ Full details — instructors, content and cost — will be announced soon. Mark your calendar!
-              </p>
             </div>
           </div>
         </section>

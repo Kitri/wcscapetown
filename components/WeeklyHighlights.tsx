@@ -24,76 +24,69 @@ export default function WeeklyHighlights() {
         <p className="text-xs font-semibold uppercase tracking-widest text-text-dark/40 text-center mb-5">
           What&apos;s On
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="flex flex-col gap-3">
 
-          {/* Monday Classes */}
+          {/* Workshop — featured banner */}
           <Link
-            href="/whats-on#monday-classes"
-            className="flex items-start gap-3 rounded-xl border-2 border-yellow-accent/30 hover:border-yellow-accent bg-yellow-accent/5 hover:bg-yellow-accent/10 p-4 transition-all group"
+            href="/swingstrong"
+            className="rounded-xl border-2 p-5 transition-all hover:shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+            style={{ borderColor: '#00B49A', backgroundColor: 'rgba(0,180,154,0.07)' }}
           >
-            <span className="mt-0.5 text-xl">🟡</span>
-            <div className="text-left min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-yellow-accent mb-0.5">
-                {mondayLabel === "Tonight" ? "🎉 Tonight!" : mondayLabel}
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: '#00B49A' }}>
+                🌍 International Workshop · Sunday 6 September 2026
               </p>
-              <p className="font-spartan font-semibold text-base leading-tight mb-1">
-                Classes &amp; Social
+              <p className="font-spartan font-bold text-xl md:text-2xl leading-tight mb-1">
+                Jeff Mumford in Cape Town!
               </p>
-              <p className="text-xs text-text-dark/60">7–10 PM · Havana Nights, Plumstead</p>
+              <p className="text-sm text-text-dark/70">Swing Strong — Mobility &amp; Movement for WCS · 4 Hours · 11:30–15:30 · R350 · Pinelands</p>
             </div>
+            <span
+              className="inline-block shrink-0 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-all hover:opacity-90"
+              style={{ backgroundColor: '#00B49A' }}
+            >
+              Find out more →
+            </span>
           </Link>
 
-          {/* Wednesday Market */}
-          <Link
-            href="/whats-on#down-to-earth"
-            className="flex items-start gap-3 rounded-xl border-2 border-text-dark/15 hover:border-text-dark/35 bg-text-dark/[0.03] hover:bg-text-dark/[0.06] p-4 transition-all group"
-          >
-            <span className="mt-0.5 text-xl">🎵</span>
-            <div className="text-left min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-text-dark/50 mb-0.5">
-                {wednesdayLabel === "Tonight" ? "🎉 Tonight!" : wednesdayLabel}
-              </p>
-              <p className="font-spartan font-semibold text-base leading-tight mb-1">
-                Casual Dancing
-              </p>
-              <p className="text-xs text-text-dark/60">6–8 PM · Down to Earth Market</p>
-            </div>
-          </Link>
+          {/* Regular events row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
-          {/* Monthly Social */}
-          <Link
-            href="/whats-on#monthly-social"
-            className="flex items-start gap-3 rounded-xl border-2 border-pink-accent/30 hover:border-pink-accent bg-pink-accent/5 hover:bg-pink-accent/10 p-4 transition-all group"
-          >
-            <span className="mt-0.5 text-xl">💃</span>
-            <div className="text-left min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-pink-accent mb-0.5">
-                Monthly Social
-              </p>
-              <p className="font-spartan font-semibold text-base leading-tight mb-1">
-                WCS Social
-              </p>
-              <p className="text-xs text-text-dark/60">Date TBD · Scout Hall, Claremont</p>
-            </div>
-          </Link>
+            {/* Monday Classes */}
+            <Link
+              href="/whats-on#monday-classes"
+              className="flex items-start gap-3 rounded-xl border-2 border-yellow-accent/30 hover:border-yellow-accent bg-yellow-accent/5 hover:bg-yellow-accent/10 p-4 transition-all group"
+            >
+              <span className="mt-0.5 text-xl">🟡</span>
+              <div className="text-left min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-yellow-accent mb-0.5">
+                  {mondayLabel === "Tonight" ? "🎉 Tonight!" : mondayLabel}
+                </p>
+                <p className="font-spartan font-semibold text-base leading-tight mb-1">
+                  Classes &amp; Social
+                </p>
+                <p className="text-xs text-text-dark/60">7–10 PM · Havana Nights, Plumstead</p>
+              </div>
+            </Link>
 
-          {/* Workshop Save the Date */}
-          <Link
-            href="/whats-on#workshop"
-            className="flex items-start gap-3 rounded-xl border-2 border-purple-accent/30 hover:border-purple-accent bg-purple-accent/5 hover:bg-purple-accent/10 p-4 transition-all group"
-          >
-            <span className="mt-0.5 text-xl">🌟</span>
-            <div className="text-left min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-purple-accent mb-0.5">
-                Save the Date · 6 September
-              </p>
-              <p className="font-spartan font-semibold text-base leading-tight mb-1">
-                4-Hour WCS Workshop
-              </p>
-              <p className="text-xs text-text-dark/60">11:00–15:30 · Details coming soon</p>
-            </div>
-          </Link>
+            {/* Wednesday Market */}
+            <Link
+              href="/whats-on#down-to-earth"
+              className="flex items-start gap-3 rounded-xl border-2 border-text-dark/15 hover:border-text-dark/35 bg-text-dark/[0.03] hover:bg-text-dark/[0.06] p-4 transition-all group"
+            >
+              <span className="mt-0.5 text-xl">🎵</span>
+              <div className="text-left min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-text-dark/50 mb-0.5">
+                  {wednesdayLabel === "Tonight" ? "🎉 Tonight!" : wednesdayLabel}
+                </p>
+                <p className="font-spartan font-semibold text-base leading-tight mb-1">
+                  Casual Dancing
+                </p>
+                <p className="text-xs text-text-dark/60">6–8 PM · Down to Earth Market</p>
+              </div>
+            </Link>
 
+          </div>
         </div>
       </div>
     </section>

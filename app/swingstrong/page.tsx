@@ -177,16 +177,16 @@ export default function SwingStrong() {
               </div>
 
               {/* Part 2 */}
-              <div className="rounded-2xl p-8" style={{ background: 'linear-gradient(135deg, rgba(219,64,156,0.08), rgba(219,64,156,0.03))' }}>
-                <div className="inline-block bg-pink-accent text-white text-xs font-semibold px-3 py-1 rounded-full mb-4">
+              <div className="rounded-2xl p-8" style={{ background: 'linear-gradient(135deg, rgba(255,209,23,0.15), rgba(255,209,23,0.05))' }}>
+                <div className="inline-block bg-yellow-accent text-text-dark text-xs font-semibold px-3 py-1 rounded-full mb-4">
                   PART 2
                 </div>
                 <h3 className="font-spartan font-semibold text-xl mb-3">💃 Apply It to Your Dancing</h3>
                 <ul className="space-y-2 text-text-dark/80 text-sm md:text-base">
-                  <li className="flex items-start gap-2"><span className="text-pink-accent mt-1">✓</span> More grounded, confident basics</li>
-                  <li className="flex items-start gap-2"><span className="text-pink-accent mt-1">✓</span> Smoother transitions and cleaner footwork</li>
-                  <li className="flex items-start gap-2"><span className="text-pink-accent mt-1">✓</span> Better connection with your partner</li>
-                  <li className="flex items-start gap-2"><span className="text-pink-accent mt-1">✓</span> A more natural sense of flow and timing</li>
+                  <li className="flex items-start gap-2"><span className="text-yellow-accent mt-1">✓</span> More grounded, confident basics</li>
+                  <li className="flex items-start gap-2"><span className="text-yellow-accent mt-1">✓</span> Smoother transitions and cleaner footwork</li>
+                  <li className="flex items-start gap-2"><span className="text-yellow-accent mt-1">✓</span> Better connection with your partner</li>
+                  <li className="flex items-start gap-2"><span className="text-yellow-accent mt-1">✓</span> A more natural sense of flow and timing</li>
                 </ul>
               </div>
             </div>
@@ -197,7 +197,7 @@ export default function SwingStrong() {
         <section className="px-[5%] py-[60px] bg-cloud-dancer">
           <div className="max-w-[800px] mx-auto text-center">
             <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] mb-4">
-              🌿 Who This Is For
+              Who This Is For
             </h2>
             <div className="grid sm:grid-cols-3 gap-4 mb-6">
               {[
@@ -234,9 +234,21 @@ export default function SwingStrong() {
                 <p className="text-text-dark/80 text-base md:text-lg mb-4">
                   Professional WCS dancer and mobility specialist, Jeff brings a unique approach that bridges athletic movement with social dance.
                 </p>
-                <p className="text-text-dark/80 text-base md:text-lg">
+                <p className="text-text-dark/80 text-base md:text-lg mb-6">
                   His workshops are designed to be supportive, practical, and immediately applicable — this is the kind of experience that changes how you feel in your body, and that changes everything in your dancing.
                 </p>
+                <a
+                  href="https://www.instagram.com/mumfuriousfitness"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm font-semibold hover:opacity-70 transition-opacity"
+                  style={{ color: '#00B49A' }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ fill: '#00B49A' }}>
+                    <path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4a5.8 5.8 0 0 1-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8A5.8 5.8 0 0 1 7.8 2m-.2 2A3.6 3.6 0 0 0 4 7.6v8.8C4 18.39 5.61 20 7.6 20h8.8a3.6 3.6 0 0 0 3.6-3.6V7.6C20 5.61 18.39 4 16.4 4H7.6m9.65 1.5a1.25 1.25 0 0 1 1.25 1.25A1.25 1.25 0 0 1 17.25 8 1.25 1.25 0 0 1 16 6.75a1.25 1.25 0 0 1 1.25-1.25M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3z" />
+                  </svg>
+                  @mumfuriousfitness
+                </a>
               </div>
             </div>
           </div>
@@ -247,7 +259,7 @@ export default function SwingStrong() {
           <div className="max-w-[900px] mx-auto grid md:grid-cols-2 gap-8">
 
             <div>
-              <h3 className="font-spartan font-semibold text-xl mb-4">🧘 What to Bring</h3>
+              <h3 className="font-spartan font-semibold text-xl mb-4">👟 What to Bring</h3>
               <ul className="space-y-2 text-text-dark/80">
               {[
                   'Comfortable, movement-friendly clothing',
@@ -275,11 +287,11 @@ export default function SwingStrong() {
                 </div>
                 <div>
                   <p className="font-semibold mb-0.5">Date &amp; Time</p>
-                  <p className="text-text-dark/80">Saturday, 6 September 2026<br />11:30 – 15:30</p>
+                  <p className="text-text-dark/80">Sunday, 6 September 2026<br />11:30 – 15:30</p>
                 </div>
                 <div>
                   <p className="font-semibold mb-0.5">Cost</p>
-                  <p className="text-text-dark/80 font-semibold text-lg">R400 per person</p>
+                  <p className="text-text-dark/80 font-semibold text-lg">R350 per person</p>
                 </div>
               </div>
             </div>
@@ -297,7 +309,7 @@ export default function SwingStrong() {
                 Register for Swing Strong
               </h2>
               <p className="text-center text-text-dark/70 mb-8">
-                Saturday, 6 September · R350 per person<br />
+                Sunday, 6 September · R350 per person<br />
                 <span className="text-sm">You&apos;ll be taken to our payment page after submitting.</span>
               </p>
 
@@ -341,7 +353,7 @@ export default function SwingStrong() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2">Role in WCS</label>
+                  <label className="block text-sm font-semibold mb-2">Primary Role in WCS</label>
                   <div className="flex gap-3">
                     {(['Lead', 'Follow'] as Role[]).map((r) => (
                       <button
@@ -366,7 +378,7 @@ export default function SwingStrong() {
                     {[
                       { value: 'newcomer', label: 'Newcomer', sub: 'Never danced WCS before' },
                       { value: 'level1', label: 'Level 1', sub: 'Know the basics, still building confidence' },
-                      { value: 'level2', label: 'Level 2', sub: 'Can social dance with any level partner' },
+                      { value: 'level2', label: 'Level 2', sub: 'Comfortable social dancing, exploring musicality and style' },
                     ].map((opt) => (
                       <button
                         key={opt.value}
