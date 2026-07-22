@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { appendToSheet } from '@/lib/googleSheets';
+import { logInfo, logError, logApiResponse } from '@/lib/blobLogger';
+import { saveSwingStrongYocoResult } from '@/lib/db';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -57,21 +59,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Payment system not configured' }, { status: 500 });
   }
 
-  // Append to Google Sheet (placeholder — set SHEET_ID_SWINGSTRONG in env once sheet is created)
+  // Log registration intent
+  logInfo('swingstrong_register', 'Registration started', { orderRef, email }).catch(console.error);
+
+  // Write initial row to Google Sheet
+  // Columns: A=Timestamp B=Email C=First Name D=Surname E=Role F=Level G=OrderRef H=Paid I=PaymentId
   const sheetId = process.env.SHEET_ID_SWINGSTRONG;
   if (sheetId) {
     try {
-      // Columns: Timestamp | Name | Surname | Email | Role | Experience | OrderRef | PaymentStatus
-      await appendToSheet(sheetId, 'Sheet1!A:H', [
-        [timestamp, name, surname, email, role, experience, orderRef, 'pending'],
+      await appendToSheet(sheetId, "'jeff workshop'!A:I", [
+        [timestamp, email, name, surname, role, experience, orderRef, 'pending', ''],
       ]);
     } catch (err) {
-      // Log but don't block payment — sheet logging is best-effort
-      console.error('Swingstrong sheet append error:', err);
+      // Best-effort — don't block payment if sheet write fails
+      logError('swingstrong_register', 'Sheet append failed', { orderRef }, err instanceof Error ? err : new Error(String(err))).catch(console.error);
     }
   }
 
   // Create Yoco checkout
+  // Note: checkout.id is the CHECKOUT ID (not a payment ID — paymentId is null until payment completes).
+  // The checkout ID is stored in yoco_api_results.response_id so the webhook can correlate it
+  // with the payment ID received in event.payload.id.
   const amountCents = 35000; // R350
 
   const yocoBody = {
@@ -80,6 +88,7 @@ export async function POST(request: Request) {
     successUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/swingstrong/success?ref=${orderRef}`,
     cancelUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/swingstrong/cancelled?ref=${orderRef}`,
     failureUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/swingstrong/cancelled?ref=${orderRef}`,
+    clientReferenceId: orderRef,
     metadata: {
       orderId: orderRef,
       customerEmail: email,
@@ -95,6 +104,8 @@ export async function POST(request: Request) {
     ],
   };
 
+  const requestTimestamp = new Date();
+
   try {
     const yocoResponse = await fetch('https://payments.yoco.com/api/checkouts', {
       method: 'POST',
@@ -107,10 +118,34 @@ export async function POST(request: Request) {
 
     const yocoData = await yocoResponse.json();
 
+    // Log Yoco API response to blob
+    logApiResponse(
+      'yoco',
+      'https://payments.yoco.com/api/checkouts',
+      { ...yocoBody, metadata: { ...yocoBody.metadata } },
+      yocoResponse.status,
+      yocoData
+    ).catch(console.error);
+
     if (!yocoResponse.ok) {
-      console.error('Yoco error for swingstrong:', yocoData);
+      logError('swingstrong_register', 'Yoco checkout failed', { orderRef, status: yocoResponse.status }).catch(console.error);
       return NextResponse.json({ error: 'Failed to create payment. Please try again.' }, { status: 500 });
     }
+
+    // checkoutId is the Yoco-generated ID for this checkout session.
+    // paymentId from the checkout response is null — it gets populated via webhook once payment completes.
+    const checkoutId: string = yocoData.id;
+
+    // Persist to yoco_api_results (requires registration_id to be nullable — see SQL script)
+    saveSwingStrongYocoResult({
+      requestTimestamp,
+      requestAmount: amountCents,
+      responseStatus: yocoResponse.status,
+      responseId: checkoutId,
+      processingMode: yocoData.processingMode || null,
+    }).catch(err => logError('swingstrong_register', 'DB yoco_api_results write failed', { orderRef }, err instanceof Error ? err : new Error(String(err))).catch(console.error));
+
+    logInfo('swingstrong_register', 'Checkout created', { orderRef, checkoutId }).catch(console.error);
 
     return NextResponse.json({
       success: true,
@@ -118,7 +153,7 @@ export async function POST(request: Request) {
       reference: orderRef,
     });
   } catch (err) {
-    console.error('Swingstrong registration error:', err);
+    logError('swingstrong_register', 'Unexpected error', { orderRef }, err instanceof Error ? err : new Error(String(err))).catch(console.error);
     return NextResponse.json({ error: 'Failed to process registration. Please try again.' }, { status: 500 });
   }
 }

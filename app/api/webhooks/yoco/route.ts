@@ -164,7 +164,8 @@ async function resolveAddOnMemberIdsFromMetadata(
 
 // ─── Swing Strong sheet helper ───────────────────────────────────────────────
 
-async function updateSwingStrongPaymentStatus(orderId: string, status: string): Promise<void> {
+// Sheet columns: A=Timestamp B=Email C=First Name D=Surname E=Role F=Level G=OrderRef H=Paid I=PaymentId
+async function updateSwingStrongPaymentStatus(orderId: string, status: string, paymentId?: string): Promise<void> {
   const sheetId = process.env.SHEET_ID_SWINGSTRONG;
   if (!sheetId) {
     console.warn('SHEET_ID_SWINGSTRONG not set — cannot update payment status for', orderId);
@@ -172,16 +173,18 @@ async function updateSwingStrongPaymentStatus(orderId: string, status: string): 
   }
 
   try {
-    // Columns: A=Timestamp B=Name C=Surname D=Email E=Role F=Experience G=OrderRef H=PaymentStatus
-    const rows = await getSheetValues(sheetId, 'Sheet1!A:H');
-    const rowIndex = rows.findIndex((row) => row[6] === orderId); // column G (index 6)
+    const rows = await getSheetValues(sheetId, "'jeff workshop'!A:I");
+    const rowIndex = rows.findIndex((row) => row[6] === orderId); // column G (index 6) = OrderRef
     if (rowIndex === -1) {
       console.warn('Swingstrong order not found in sheet:', orderId);
       return;
     }
-    // Row 1 is header (index 0), so sheet row = rowIndex + 1 (1-based), and data starts at row 2
+    // Rows are 1-indexed in Sheets API; header is row 1 so data starts at row 2
     const sheetRowNumber = rowIndex + 1;
-    await updateSheetValues(sheetId, `Sheet1!H${sheetRowNumber}`, [[status]]);
+    // Update H (Paid) and I (PaymentId) in one write
+    await updateSheetValues(sheetId, `'jeff workshop'!H${sheetRowNumber}:I${sheetRowNumber}`, [
+      [status, paymentId ?? ''],
+    ]);
   } catch (err) {
     console.error('Failed to update swingstrong sheet status:', err);
   }
@@ -205,11 +208,26 @@ async function handleEvent(event: YocoEvent) {
       const source = event.payload.metadata?.source;
 
       // Handle Swing Strong workshop payment
+      // - event.payload.id = payment ID (the actual payment processed by Yoco)
+      // - event.payload.metadata.orderId = our SS-xxx order reference (Google Sheet lookup key)
+      // - event.payload.metadata.checkoutId = Yoco checkout ID (links to yoco_api_results.response_id)
       if (source === 'swingstrong_workshop') {
         const orderId = event.payload.metadata?.orderId;
+        const paymentId = event.payload.id;
+        const checkoutId = event.payload.metadata?.checkoutId;
+        const amount = event.payload.amount;
+        const apiCreatedDate = event.payload.createdDate;
+
+        // Update Google Sheet: mark row as paid and record the payment ID
         if (orderId) {
-          await updateSwingStrongPaymentStatus(orderId, 'paid');
+          await updateSwingStrongPaymentStatus(orderId, 'paid', paymentId);
         }
+
+        // Update yoco_api_results: store the payment ID against the checkout ID
+        if (checkoutId && paymentId) {
+          await updateYocoPaymentId(checkoutId, paymentId, amount, apiCreatedDate || null);
+        }
+
         return;
       }
 

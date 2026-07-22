@@ -1223,6 +1223,45 @@ export async function getWaitlistSettings(): Promise<{
   };
 }
 
+// ─── Swing Strong workshop ───────────────────────────────────────────────────
+
+// Insert a Yoco checkout record for the Swing Strong workshop.
+// registration_id is stored as NULL because there is no registrations table entry for this event.
+// PREREQUISITE: run this SQL once on the DB before this function will work:
+//   ALTER TABLE yoco_api_results ALTER COLUMN registration_id DROP NOT NULL;
+export async function saveSwingStrongYocoResult(params: {
+  requestTimestamp: Date;
+  requestAmount: number;
+  responseStatus: number;
+  responseId: string; // Yoco checkout ID (stored as response_id)
+  processingMode?: string | null;
+}): Promise<void> {
+  const sql = getDb();
+
+  await sql`
+    INSERT INTO yoco_api_results (
+      request_timestamp,
+      request_amount,
+      registration_id,
+      response_status,
+      payment_id,
+      response_id,
+      processing_mode
+    )
+    VALUES (
+      ${params.requestTimestamp},
+      ${params.requestAmount},
+      NULL,
+      ${params.responseStatus},
+      NULL,
+      ${params.responseId},
+      ${params.processingMode ?? null}
+    )
+  `;
+}
+
+// ─── Waitlist settings ────────────────────────────────────────────────────────
+
 // Update waitlist settings
 export async function updateWaitlistSettings(settings: {
   level1WeekendFollowersOpen?: boolean;
