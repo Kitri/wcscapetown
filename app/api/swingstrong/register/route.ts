@@ -72,7 +72,7 @@ export async function POST(request: Request) {
   }
 
   // Create Yoco checkout
-  const amountCents = 40000; // R400
+  const amountCents = 35000; // R350
 
   const yocoBody = {
     amount: amountCents,

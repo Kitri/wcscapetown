@@ -30,7 +30,8 @@ function CancelledContent() {
 
           <Link
             href="/swingstrong"
-            className="inline-block w-full bg-purple-accent text-white px-8 py-4 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all"
+            className="inline-block w-full text-white px-8 py-4 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all"
+            style={{ backgroundColor: '#00B49A' }}
           >
             Back to Registration
           </Link>
@@ -46,7 +47,7 @@ export default function SwingStrongCancelled() {
       <>
         <Header />
         <main className="min-h-screen bg-cloud-dancer flex items-center justify-center">
-          <div className="animate-spin h-8 w-8 border-4 border-purple-accent border-t-transparent rounded-full" />
+          <div className="animate-spin h-8 w-8 border-4 border-t-transparent rounded-full" style={{ borderColor: '#00B49A', borderTopColor: 'transparent' }} />
         </main>
       </>
     }>

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Header from '@/components/Header';
 
 type Role = 'Lead' | 'Follow' | '';
-type Experience = 'new' | 'basics' | 'intermediate' | 'advanced' | '';
+type Experience = 'newcomer' | 'level1' | 'level2' | '';
 
 export default function SwingStrong() {
   const [name, setName] = useState('');
@@ -61,7 +61,7 @@ export default function SwingStrong() {
 
               {/* Left: copy */}
               <div>
-                <div className="inline-block bg-purple-accent text-white px-4 py-2 rounded-full font-semibold text-xs tracking-wider mb-6">
+                <div className="inline-block text-white px-4 py-2 rounded-full font-semibold text-xs tracking-wider mb-6" style={{ backgroundColor: '#00B49A' }}>
                   SAVE THE DATE · 6 SEPTEMBER 2026
                 </div>
                 <h1 className="font-spartan font-bold text-[48px] md:text-[64px] leading-none mb-3">
@@ -84,8 +84,8 @@ export default function SwingStrong() {
                     <p className="font-semibold">11:30 – 15:30</p>
                   </div>
                   <div>
-                    <p className="text-white/40 uppercase tracking-widest text-[10px] mb-1">Investment</p>
-                    <p className="font-semibold">R400 per person</p>
+                  <p className="text-white/40 uppercase tracking-widest text-[10px] mb-1">Investment</p>
+                    <p className="font-semibold">R350 per person</p>
                   </div>
                   <div>
                     <p className="text-white/40 uppercase tracking-widest text-[10px] mb-1">Venue</p>
@@ -95,9 +95,10 @@ export default function SwingStrong() {
 
                 <button
                   onClick={scrollToForm}
-                  className="bg-purple-accent text-white px-8 py-4 rounded-lg font-semibold text-lg hover:-translate-y-0.5 hover:shadow-xl hover:shadow-purple-accent/40 transition-all duration-200"
+                  className="text-white px-8 py-4 rounded-lg font-semibold text-lg hover:-translate-y-0.5 hover:shadow-xl transition-all duration-200"
+                  style={{ backgroundColor: '#00B49A' }}
                 >
-                  Register Now — R400
+                  Register Now — R350
                 </button>
               </div>
 
@@ -117,7 +118,7 @@ export default function SwingStrong() {
         </section>
 
         {/* ── Tagline strip ──────────────────────────────────────────────────── */}
-        <section className="px-[5%] py-[24px] bg-purple-accent text-white text-center">
+        <section className="px-[5%] py-[24px] text-white text-center" style={{ backgroundColor: '#00B49A' }}>
           <p className="font-spartan font-semibold text-lg md:text-2xl">
             Better movement creates better dance. Period.
           </p>
@@ -137,12 +138,12 @@ export default function SwingStrong() {
                 'Thinking too much while dancing',
               ].map((item) => (
                 <div key={item} className="bg-white rounded-xl p-4 flex items-start gap-3">
-                  <span className="text-purple-accent font-bold text-lg mt-0.5">•</span>
+                  <span className="font-bold text-lg mt-0.5" style={{ color: '#00B49A' }}>•</span>
                   <p className="text-text-dark/80">{item}</p>
                 </div>
               ))}
             </div>
-            <div className="bg-purple-accent/10 border-2 border-purple-accent/30 rounded-xl p-6">
+            <div className="rounded-xl p-6 border-2" style={{ backgroundColor: 'rgba(0,180,154,0.1)', borderColor: 'rgba(0,180,154,0.35)' }}>
               <p className="text-base md:text-lg font-medium">
                 You&apos;re not alone. And more importantly — <strong>it&apos;s fixable.</strong>
               </p>
@@ -162,16 +163,16 @@ export default function SwingStrong() {
             <div className="grid md:grid-cols-2 gap-8">
 
               {/* Part 1 */}
-              <div className="rounded-2xl p-8" style={{ background: 'linear-gradient(135deg, rgba(138,43,226,0.08), rgba(138,43,226,0.03))' }}>
-                <div className="inline-block bg-purple-accent text-white text-xs font-semibold px-3 py-1 rounded-full mb-4">
+              <div className="rounded-2xl p-8" style={{ background: 'linear-gradient(135deg, rgba(0,180,154,0.1), rgba(0,180,154,0.03))' }}>
+                <div className="inline-block text-white text-xs font-semibold px-3 py-1 rounded-full mb-4" style={{ backgroundColor: '#00B49A' }}>
                   PART 1
                 </div>
                 <h3 className="font-spartan font-semibold text-xl mb-3">🧘 Mobility &amp; Movement Foundations</h3>
                 <ul className="space-y-2 text-text-dark/80 text-sm md:text-base">
-                  <li className="flex items-start gap-2"><span className="text-purple-accent mt-1">✓</span> Move with more ease and less tension</li>
-                  <li className="flex items-start gap-2"><span className="text-purple-accent mt-1">✓</span> Improve balance and body awareness</li>
-                  <li className="flex items-start gap-2"><span className="text-purple-accent mt-1">✓</span> Unlock mobility in the joints that matter most for WCS</li>
-                  <li className="flex items-start gap-2"><span className="text-purple-accent mt-1">✓</span> Build movement patterns that support your dancing</li>
+                  <li className="flex items-start gap-2"><span className="mt-1" style={{ color: '#00B49A' }}>✓</span> Move with more ease and less tension</li>
+                  <li className="flex items-start gap-2"><span className="mt-1" style={{ color: '#00B49A' }}>✓</span> Improve balance and body awareness</li>
+                  <li className="flex items-start gap-2"><span className="mt-1" style={{ color: '#00B49A' }}>✓</span> Unlock mobility in the joints that matter most for WCS</li>
+                  <li className="flex items-start gap-2"><span className="mt-1" style={{ color: '#00B49A' }}>✓</span> Build movement patterns that support your dancing</li>
                 </ul>
               </div>
 
@@ -220,7 +221,7 @@ export default function SwingStrong() {
             <div className="grid md:grid-cols-2 gap-10 items-center">
               <div>
                 <Image
-                  src="/images/jeff.jpeg"
+                  src="/images/jeff_2.jpeg"
                   alt="Jeff Mumford"
                   width={480}
                   height={400}
@@ -228,7 +229,7 @@ export default function SwingStrong() {
                 />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-widest text-purple-accent mb-3">Your Instructor</p>
+                <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: '#00B49A' }}>Your Instructor</p>
                 <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] mb-4">Jeff Mumford</h2>
                 <p className="text-text-dark/80 text-base md:text-lg mb-4">
                   Professional WCS dancer and mobility specialist, Jeff brings a unique approach that bridges athletic movement with social dance.
@@ -248,14 +249,14 @@ export default function SwingStrong() {
             <div>
               <h3 className="font-spartan font-semibold text-xl mb-4">🧘 What to Bring</h3>
               <ul className="space-y-2 text-text-dark/80">
-                {[
+              {[
                   'Comfortable, movement-friendly clothing',
                   'A yoga mat',
                   'Socks or bare feet for the mobility section',
                   'Dance shoes for the second half',
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 bg-white rounded-lg p-3">
-                    <span className="text-purple-accent font-bold mt-0.5">•</span>
+                    <span className="font-bold mt-0.5" style={{ color: '#00B49A' }}>•</span>
                     {item}
                   </li>
                 ))}
@@ -289,14 +290,14 @@ export default function SwingStrong() {
         <div ref={formRef}>
           <section
             className="px-[5%] py-[60px]"
-            style={{ background: 'linear-gradient(135deg, rgba(138,43,226,0.12), rgba(138,43,226,0.04))' }}
+            style={{ background: 'linear-gradient(135deg, rgba(0,180,154,0.1), rgba(0,180,154,0.03))' }}
           >
             <div className="max-w-[600px] mx-auto">
               <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] text-center mb-2">
                 Register for Swing Strong
               </h2>
               <p className="text-center text-text-dark/70 mb-8">
-                Saturday, 6 September · R400 per person<br />
+                Saturday, 6 September · R350 per person<br />
                 <span className="text-sm">You&apos;ll be taken to our payment page after submitting.</span>
               </p>
 
@@ -310,7 +311,7 @@ export default function SwingStrong() {
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full border-2 border-text-dark/15 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-accent transition-colors"
+                  className="w-full border-2 border-text-dark/15 rounded-lg px-4 py-3 focus:outline-none transition-colors" style={{ '--tw-ring-color': '#00B49A' } as React.CSSProperties}
                       placeholder="Jane"
                     />
                   </div>
@@ -321,7 +322,7 @@ export default function SwingStrong() {
                       required
                       value={surname}
                       onChange={(e) => setSurname(e.target.value)}
-                      className="w-full border-2 border-text-dark/15 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-accent transition-colors"
+                      className="w-full border-2 border-text-dark/15 rounded-lg px-4 py-3 focus:outline-none transition-colors"
                       placeholder="Smith"
                     />
                   </div>
@@ -334,7 +335,7 @@ export default function SwingStrong() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full border-2 border-text-dark/15 rounded-lg px-4 py-3 focus:outline-none focus:border-purple-accent transition-colors"
+                    className="w-full border-2 border-text-dark/15 rounded-lg px-4 py-3 focus:outline-none transition-colors"
                     placeholder="jane@example.com"
                   />
                 </div>
@@ -347,11 +348,11 @@ export default function SwingStrong() {
                         key={r}
                         type="button"
                         onClick={() => setRole(r)}
-                        className={`flex-1 py-3 rounded-lg border-2 font-semibold text-sm transition-all ${
-                          role === r
-                            ? 'border-purple-accent bg-purple-accent/10 text-purple-accent'
-                            : 'border-text-dark/15 text-text-dark/60 hover:border-purple-accent/50'
-                        }`}
+                        className="flex-1 py-3 rounded-lg border-2 font-semibold text-sm transition-all"
+                        style={role === r
+                          ? { borderColor: '#00B49A', backgroundColor: 'rgba(0,180,154,0.1)', color: '#00B49A' }
+                          : { borderColor: 'rgba(40,39,35,0.15)', color: 'rgba(40,39,35,0.6)' }
+                        }
                       >
                         {r}
                       </button>
@@ -361,24 +362,24 @@ export default function SwingStrong() {
 
                 <div>
                   <label className="block text-sm font-semibold mb-2">Your WCS Experience</label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     {[
-                      { value: 'new', label: 'New to WCS' },
-                      { value: 'basics', label: 'Still building basics' },
-                      { value: 'intermediate', label: 'Intermediate' },
-                      { value: 'advanced', label: 'Advanced' },
+                      { value: 'newcomer', label: 'Newcomer', sub: 'Never danced WCS before' },
+                      { value: 'level1', label: 'Level 1', sub: 'Know the basics, still building confidence' },
+                      { value: 'level2', label: 'Level 2', sub: 'Can social dance with any level partner' },
                     ].map((opt) => (
                       <button
                         key={opt.value}
                         type="button"
                         onClick={() => setExperience(opt.value as Experience)}
-                        className={`py-2.5 px-3 rounded-lg border-2 font-medium text-sm transition-all text-left ${
-                          experience === opt.value
-                            ? 'border-purple-accent bg-purple-accent/10 text-purple-accent'
-                            : 'border-text-dark/15 text-text-dark/60 hover:border-purple-accent/50'
-                        }`}
+                        className="py-2.5 px-3 rounded-lg border-2 font-medium text-sm transition-all text-left"
+                        style={experience === opt.value
+                          ? { borderColor: '#00B49A', backgroundColor: 'rgba(0,180,154,0.1)', color: '#00B49A' }
+                          : { borderColor: 'rgba(40,39,35,0.15)', color: 'rgba(40,39,35,0.6)' }
+                        }
                       >
-                        {opt.label}
+                        <span className="block font-semibold">{opt.label}</span>
+                        <span className="block text-xs opacity-70 mt-0.5 font-normal">{opt.sub}</span>
                       </button>
                     ))}
                   </div>
@@ -393,7 +394,8 @@ export default function SwingStrong() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-purple-accent text-white py-4 rounded-lg font-semibold text-lg hover:-translate-y-0.5 hover:shadow-lg hover:shadow-purple-accent/30 transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+                  className="w-full text-white py-4 rounded-lg font-semibold text-lg hover:-translate-y-0.5 hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+                  style={{ backgroundColor: '#00B49A' }}
                 >
                   {loading ? (
                     <span className="flex items-center justify-center gap-2">
@@ -401,7 +403,7 @@ export default function SwingStrong() {
                       Preparing payment…
                     </span>
                   ) : (
-                    'Register & Pay — R400'
+                    'Register & Pay — R350'
                   )}
                 </button>
 
@@ -412,7 +414,7 @@ export default function SwingStrong() {
 
               <p className="text-center text-sm text-text-dark/60 mt-6">
                 Questions? Email{' '}
-                <a href="mailto:hello@wcscapetown.co.za" className="text-purple-accent hover:underline">
+                <a href="mailto:hello@wcscapetown.co.za" className="hover:underline" style={{ color: '#00B49A' }}>
                   hello@wcscapetown.co.za
                 </a>
               </p>

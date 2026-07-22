@@ -14,8 +14,8 @@ function SuccessContent() {
       <Header />
       <main className="min-h-screen bg-cloud-dancer flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-lg text-center">
-          <div className="w-16 h-16 bg-purple-accent/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-purple-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'rgba(0,180,154,0.15)' }}>
+            <svg className="w-8 h-8" style={{ color: '#00B49A' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
@@ -25,7 +25,7 @@ function SuccessContent() {
           </h1>
 
           <p className="text-text-dark/70 mb-6">
-            Payment confirmed for <strong>Swing Strong</strong> — 6 September 2026.
+            Payment confirmed for <strong>Swing Strong</strong> — 6 September 2026. R350 paid.
           </p>
 
           <div className="bg-cloud-dancer rounded-lg p-4 mb-6">
@@ -33,7 +33,7 @@ function SuccessContent() {
             <p className="font-mono text-sm font-semibold">{reference || 'N/A'}</p>
           </div>
 
-          <div className="text-left bg-purple-accent/10 rounded-lg p-4 mb-6">
+          <div className="text-left rounded-lg p-4 mb-6" style={{ backgroundColor: 'rgba(0,180,154,0.1)' }}>
             <p className="font-semibold mb-2">What to bring on the day</p>
             <ul className="text-sm text-text-dark/80 space-y-1">
               <li>• Comfortable, movement-friendly clothing</li>
@@ -54,14 +54,15 @@ function SuccessContent() {
 
           <p className="text-sm text-text-dark/70 mb-6">
             Questions? Email{' '}
-            <a href="mailto:hello@wcscapetown.co.za" className="text-purple-accent hover:underline">
+            <a href="mailto:hello@wcscapetown.co.za" className="hover:underline" style={{ color: '#00B49A' }}>
               hello@wcscapetown.co.za
             </a>
           </p>
 
           <Link
             href="/swingstrong"
-            className="inline-block w-full bg-purple-accent text-white px-8 py-4 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all"
+            className="inline-block w-full text-white px-8 py-4 rounded-lg font-semibold hover:-translate-y-0.5 hover:shadow-lg transition-all"
+            style={{ backgroundColor: '#00B49A' }}
           >
             Back to Swing Strong
           </Link>
@@ -77,7 +78,7 @@ export default function SwingStrongSuccess() {
       <>
         <Header />
         <main className="min-h-screen bg-cloud-dancer flex items-center justify-center">
-          <div className="animate-spin h-8 w-8 border-4 border-purple-accent border-t-transparent rounded-full" />
+          <div className="animate-spin h-8 w-8 border-4 border-t-transparent rounded-full" style={{ borderColor: '#00B49A', borderTopColor: 'transparent' }} />
         </main>
       </>
     }>
