@@ -62,7 +62,7 @@ export default function SwingStrong() {
               {/* Left: copy */}
               <div>
                 <div className="inline-block text-white px-4 py-2 rounded-full font-semibold text-xs tracking-wider mb-6" style={{ backgroundColor: '#00B49A' }}>
-                  SAVE THE DATE · 6 SEPTEMBER 2026
+                  INTERNATIONAL WORKSHOP · 6 SEPTEMBER 2026
                 </div>
                 <h1 className="font-spartan font-bold text-[48px] md:text-[64px] leading-none mb-3">
                   Swing<br />Strong
@@ -77,7 +77,7 @@ export default function SwingStrong() {
                 <div className="flex flex-wrap gap-8 mb-10 text-sm">
                   <div>
                     <p className="text-white/40 uppercase tracking-widest text-[10px] mb-1">Date</p>
-                    <p className="font-semibold">Saturday, 6 September</p>
+                    <p className="font-semibold">Sunday, 6 September</p>
                   </div>
                   <div>
                     <p className="text-white/40 uppercase tracking-widest text-[10px] mb-1">Time</p>

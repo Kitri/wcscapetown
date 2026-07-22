@@ -46,7 +46,7 @@ function SuccessContent() {
           <div className="text-left bg-yellow-accent/10 rounded-lg p-4 mb-6">
             <p className="font-semibold mb-2">Event details</p>
             <ul className="text-sm text-text-dark/80 space-y-1">
-              <li>📅 Saturday, 6 September 2026</li>
+              <li>📅 Sunday, 6 September 2026</li>
               <li>🕐 11:30 – 15:30</li>
               <li>📍 Pinelands North Primary School Hall, Cape Town</li>
             </ul>
