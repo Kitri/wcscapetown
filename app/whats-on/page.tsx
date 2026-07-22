@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Header from "@/components/Header";
 
 export const dynamic = "force-dynamic";
@@ -83,16 +82,25 @@ export default function WhatsOn() {
             </div>
 
             <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Upcoming Events</h2>
-            <div className="flex justify-center">
-              {/* Monthly Social - poster card */}
-              <a href="#monthly-social" className="group block rounded-2xl overflow-hidden border-2 border-pink-accent/30 hover:border-pink-accent transition-all hover:shadow-xl max-w-[340px] w-full">
-                <Image
-                  src="/images/social-18jul-26.JPG"
-                  alt="Cowboys & Fishnets WCS Social — 18 July"
-                  width={500}
-                  height={600}
-                  className="w-full h-auto"
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Monthly Social */}
+              <a href="#monthly-social" className="group border-2 border-pink-accent/30 hover:border-pink-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
+                <div className="inline-block bg-pink-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
+                  MONTHLY SOCIAL
+                </div>
+                <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social</h3>
+                <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
+                <p className="text-xs italic mt-2 text-text-dark/60">Date TBD — watch this space</p>
+              </a>
+
+              {/* Workshop Save the Date */}
+              <a href="#workshop" className="group border-2 border-purple-accent/30 hover:border-purple-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
+                <div className="inline-block bg-purple-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
+                  SAVE THE DATE
+                </div>
+                <h3 className="font-spartan font-semibold text-lg mb-2">4-Hour WCS Workshop</h3>
+                <p className="text-sm text-text-dark/70 mb-1">Saturday, 6 September</p>
+                <p className="text-xs italic mt-2 text-text-dark/60">11:00 – 15:30 · Details to be confirmed</p>
               </a>
             </div>
 
@@ -275,37 +283,39 @@ export default function WhatsOn() {
               WCS Social
             </h2>
 
-            {/* Theme callout */}
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
-              <p className="text-lg md:text-xl font-semibold mb-2">🤠 Theme: Cowboys &amp; Fishnets</p>
-              <p className="text-base md:text-lg">Dress the part! WCS line dance class at 9 PM — same great social as usual.</p>
+              <p className="text-lg md:text-xl font-semibold mb-2">📅 Date to be confirmed</p>
+              <p className="text-base md:text-lg">Our monthly social is coming — details will be announced soon. Follow us on social media to stay in the loop!</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
-              {/* Left Column - Event Details */}
+              {/* Left Column - What to expect */}
               <div>
-                <h3 className="font-spartan font-semibold text-xl mb-4">Event Details</h3>
-                <div className="space-y-4 text-base md:text-lg">
-                  <div>
-                    <p className="font-semibold mb-1">📅 When</p>
-                    <p>Saturday, 18 July</p>
+                <h3 className="font-spartan font-semibold text-xl mb-4">What to Expect</h3>
+                <div className="space-y-3">
+                  <div className="bg-white/60 rounded-lg p-4">
+                    <p className="font-semibold">Taster Class</p>
+                    <p className="text-sm text-text-dark/70">A short intro class at the start — perfect for newcomers</p>
                   </div>
-                  <div>
-                    <p className="font-semibold mb-1">🕗 Time</p>
-                    <p>8:00 – 11:00 PM</p>
-                    <p className="text-sm text-text-dark/70">WCS line dance class at 9:00 PM</p>
+                  <div className="bg-white/60 rounded-lg p-4">
+                    <p className="font-semibold">Social Dancing</p>
+                    <p className="text-sm text-text-dark/70">Open social for the rest of the evening</p>
                   </div>
-                  <div>
-                    <p className="font-semibold mb-1">💰 Cost</p>
-                    <p>R50 per person</p>
+                  <div className="bg-white/60 rounded-lg p-4">
+                    <p className="font-semibold">All Welcome</p>
+                    <p className="text-sm text-text-dark/70">No partner needed, all levels welcome</p>
                   </div>
                 </div>
               </div>
 
-              {/* Right Column - Venue & Parking */}
+              {/* Right Column - Usual details */}
               <div>
-                <h3 className="font-spartan font-semibold text-xl mb-4">Venue &amp; Parking</h3>
+                <h3 className="font-spartan font-semibold text-xl mb-4">Usual Details</h3>
                 <div className="space-y-4 text-base md:text-lg">
+                  <div>
+                    <p className="font-semibold mb-1">💰 Cost</p>
+                    <p>R50 per person</p>
+                  </div>
                   <div>
                     <p className="font-semibold mb-1">📍 Venue</p>
                     <p>
@@ -328,6 +338,44 @@ export default function WhatsOn() {
           </div>
         </section>
 
+        {/* Workshop - Save the Date */}
+        <section
+          id="workshop"
+          className="px-[5%] py-[50px] bg-cloud-dancer"
+        >
+          <div className="max-w-[900px] mx-auto text-center">
+            <div className="inline-block bg-purple-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-6">
+              SAVE THE DATE
+            </div>
+            <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] mb-4">
+              4-Hour WCS Workshop
+            </h2>
+            <p className="text-lg md:text-xl text-text-dark/80 mb-8 max-w-[600px] mx-auto">
+              A dedicated half-day workshop for West Coast Swing — more details coming soon!
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-[700px] mx-auto mb-8">
+              <div className="bg-white rounded-xl p-5">
+                <p className="text-2xl mb-2">📅</p>
+                <p className="font-semibold">Saturday, 6 September</p>
+              </div>
+              <div className="bg-white rounded-xl p-5">
+                <p className="text-2xl mb-2">🕐</p>
+                <p className="font-semibold">11:00 – 15:30</p>
+              </div>
+              <div className="bg-white rounded-xl p-5">
+                <p className="text-2xl mb-2">📍</p>
+                <p className="font-semibold">Venue TBC</p>
+              </div>
+            </div>
+
+            <div className="bg-purple-accent/10 border-2 border-purple-accent/30 rounded-xl p-6 max-w-[500px] mx-auto">
+              <p className="text-base text-text-dark/80">
+                ✨ Full details — instructors, content and cost — will be announced soon. Mark your calendar!
+              </p>
+            </div>
+          </div>
+        </section>
 
         {/* Class Levels Explanation */}
         <section id="class-levels" className="px-[5%] py-[50px] bg-white">

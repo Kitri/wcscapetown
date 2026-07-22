@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { getSheetValues, updateSheetValues } from '@/lib/googleSheets';
 import {
   completeRegistration,
   updateRegistrationPaymentStatusByOrder,
@@ -161,6 +162,33 @@ async function resolveAddOnMemberIdsFromMetadata(
   }
 }
 
+// ─── Swing Strong sheet helper ───────────────────────────────────────────────
+
+async function updateSwingStrongPaymentStatus(orderId: string, status: string): Promise<void> {
+  const sheetId = process.env.SHEET_ID_SWINGSTRONG;
+  if (!sheetId) {
+    console.warn('SHEET_ID_SWINGSTRONG not set — cannot update payment status for', orderId);
+    return;
+  }
+
+  try {
+    // Columns: A=Timestamp B=Name C=Surname D=Email E=Role F=Experience G=OrderRef H=PaymentStatus
+    const rows = await getSheetValues(sheetId, 'Sheet1!A:H');
+    const rowIndex = rows.findIndex((row) => row[6] === orderId); // column G (index 6)
+    if (rowIndex === -1) {
+      console.warn('Swingstrong order not found in sheet:', orderId);
+      return;
+    }
+    // Row 1 is header (index 0), so sheet row = rowIndex + 1 (1-based), and data starts at row 2
+    const sheetRowNumber = rowIndex + 1;
+    await updateSheetValues(sheetId, `Sheet1!H${sheetRowNumber}`, [[status]]);
+  } catch (err) {
+    console.error('Failed to update swingstrong sheet status:', err);
+  }
+}
+
+// ─── Event handler ────────────────────────────────────────────────────────────
+
 async function handleEvent(event: YocoEvent) {
 
   // Log webhook event to blob storage (non-blocking)
@@ -175,6 +203,15 @@ async function handleEvent(event: YocoEvent) {
   switch (event.type) {
     case 'payment.succeeded': {
       const source = event.payload.metadata?.source;
+
+      // Handle Swing Strong workshop payment
+      if (source === 'swingstrong_workshop') {
+        const orderId = event.payload.metadata?.orderId;
+        if (orderId) {
+          await updateSwingStrongPaymentStatus(orderId, 'paid');
+        }
+        return;
+      }
 
       // Handle outstanding add-on payments (combined spin/spot/tshirt checkout)
       if (source === 'addon_pay_outstanding') {

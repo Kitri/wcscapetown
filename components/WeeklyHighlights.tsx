@@ -22,9 +22,9 @@ export default function WeeklyHighlights() {
     <section className="px-[5%] py-[28px] bg-white border-t border-text-dark/10">
       <div className="max-w-[1100px] mx-auto">
         <p className="text-xs font-semibold uppercase tracking-widest text-text-dark/40 text-center mb-5">
-          This week
+          What&apos;s On
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
           {/* Monday Classes */}
           <Link
@@ -65,15 +65,32 @@ export default function WeeklyHighlights() {
             href="/whats-on#monthly-social"
             className="flex items-start gap-3 rounded-xl border-2 border-pink-accent/30 hover:border-pink-accent bg-pink-accent/5 hover:bg-pink-accent/10 p-4 transition-all group"
           >
-            <span className="mt-0.5 text-xl">🤠</span>
+            <span className="mt-0.5 text-xl">💃</span>
             <div className="text-left min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-pink-accent mb-0.5">
-                Saturday, 18 July
+                Monthly Social
               </p>
               <p className="font-spartan font-semibold text-base leading-tight mb-1">
-                Cowboys &amp; Fishnets Social
+                WCS Social
               </p>
-              <p className="text-xs text-text-dark/60">8–11 PM · Scout Hall, Claremont</p>
+              <p className="text-xs text-text-dark/60">Date TBD · Scout Hall, Claremont</p>
+            </div>
+          </Link>
+
+          {/* Workshop Save the Date */}
+          <Link
+            href="/whats-on#workshop"
+            className="flex items-start gap-3 rounded-xl border-2 border-purple-accent/30 hover:border-purple-accent bg-purple-accent/5 hover:bg-purple-accent/10 p-4 transition-all group"
+          >
+            <span className="mt-0.5 text-xl">🌟</span>
+            <div className="text-left min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-purple-accent mb-0.5">
+                Save the Date · 6 September
+              </p>
+              <p className="font-spartan font-semibold text-base leading-tight mb-1">
+                4-Hour WCS Workshop
+              </p>
+              <p className="text-xs text-text-dark/60">11:00–15:30 · Details coming soon</p>
             </div>
           </Link>
 
