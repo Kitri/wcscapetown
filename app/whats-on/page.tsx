@@ -114,13 +114,13 @@ export default function WhatsOn() {
                   </span>
                 </div>
                 {/* Image side */}
-                <div className="md:w-[240px] shrink-0 h-[200px] md:h-auto overflow-hidden">
+                <div className="shrink-0 md:w-[240px] overflow-hidden">
                   <Image
                     src="/images/jeff_3.jpeg"
                     alt="Jeff Mumford performing West Coast Swing"
                     width={480}
                     height={640}
-                    className="w-full h-full object-cover object-top"
+                    className="w-full h-auto md:h-full object-cover object-center"
                   />
                 </div>
               </a>

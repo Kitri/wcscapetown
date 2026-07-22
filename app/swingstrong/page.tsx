@@ -7,6 +7,14 @@ import Header from '@/components/Header';
 type Role = 'Lead' | 'Follow' | '';
 type Experience = 'newcomer' | 'level1' | 'level2' | '';
 
+interface CheckResult {
+  found: boolean;
+  paid?: boolean;
+  orderRef?: string;
+  emailMasked?: string;
+  firstName?: string;
+}
+
 export default function SwingStrong() {
   const [name, setName] = useState('');
   const [surname, setSurname] = useState('');
@@ -16,10 +24,42 @@ export default function SwingStrong() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Check registration state
+  const [checkEmail, setCheckEmail] = useState('');
+  const [checkFirst, setCheckFirst] = useState('');
+  const [checkSurname, setCheckSurname] = useState('');
+  const [checkLoading, setCheckLoading] = useState(false);
+  const [checkError, setCheckError] = useState('');
+  const [checkResult, setCheckResult] = useState<CheckResult | null>(null);
+
   const formRef = useRef<HTMLDivElement>(null);
 
   const scrollToForm = () => {
     formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const handleCheck = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCheckError('');
+    setCheckResult(null);
+    setCheckLoading(true);
+    try {
+      const res = await fetch('/api/swingstrong/check-registration', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: checkEmail, firstName: checkFirst, surname: checkSurname }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCheckError(data.error || 'Something went wrong.');
+      } else {
+        setCheckResult(data);
+      }
+    } catch {
+      setCheckError('Something went wrong. Please try again.');
+    } finally {
+      setCheckLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,8 +99,8 @@ export default function SwingStrong() {
           <div className="max-w-[1100px] mx-auto">
             <div className="grid md:grid-cols-2 gap-12 items-center">
 
-              {/* Left: copy */}
-              <div>
+              {/* Left: copy — shown second on mobile, first on desktop */}
+              <div className="order-2 md:order-1">
                 <div className="inline-block text-white px-4 py-2 rounded-full font-semibold text-xs tracking-wider mb-6" style={{ backgroundColor: '#00B49A' }}>
                   INTERNATIONAL WORKSHOP · 6 SEPTEMBER 2026
                 </div>
@@ -102,8 +142,8 @@ export default function SwingStrong() {
                 </button>
               </div>
 
-              {/* Right: Jeff image */}
-              <div className="flex justify-center md:justify-end">
+              {/* Right: Jeff image — shown first on mobile, second on desktop */}
+              <div className="order-1 md:order-2 flex justify-center md:justify-end">
                 <Image
                   src="/images/jeff.jpeg"
                   alt="Jeff Mumford — WCS dancer and mobility specialist"
@@ -433,6 +473,108 @@ export default function SwingStrong() {
             </div>
           </section>
         </div>
+
+        {/* ── Check Registration ────────────────────────────────────────────────── */}
+        <section className="px-[5%] py-[48px] bg-cloud-dancer">
+          <div className="max-w-[600px] mx-auto">
+            <h2 className="font-spartan font-semibold text-[22px] text-center mb-2">Check your registration</h2>
+            <p className="text-center text-sm text-text-dark/60 mb-6">
+              Already registered? Look up your status using your email or name.
+            </p>
+
+            <form onSubmit={handleCheck} className="bg-white rounded-2xl p-6 shadow-sm space-y-4">
+              <div>
+                <label className="block text-sm font-semibold mb-1">Email address</label>
+                <input
+                  type="email"
+                  value={checkEmail}
+                  onChange={(e) => setCheckEmail(e.target.value)}
+                  className="w-full border-2 border-text-dark/15 rounded-lg px-4 py-3 focus:outline-none transition-colors"
+                  placeholder="jane@example.com"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 text-xs text-text-dark/40">
+                <div className="flex-1 h-px bg-text-dark/15" />
+                <span>or search by name</span>
+                <div className="flex-1 h-px bg-text-dark/15" />
+              </div>
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-semibold mb-1">First Name</label>
+                  <input
+                    type="text"
+                    value={checkFirst}
+                    onChange={(e) => setCheckFirst(e.target.value)}
+                    className="w-full border-2 border-text-dark/15 rounded-lg px-4 py-3 focus:outline-none transition-colors"
+                    placeholder="Jane"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold mb-1">Surname</label>
+                  <input
+                    type="text"
+                    value={checkSurname}
+                    onChange={(e) => setCheckSurname(e.target.value)}
+                    className="w-full border-2 border-text-dark/15 rounded-lg px-4 py-3 focus:outline-none transition-colors"
+                    placeholder="Smith"
+                  />
+                </div>
+              </div>
+
+              {checkError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
+                  {checkError}
+                </div>
+              )}
+
+              {checkResult && (
+                <div
+                  className="rounded-lg p-4 text-sm"
+                  style={{
+                    backgroundColor: checkResult.found
+                      ? checkResult.paid ? 'rgba(0,180,154,0.1)' : 'rgba(255,209,23,0.15)'
+                      : 'rgba(239,68,68,0.07)',
+                    borderWidth: 1,
+                    borderStyle: 'solid',
+                    borderColor: checkResult.found
+                      ? checkResult.paid ? 'rgba(0,180,154,0.4)' : 'rgba(255,209,23,0.6)'
+                      : 'rgba(239,68,68,0.3)',
+                  }}
+                >
+                  {!checkResult.found && (
+                    <p className="font-semibold text-red-600">No registration found.</p>
+                  )}
+                  {checkResult.found && checkResult.paid && (
+                    <>
+                      <p className="font-semibold mb-1" style={{ color: '#00B49A' }}>&#10003; Registered &amp; paid — you&apos;re confirmed!</p>
+                      {checkResult.firstName && <p className="text-text-dark/70">Hi {checkResult.firstName} 👋</p>}
+                      {checkResult.emailMasked && <p className="text-text-dark/60 text-xs mt-1">Email: {checkResult.emailMasked}</p>}
+                      {checkResult.orderRef && <p className="text-text-dark/60 text-xs">Ref: {checkResult.orderRef}</p>}
+                    </>
+                  )}
+                  {checkResult.found && !checkResult.paid && (
+                    <>
+                      <p className="font-semibold mb-1 text-yellow-600">⚠️ Registration found but payment not confirmed yet.</p>
+                      {checkResult.emailMasked && <p className="text-text-dark/60 text-xs mt-1">Email: {checkResult.emailMasked}</p>}
+                      <p className="text-text-dark/70 text-xs mt-1">If you&apos;ve paid, it may take a moment to update. Email us if you&apos;re unsure.</p>
+                    </>
+                  )}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={checkLoading}
+                className="w-full text-white py-3 rounded-lg font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{ backgroundColor: '#00B49A' }}
+              >
+                {checkLoading ? 'Checking…' : 'Check registration'}
+              </button>
+            </form>
+          </div>
+        </section>
 
       </main>
     </>
