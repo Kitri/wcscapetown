@@ -7,12 +7,6 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
-function maskEmail(email: string): string {
-  const [local, domain] = email.split('@');
-  if (!domain || local.length <= 2) return `${local[0]}***@${domain}`;
-  return `${local[0]}${'*'.repeat(Math.min(local.length - 2, 4))}${local[local.length - 1]}@${domain}`;
-}
-
 export async function POST(request: Request) {
   let payload: unknown;
   try {
@@ -62,14 +56,10 @@ export async function POST(request: Request) {
     }
 
     const paid = (match[7] ?? '').toLowerCase() === 'paid';
-    const orderRef = match[6] ?? '';
-    const rowEmail = match[1] ?? '';
 
     return NextResponse.json({
       found: true,
       paid,
-      orderRef: orderRef ? `${orderRef.slice(0, 3)}...${orderRef.slice(-4)}` : '',
-      emailMasked: rowEmail ? maskEmail(rowEmail) : '',
       firstName: match[2] ?? '',
     });
   } catch (err) {

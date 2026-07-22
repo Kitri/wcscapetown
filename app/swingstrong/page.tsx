@@ -10,8 +10,6 @@ type Experience = 'newcomer' | 'level1' | 'level2' | '';
 interface CheckResult {
   found: boolean;
   paid?: boolean;
-  orderRef?: string;
-  emailMasked?: string;
   firstName?: string;
 }
 
@@ -140,6 +138,12 @@ export default function SwingStrong() {
                 >
                   Register Now — R350
                 </button>
+                <p className="mt-3 text-sm text-white/50">
+                  Already registered?{' '}
+                  <a href="#check-registration" className="underline hover:text-white/80 transition-colors">
+                    Check your registration
+                  </a>
+                </p>
               </div>
 
               {/* Right: Jeff image — shown first on mobile, second on desktop */}
@@ -475,7 +479,7 @@ export default function SwingStrong() {
         </div>
 
         {/* ── Check Registration ────────────────────────────────────────────────── */}
-        <section className="px-[5%] py-[48px] bg-cloud-dancer">
+        <section id="check-registration" className="px-[5%] py-[48px] bg-cloud-dancer">
           <div className="max-w-[600px] mx-auto">
             <h2 className="font-spartan font-semibold text-[22px] text-center mb-2">Check your registration</h2>
             <p className="text-center text-sm text-text-dark/60 mb-6">
@@ -548,16 +552,16 @@ export default function SwingStrong() {
                   )}
                   {checkResult.found && checkResult.paid && (
                     <>
-                      <p className="font-semibold mb-1" style={{ color: '#00B49A' }}>&#10003; Registered &amp; paid — you&apos;re confirmed!</p>
-                      {checkResult.firstName && <p className="text-text-dark/70">Hi {checkResult.firstName} 👋</p>}
-                      {checkResult.emailMasked && <p className="text-text-dark/60 text-xs mt-1">Email: {checkResult.emailMasked}</p>}
-                      {checkResult.orderRef && <p className="text-text-dark/60 text-xs">Ref: {checkResult.orderRef}</p>}
+                      <p className="font-semibold" style={{ color: '#00B49A' }}>
+                        Hi {checkResult.firstName || 'there'} 👋 You&apos;re registered and confirmed!
+                      </p>
                     </>
                   )}
                   {checkResult.found && !checkResult.paid && (
                     <>
-                      <p className="font-semibold mb-1 text-yellow-600">⚠️ Registration found but payment not confirmed yet.</p>
-                      {checkResult.emailMasked && <p className="text-text-dark/60 text-xs mt-1">Email: {checkResult.emailMasked}</p>}
+                      <p className="font-semibold text-yellow-600">
+                        Hi {checkResult.firstName || 'there'} — we have your registration but payment isn&apos;t confirmed yet.
+                      </p>
                       <p className="text-text-dark/70 text-xs mt-1">If you&apos;ve paid, it may take a moment to update. Email us if you&apos;re unsure.</p>
                     </>
                   )}
