@@ -88,7 +88,8 @@ export default function WhatsOn() {
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs mt-2 font-semibold text-pink-accent">Next: August — date TBC</p>
+                <p className="text-xs mt-2 font-semibold text-pink-accent">Friday 21 August · 8:30–11:30pm</p>
+                <p className="text-xs italic mt-1 text-text-dark/60">Taster class at 8:30pm</p>
               </a>
             </div>
 
@@ -306,8 +307,8 @@ export default function WhatsOn() {
             </h2>
 
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
-              <p className="text-lg md:text-xl font-semibold mb-2">📅 Date to be confirmed</p>
-              <p className="text-base md:text-lg">Our monthly social is coming — details will be announced soon. Follow us on social media to stay in the loop!</p>
+              <p className="text-lg md:text-xl font-semibold mb-2">📅 Friday 21 August</p>
+              <p className="text-base md:text-lg">🕣 8:30–11:30pm · Taster class at 8:30pm</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
@@ -317,11 +318,11 @@ export default function WhatsOn() {
                 <div className="space-y-3">
                   <div className="bg-white/60 rounded-lg p-4">
                     <p className="font-semibold">Taster Class</p>
-                    <p className="text-sm text-text-dark/70">A short intro class at the start — perfect for newcomers</p>
+                    <p className="text-sm text-text-dark/70">A short intro class at 8:30pm — perfect for newcomers</p>
                   </div>
                   <div className="bg-white/60 rounded-lg p-4">
                     <p className="font-semibold">Social Dancing</p>
-                    <p className="text-sm text-text-dark/70">Open social for the rest of the evening</p>
+                    <p className="text-sm text-text-dark/70">Open social 8:30–11:30pm</p>
                   </div>
                   <div className="bg-white/60 rounded-lg p-4">
                     <p className="font-semibold">All Welcome</p>

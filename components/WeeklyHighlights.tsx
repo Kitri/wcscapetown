@@ -50,7 +50,7 @@ export default function WeeklyHighlights() {
           </Link>
 
           {/* Regular events row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 
             {/* Monday Classes */}
             <Link
@@ -83,6 +83,22 @@ export default function WeeklyHighlights() {
                   Casual Dancing
                 </p>
                 <p className="text-xs text-text-dark/60">6–8 PM · Down to Earth Market</p>
+              </div>
+            </Link>
+            <Link
+              href="/whats-on#monthly-social"
+              className="flex items-start gap-3 rounded-xl border-2 border-pink-accent/30 hover:border-pink-accent bg-pink-accent/[0.05] hover:bg-pink-accent/[0.1] p-4 transition-all group"
+            >
+              <span className="mt-0.5 text-xl">🩷</span>
+              <div className="text-left min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-pink-accent mb-0.5">
+                  Friday 21 August
+                </p>
+                <p className="font-spartan font-semibold text-base leading-tight mb-1">
+                  Monthly WCS Social
+                </p>
+                <p className="text-xs text-text-dark/60">8:30–11:30pm · Scout Hall, Claremont</p>
+                <p className="text-xs text-text-dark/60 mt-0.5">Taster class at 8:30pm</p>
               </div>
             </Link>
 
