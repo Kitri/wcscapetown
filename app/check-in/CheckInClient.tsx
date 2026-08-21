@@ -69,6 +69,7 @@ const MONTHLY_TYPES = [
   "Student monthly",
 ] as const;
 const THURSDAY_TYPES = ["Practice"] as const;
+const STRICTLY_SOCIAL_TYPES = ["Social only"] as const;
 
 const LEVEL_2_TUESDAY_PRICE = 50;
 
@@ -76,14 +77,13 @@ const ZA_TIME_ZONE = "Africa/Johannesburg";
 
 const CHECKIN_EVENT_OPTIONS = [
   "Monday Plumstead",
-  "Tuesday Pinelands",
   "Thursday Pinelands",
-  "Saturday scout hall",
+  "Strictly Social",
   "Bootcamp",
 ] as const;
 
 type CheckinEvent = (typeof CHECKIN_EVENT_OPTIONS)[number];
-type CheckinWeekday = "Monday" | "Tuesday" | "Thursday" | "Saturday";
+type CheckinWeekday = "Monday" | "Tuesday" | "Thursday" | "Saturday" | "Any";
 
 function getZaTodayISO(): string {
   return formatZaDateInputValue(new Date());
@@ -146,11 +146,11 @@ function defaultEventForDateISO(dateISO: string): CheckinEvent {
     case "Monday":
       return "Monday Plumstead";
     case "Tuesday":
-      return "Tuesday Pinelands";
+      return "Monday Plumstead";
     case "Thursday":
       return "Thursday Pinelands";
     case "Saturday":
-      return "Saturday scout hall";
+      return "Strictly Social";
     default:
       return "Monday Plumstead";
   }
@@ -160,6 +160,7 @@ function weekdayForEvent(event: CheckinEvent): CheckinWeekday {
   if (event.startsWith("Monday")) return "Monday";
   if (event.startsWith("Tuesday")) return "Tuesday";
   if (event.startsWith("Thursday")) return "Thursday";
+  if (event === "Strictly Social") return "Any";
   return "Saturday";
 }
 
@@ -167,6 +168,7 @@ function mostRecentDateForWeekday(targetWeekday: CheckinWeekday, referenceDateIS
   const validReference = /^\d{4}-\d{2}-\d{2}$/.test(referenceDateISO)
     ? referenceDateISO
     : getZaTodayISO();
+  if (targetWeekday === "Any") return validReference;
 
   const base = new Date(`${validReference}T12:00:00+02:00`);
   if (Number.isNaN(base.getTime())) return getZaTodayISO();
@@ -821,6 +823,10 @@ export default function CheckInClient({
 
     const prev = prevDateISORef.current;
     if (prev === selectedDateISO) return;
+    if (selectedEvent === "Strictly Social") {
+      prevDateISORef.current = selectedDateISO;
+      return;
+    }
 
     const prevDefault = defaultEventForDateISO(prev);
     if (selectedEvent === prevDefault) {
@@ -901,6 +907,7 @@ export default function CheckInClient({
   const searchAbortRef = useRef<AbortController | null>(null);
   const isBootcampMode = selectedEvent === "Bootcamp";
   const isThursdayEvent = selectedEvent.startsWith("Thursday");
+  const isStrictlySocialEvent = selectedEvent === "Strictly Social";
   const isSelectedLevel2 = useMemo(() => {
     if (!selected) return false;
     return isLevel2Member(selected.level);
@@ -913,6 +920,9 @@ export default function CheckInClient({
   }, [costs?.isTuesday, isSelectedLevel2]);
 
   const typeOptions = useMemo(() => {
+    if (isStrictlySocialEvent) {
+      return [...STRICTLY_SOCIAL_TYPES];
+    }
     // Thursday practice: only Practice
     if (isThursdayEvent) {
       return [...THURSDAY_TYPES];
@@ -924,7 +934,7 @@ export default function CheckInClient({
     const base = [...BASE_TYPES];
     const monthly = costs?.showMonthly ? [...MONTHLY_TYPES] : [];
     return [...base, ...monthly];
-  }, [costs?.showMonthly, isLevel2TuesdayDiscount, isThursdayEvent]);
+  }, [costs?.showMonthly, isLevel2TuesdayDiscount, isThursdayEvent, isStrictlySocialEvent]);
 
   const payableAmount = useMemo(() => {
     if (!selectedType) return 0;
@@ -2257,6 +2267,8 @@ export default function CheckInClient({
                     const displayPrice = isLevel2TuesdayDiscount
                       ? LEVEL_2_TUESDAY_PRICE
                       : (costs?.costs?.[t] ?? 0);
+                    const typeLabel =
+                      isStrictlySocialEvent && t === "Social only" ? "Social R50" : t;
                     return (
                       <PillButton
                         key={t}
@@ -2267,7 +2279,7 @@ export default function CheckInClient({
                         disabled={!costs}
                       >
                         <div className="flex items-center justify-between gap-3">
-                          <div>{t}</div>
+                          <div>{typeLabel}</div>
                           <div className="font-semibold text-text-dark/70">
                             {costs ? formatZar(displayPrice) : ""}
                           </div>
