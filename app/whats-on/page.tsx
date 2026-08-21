@@ -63,7 +63,7 @@ export default function WhatsOn() {
                   {nextMonday === "Tonight!" ? "🎉 Tonight!" : `Next class: ${nextMonday}`}
                 </p>
                 <p className="text-xs mt-1 text-text-dark/60">
-                  See level descriptions below
+                  31st - all level; 14th - social only with international westie visitors
                 </p>
               </a>
               
@@ -88,13 +88,13 @@ export default function WhatsOn() {
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs mt-2 font-semibold text-pink-accent">Friday 21 August · 8:30–11:30pm</p>
+                <p className="text-xs mt-2 font-semibold text-pink-accent">Tonight! Friday 21 August · 8:30–11:30pm</p>
                 <p className="text-xs italic mt-1 text-text-dark/60">Taster class at 8:30pm</p>
               </a>
             </div>
 
             <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Upcoming Events</h2>
-            <div className="flex justify-center">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Workshop */}
               <a
                 href="/swingstrong"
@@ -125,10 +125,32 @@ export default function WhatsOn() {
                   />
                 </div>
               </a>
+
+              {/* International westies visiting Cape Town */}
+              <a
+                id="international-westies"
+                href="#monday-classes"
+                className="group rounded-2xl border-2 p-6 md:p-8 transition-all hover:shadow-xl"
+                style={{ borderColor: 'rgba(103, 72, 217, 0.35)', backgroundColor: 'rgba(103,72,217,0.07)' }}
+              >
+                <div className="inline-block bg-purple-accent text-white px-4 py-1.5 rounded-full font-semibold text-xs mb-4">
+                  INTERNATIONAL + LOCAL WESTIES
+                </div>
+                <h3 className="font-spartan font-semibold text-2xl mb-2">Visitors week in Cape Town</h3>
+                <p className="text-sm text-text-dark/75 mb-4">
+                  A group of international westies is visiting Cape Town before Safari Swing, and we&apos;ve got exciting chances to mix local and international communities on and off the dance floor.
+                </p>
+                <div className="space-y-2 text-sm text-text-dark/80 mb-4">
+                  <p><span className="font-semibold">Sat 12 Sept:</span> Mojo Market meetup (food + live-music dancing vibe)</p>
+                  <p><span className="font-semibold">Sun 13 Sept:</span> Mojo Salsa hang (WCS on SBK music)</p>
+                  <p><span className="font-semibold">Mon 14 Sept:</span> Dinner first, then Havana Nights social (visitors joining around 8pm)</p>
+                </div>
+              </a>
             </div>
 
           </div>
         </section>
+
 
         {/* Monday Classes - Full Details */}
         <section 
@@ -204,6 +226,15 @@ export default function WhatsOn() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div className="bg-pink-accent/15 border-2 border-pink-accent/30 rounded-xl p-5 md:p-6 mt-8">
+              <p className="font-semibold text-base md:text-lg mb-3">Please note upcoming Monday schedule changes:</p>
+              <div className="space-y-2 text-sm md:text-base text-text-dark/85">
+                <p><span className="font-semibold">Monday 31 August:</span> All level class at 7:30pm, social from 8:15pm after class.</p>
+                <p className="ml-4">All level = Level 1 + Level 2 (WCS basics required: sugar push, left side pass, underarm turn; better if you also know sugar tuck and whip).</p>
+                <p><span className="font-semibold">Monday 14 September:</span> Social-only night from 7:30pm, with international westie visitors joining after dinner (around 8pm).</p>
               </div>
             </div>
           </div>
@@ -307,7 +338,7 @@ export default function WhatsOn() {
             </h2>
 
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
-              <p className="text-lg md:text-xl font-semibold mb-2">📅 Friday 21 August</p>
+              <p className="text-lg md:text-xl font-semibold mb-2">📅 Tonight! Friday 21 August</p>
               <p className="text-base md:text-lg">🕣 8:30–11:30pm · Taster class at 8:30pm</p>
             </div>
 
@@ -368,7 +399,14 @@ export default function WhatsOn() {
               Understanding Class Levels
             </h2>
             
-            <div className="grid md:grid-cols-2 gap-8">
+            <div className="grid md:grid-cols-3 gap-8">
+              {/* Newcomer */}
+              <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">
+                <h3 className="font-spartan font-semibold text-2xl mb-4 text-pink-accent">Newcomer</h3>
+                <p className="text-base md:text-lg mb-4">
+                  New to WCS, haven&apos;t learnt the basics yet.
+                </p>
+              </div>
               {/* Level 1 */}
               <div className="bg-cloud-dancer rounded-xl p-6 md:p-8">
                 <h3 className="font-spartan font-semibold text-2xl mb-4 text-purple-accent">Level 1</h3>
@@ -376,7 +414,7 @@ export default function WhatsOn() {
                       You know the basics of West Coast Swing, but you still don&apos;t feel confident when social dancing. In addition to improving your basics, you want to learn the West Coast Swing fundamentals and be able to dance with any partner.
                 </p>
                 <p className="text-sm text-text-dark/70 italic">
-                  All welcome — from never danced to busy learning the dance
+                  For dancers who already know the basics and want stronger social confidence.
                 </p>
               </div>
 

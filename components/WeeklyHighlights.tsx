@@ -49,6 +49,29 @@ export default function WeeklyHighlights() {
             </span>
           </Link>
 
+          {/* International westies visiting Cape Town */}
+          <Link
+            href="/whats-on#international-westies"
+            className="rounded-xl border-2 p-5 transition-all hover:shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+            style={{ borderColor: 'rgba(103, 72, 217, 0.35)', backgroundColor: 'rgba(103,72,217,0.07)' }}
+          >
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider mb-1 text-purple-accent">
+                International + local westies
+              </p>
+              <p className="font-spartan font-semibold text-xl leading-tight mb-1">
+                Visitors week in Cape Town
+              </p>
+              <p className="text-sm text-text-dark/70">A group of international westies is in Cape Town before Safari Swing — come dance, connect, and share the floor together: Sat 12 Sept Mojo Market, Sun 13 Sept Mojo Salsa, Mon 14 Sept Havana Nights social.</p>
+            </div>
+            <span
+              className="inline-block shrink-0 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-all hover:opacity-90"
+              style={{ backgroundColor: '#6748D9' }}
+            >
+              Join the vibe →
+            </span>
+          </Link>
+
           {/* Regular events row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 
@@ -92,7 +115,7 @@ export default function WeeklyHighlights() {
               <span className="mt-0.5 text-xl">🩷</span>
               <div className="text-left min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-pink-accent mb-0.5">
-                  Friday 21 August
+                  Tonight! Friday 21 August
                 </p>
                 <p className="font-spartan font-semibold text-base leading-tight mb-1">
                   Monthly WCS Social
