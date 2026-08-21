@@ -1166,26 +1166,44 @@ export default function CheckInClient({
     setBanner(null);
 
     try {
-      const requests = bulkSelectedIds.map((memberId) =>
-        fetchJson<{ ok: true }>("/api/check-in/attendance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            member_id: memberId,
-            type: "Practice",
-            paid_via: bulkPaidViaById[memberId] ?? "Yoco",
-            paid_amount: thursdayPracticeAmount,
-            comment: "",
-            free_entry_reason: "",
-            date: selectedDateISO,
-            event: selectedEvent,
-          }),
-        })
-      );
+      let successCount = 0;
+      const failedMemberIds: number[] = [];
 
-      const settled = await Promise.allSettled(requests);
-      const successCount = settled.filter((r) => r.status === "fulfilled").length;
-      const failedCount = settled.length - successCount;
+      for (const memberId of bulkSelectedIds) {
+        const payload = {
+          member_id: memberId,
+          type: "Practice",
+          paid_via: bulkPaidViaById[memberId] ?? "Yoco",
+          paid_amount: thursdayPracticeAmount,
+          comment: "",
+          free_entry_reason: "",
+          date: selectedDateISO,
+          event: selectedEvent,
+        };
+
+        try {
+          await fetchJson<{ ok: true }>("/api/check-in/attendance", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          successCount += 1;
+        } catch {
+          // Retry once for transient local-dev/network/sheet write contention.
+          try {
+            await fetchJson<{ ok: true }>("/api/check-in/attendance", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            successCount += 1;
+          } catch {
+            failedMemberIds.push(memberId);
+          }
+        }
+      }
+
+      const failedCount = failedMemberIds.length;
 
       if (failedCount === 0) {
         setBanner({
