@@ -14,6 +14,21 @@ type Member = {
   pensionerStudent: string;
 };
 
+type ThursdayBulkCandidate = {
+  member_id: number;
+  full_name: string;
+  last_seen_date: string;
+  sessions_attended: number;
+  already_checked_in: boolean;
+};
+
+type ThursdayBulkCandidatesResponse = {
+  date: string;
+  event: string;
+  session_dates: string[];
+  candidates: ThursdayBulkCandidate[];
+};
+
 type FreeEntryResponse =
   | { applies: false; today: string }
   | {
@@ -71,8 +86,45 @@ type CheckinEvent = (typeof CHECKIN_EVENT_OPTIONS)[number];
 type CheckinWeekday = "Monday" | "Tuesday" | "Thursday" | "Saturday";
 
 function getZaTodayISO(): string {
-  // en-CA gives YYYY-MM-DD
-  return new Date().toLocaleDateString("en-CA", { timeZone: ZA_TIME_ZONE });
+  return formatZaDateInputValue(new Date());
+}
+
+function formatZaDateInputValue(date: Date): string {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: ZA_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(date);
+
+    const year = parts.find((p) => p.type === "year")?.value ?? "";
+    const month = parts.find((p) => p.type === "month")?.value ?? "";
+    const day = parts.find((p) => p.type === "day")?.value ?? "";
+    const candidate = `${year}-${month}-${day}`;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(candidate)) return candidate;
+  } catch {
+    // fall through to backup formatters
+  }
+
+  const localeCandidate = date.toLocaleDateString("en-CA", {
+    timeZone: ZA_TIME_ZONE,
+  });
+  if (/^\d{4}-\d{2}-\d{2}$/.test(localeCandidate)) return localeCandidate;
+
+  // Last-resort fallback from ZA-localized Date object.
+  const zaLocalized = new Date(
+    date.toLocaleString("en-US", { timeZone: ZA_TIME_ZONE })
+  );
+  if (!Number.isNaN(zaLocalized.getTime())) {
+    const y = zaLocalized.getFullYear();
+    const m = String(zaLocalized.getMonth() + 1).padStart(2, "0");
+    const d = String(zaLocalized.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  // Absolute final fallback — avoids empty date value on any platform.
+  return date.toISOString().slice(0, 10);
 }
 
 function weekdayZa(dateISO: string): string {
@@ -140,7 +192,7 @@ function mostRecentDateForWeekday(targetWeekday: CheckinWeekday, referenceDateIS
   const daysBack = (currentIdx - targetIdx + 7) % 7;
   base.setDate(base.getDate() - daysBack);
 
-  return base.toLocaleDateString("en-CA", { timeZone: ZA_TIME_ZONE });
+  return formatZaDateInputValue(base);
 }
 
 function formatZar(amount: number): string {
@@ -778,6 +830,7 @@ export default function CheckInClient({
     prevDateISORef.current = selectedDateISO;
   }, [selectedDateISO, selectedEvent]);
 
+
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<Member[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -796,6 +849,15 @@ export default function CheckInClient({
       rowNumber: number;
     }[]
   >([]);
+  const [bulkCandidates, setBulkCandidates] = useState<ThursdayBulkCandidate[]>([]);
+  const [bulkSessionDates, setBulkSessionDates] = useState<string[]>([]);
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<number[]>([]);
+  const [bulkPaidViaById, setBulkPaidViaById] = useState<
+    Record<number, "Cash" | "Yoco">
+  >({});
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkError, setBulkError] = useState<string | null>(null);
+  const [bulkCheckingIn, setBulkCheckingIn] = useState(false);
 
   const [selected, setSelected] = useState<Member | null>(null);
   const [alreadyCheckedIn, setAlreadyCheckedIn] = useState(false);
@@ -851,7 +913,7 @@ export default function CheckInClient({
   }, [costs?.isTuesday, isSelectedLevel2]);
 
   const typeOptions = useMemo(() => {
-    // Thursday practice: only Practice and Social
+    // Thursday practice: only Practice
     if (isThursdayEvent) {
       return [...THURSDAY_TYPES];
     }
@@ -873,6 +935,12 @@ export default function CheckInClient({
     const amount = costs?.costs?.[selectedType];
     return typeof amount === "number" ? amount : 0;
   }, [costs, selectedType, isLevel2TuesdayDiscount]);
+
+  const thursdayPracticeAmount = useMemo(() => {
+    const amount = costs?.costs?.Practice;
+    return typeof amount === "number" && amount > 0 ? amount : 50;
+  }, [costs]);
+
 
   const effectiveFreeEntry = useMemo(() => {
     if (!freeEntry || ignoreFreeEntry) return null;
@@ -1044,6 +1112,109 @@ export default function CheckInClient({
     }
   }, [selectedDateISO, selectedEvent]);
 
+  const refreshThursdayBulkCandidates = useCallback(async () => {
+    if (!authed || !isThursdayEvent) {
+      setBulkCandidates([]);
+      setBulkSessionDates([]);
+      setBulkSelectedIds([]);
+      setBulkPaidViaById({});
+      setBulkError(null);
+      return;
+    }
+
+    setBulkError(null);
+    setBulkLoading(true);
+    try {
+      const res = await fetchJson<ThursdayBulkCandidatesResponse>(
+        `/api/check-in/thursday-bulk-candidates?date=${encodeURIComponent(selectedDateISO)}&event=${encodeURIComponent(selectedEvent)}`
+      );
+
+      setBulkCandidates(res.candidates);
+      setBulkSessionDates(res.session_dates);
+      setBulkSelectedIds((prev) =>
+        prev.filter((id) =>
+          res.candidates.some(
+            (candidate) => candidate.member_id === id && !candidate.already_checked_in
+          )
+        )
+      );
+      setBulkPaidViaById((prev) => {
+        const next: Record<number, "Cash" | "Yoco"> = {};
+        for (const candidate of res.candidates) {
+          const existing = prev[candidate.member_id];
+          if (existing) next[candidate.member_id] = existing;
+        }
+        return next;
+      });
+    } catch (e) {
+      setBulkCandidates([]);
+      setBulkSessionDates([]);
+      setBulkSelectedIds([]);
+      setBulkError(
+        e instanceof Error ? e.message : "Failed to load bulk check-in candidates"
+      );
+    } finally {
+      setBulkLoading(false);
+    }
+  }, [authed, isThursdayEvent, selectedDateISO, selectedEvent]);
+
+  async function doBulkCheckIn() {
+    if (!isThursdayEvent || bulkSelectedIds.length === 0) return;
+
+    setBulkCheckingIn(true);
+    setBulkError(null);
+    setBanner(null);
+
+    try {
+      const requests = bulkSelectedIds.map((memberId) =>
+        fetchJson<{ ok: true }>("/api/check-in/attendance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            member_id: memberId,
+            type: "Practice",
+            paid_via: bulkPaidViaById[memberId] ?? "Yoco",
+            paid_amount: thursdayPracticeAmount,
+            comment: "",
+            free_entry_reason: "",
+            date: selectedDateISO,
+            event: selectedEvent,
+          }),
+        })
+      );
+
+      const settled = await Promise.allSettled(requests);
+      const successCount = settled.filter((r) => r.status === "fulfilled").length;
+      const failedCount = settled.length - successCount;
+
+      if (failedCount === 0) {
+        setBanner({
+          kind: "ok",
+          text: `Bulk checked in ${successCount} people.`,
+        });
+      } else if (successCount > 0) {
+        setBanner({
+          kind: "ok",
+          text: `Bulk checked in ${successCount} people. ${failedCount} failed.`,
+        });
+      } else {
+        setBanner({
+          kind: "error",
+          text: "Bulk check-in failed for all selected people.",
+        });
+      }
+
+      await refreshThursdayBulkCandidates();
+    } catch (e) {
+      setBanner({
+        kind: "error",
+        text: e instanceof Error ? e.message : "Bulk check-in failed",
+      });
+    } finally {
+      setBulkCheckingIn(false);
+    }
+  }
+
   async function selectMember(member: Member) {
     setSelected(member);
     setAlreadyCheckedIn(false);
@@ -1091,6 +1262,13 @@ export default function CheckInClient({
     setCheckedInLoading(false);
     setCheckedInError(null);
     setCheckedInItems([]);
+    setBulkCandidates([]);
+    setBulkSessionDates([]);
+    setBulkSelectedIds([]);
+    setBulkPaidViaById({});
+    setBulkLoading(false);
+    setBulkError(null);
+    setBulkCheckingIn(false);
 
       setOverrideOpen(false);
       setOverrideComment("");
@@ -1111,6 +1289,26 @@ export default function CheckInClient({
     if (!authed) return;
     resetToSearch();
   }, [authed, resetToSearch, selectedDateISO, selectedEvent]);
+
+  useEffect(() => {
+    if (!authed) return;
+    if (!isThursdayEvent || selected || step1Mode !== "search") {
+      setBulkCandidates([]);
+      setBulkSessionDates([]);
+      setBulkSelectedIds([]);
+      setBulkPaidViaById({});
+      setBulkLoading(false);
+      setBulkError(null);
+      return;
+    }
+    void refreshThursdayBulkCandidates();
+  }, [
+    authed,
+    isThursdayEvent,
+    refreshThursdayBulkCandidates,
+    selected,
+    step1Mode,
+  ]);
 
   async function doCheckIn() {
     if (!selected || !checkinEnabled) return;
@@ -1571,6 +1769,150 @@ export default function CheckInClient({
                           </div>
                         )}
                     </div>
+                  </div>
+                )}
+
+                {isThursdayEvent && (
+                  <div className="mt-6 rounded-2xl border-2 border-purple-accent/25 bg-purple-accent/5 p-4">
+                    <div className="font-semibold mb-1">
+                      Bulk check-in — previous 3 Thursday practice sessions
+                    </div>
+                    <div className="text-sm text-text-dark/70 mb-3">
+                      Select multiple people at once. Payment defaults to Yoco (R{thursdayPracticeAmount}) and can be changed to Cash per person.
+                    </div>
+
+                    {bulkSessionDates.length > 0 && (
+                      <div className="text-xs text-text-dark/60 mb-3">
+                        Sessions used: {bulkSessionDates.join(", ")}
+                      </div>
+                    )}
+
+                    {bulkLoading && <div className="text-text-dark/70">Loading candidates…</div>}
+
+                    {bulkError && (
+                      <div className="mb-3 bg-pink-accent/10 border border-pink-accent/40 rounded-xl p-3 text-sm">
+                        {bulkError}
+                      </div>
+                    )}
+
+                    {!bulkLoading && !bulkError && bulkCandidates.length === 0 && (
+                      <div className="text-text-dark/70 text-sm">
+                        No recent Thursday practice attendees found.
+                      </div>
+                    )}
+
+                    {!bulkLoading && bulkCandidates.length > 0 && (
+                      <>
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setBulkSelectedIds(
+                                bulkCandidates.map((c) => c.member_id)
+                              )
+                            }
+                            className="px-3 py-2 rounded-lg border border-text-dark/20 bg-white text-sm font-semibold"
+                          >
+                            Select all
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBulkSelectedIds([])}
+                            className="px-3 py-2 rounded-lg border border-text-dark/20 bg-white text-sm font-semibold"
+                          >
+                            Clear
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-2">
+                          {bulkCandidates.map((candidate) => {
+                            const isSelected = bulkSelectedIds.includes(candidate.member_id);
+                            const paidVia = bulkPaidViaById[candidate.member_id] ?? "Yoco";
+                            return (
+                              <div
+                                key={candidate.member_id}
+                                className="rounded-xl border border-text-dark/15 bg-white p-3"
+                              >
+                                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                  <label className="flex items-start gap-3">
+                                    <input
+                                      type="checkbox"
+                                      checked={isSelected}
+                                      onChange={(e) => {
+                                        setBulkSelectedIds((prev) => {
+                                          if (e.target.checked) {
+                                            return prev.includes(candidate.member_id)
+                                              ? prev
+                                              : [...prev, candidate.member_id];
+                                          }
+                                          return prev.filter((id) => id !== candidate.member_id);
+                                        });
+                                      }}
+                                      className="mt-1"
+                                    />
+                                    <div>
+                                      <div className="font-semibold">{candidate.full_name}</div>
+                                    </div>
+                                  </label>
+                                  <div className="flex gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setBulkPaidViaById((prev) => ({
+                                          ...prev,
+                                          [candidate.member_id]: "Yoco",
+                                        }))
+                                      }
+                                      className={
+                                        "px-3 py-2 rounded-lg border text-sm font-semibold " +
+                                        (paidVia === "Yoco"
+                                          ? "border-pink-accent bg-pink-accent/10"
+                                          : "border-text-dark/20 bg-white")
+                                      }
+                                    >
+                                      Yoco
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setBulkPaidViaById((prev) => ({
+                                          ...prev,
+                                          [candidate.member_id]: "Cash",
+                                        }))
+                                      }
+                                      className={
+                                        "px-3 py-2 rounded-lg border text-sm font-semibold " +
+                                        (paidVia === "Cash"
+                                          ? "border-pink-accent bg-pink-accent/10"
+                                          : "border-text-dark/20 bg-white")
+                                      }
+                                    >
+                                      Cash
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={doBulkCheckIn}
+                          disabled={bulkSelectedIds.length === 0 || bulkCheckingIn}
+                          className={
+                            "w-full mt-4 py-4 rounded-xl font-spartan font-semibold text-xl border-2 transition-colors " +
+                            (bulkSelectedIds.length === 0 || bulkCheckingIn
+                              ? "opacity-40 border-text-dark/20"
+                              : "border-yellow-accent bg-yellow-accent text-text-dark hover:bg-yellow-accent/90")
+                          }
+                        >
+                          {bulkCheckingIn
+                            ? "Checking in selected…"
+                            : `Bulk check in selected (${bulkSelectedIds.length})`}
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </>
