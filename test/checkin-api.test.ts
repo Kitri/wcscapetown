@@ -166,6 +166,70 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
     expect(data.entry_type).toBe("Parsed");
   });
 
+  it("matches teacher entries using day-month text format without a year", async () => {
+    const { GET } = await import("../app/api/check-in/free-entry/route");
+
+    mockParseZaDateISO.mockImplementation((v?: unknown) => {
+      if (v === "2026-08-24") return new Date("2026-08-24T12:00:00+02:00");
+      return null;
+    });
+    mockFormatZaMonthYear.mockImplementation(() => "August 2026");
+    mockIsZaMonday.mockImplementation(() => true);
+
+    mockGetSheetValues.mockResolvedValue([
+      ["member_id", "", "entry_type", "applicable_date", "details", "reason", "Monday Plumstead", "Tuesday Pinelands", "Social"],
+      ["14", "James Browning", "Teacher", "24 August", "Teaching a class tonight", "teacher", "TRUE", "", ""],
+    ]);
+
+    const req = new Request(
+      "http://localhost/api/check-in/free-entry?member_id=14&date=2026-08-24&event=Monday%20Plumstead",
+      { method: "GET" }
+    );
+
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toMatchObject({
+      applies: true,
+      entry_type: "Teacher",
+      applicable_date: "24 August",
+      reason: "teacher",
+    });
+  });
+
+  it("matches teacher entries using day-first numeric format", async () => {
+    const { GET } = await import("../app/api/check-in/free-entry/route");
+
+    mockParseZaDateISO.mockImplementation((v?: unknown) => {
+      if (v === "2026-08-24") return new Date("2026-08-24T12:00:00+02:00");
+      return null;
+    });
+    mockFormatZaMonthYear.mockImplementation(() => "August 2026");
+    mockIsZaMonday.mockImplementation(() => true);
+
+    mockGetSheetValues.mockResolvedValue([
+      ["member_id", "", "entry_type", "applicable_date", "details", "reason", "Monday Plumstead", "Tuesday Pinelands", "Social"],
+      ["61", "Priyanka Kooverjee", "Teacher", "24/08/2026", "Teaching a class tonight", "teacher", "TRUE", "", ""],
+    ]);
+
+    const req = new Request(
+      "http://localhost/api/check-in/free-entry?member_id=61&date=2026-08-24&event=Monday%20Plumstead",
+      { method: "GET" }
+    );
+
+    const res = await GET(req);
+    expect(res.status).toBe(200);
+
+    const data = await res.json();
+    expect(data).toMatchObject({
+      applies: true,
+      entry_type: "Teacher",
+      applicable_date: "24/08/2026",
+      reason: "teacher",
+    });
+  });
+
   it("applies Thursday Tuesday combo as free entry when member attended Tuesday in same week", async () => {
     const { GET } = await import("../app/api/check-in/free-entry/route");
 

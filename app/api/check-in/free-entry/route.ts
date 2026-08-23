@@ -59,6 +59,108 @@ function parseMemberId(raw: string): number {
   return Number.isFinite(id) ? id : NaN;
 }
 
+function parseIsoDateParts(v: string): { year: number; month: number; day: number } | null {
+  const match = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return null;
+  const [, yRaw, mRaw, dRaw] = match;
+  const year = Number(yRaw);
+  const month = Number(mRaw);
+  const day = Number(dRaw);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return null;
+  }
+  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  return { year, month, day };
+}
+
+function isValidDateParts(year: number, month: number, day: number): boolean {
+  const d = new Date(Date.UTC(year, month - 1, day));
+  return (
+    d.getUTCFullYear() === year &&
+    d.getUTCMonth() === month - 1 &&
+    d.getUTCDate() === day
+  );
+}
+
+function normalizeOptionalYear(raw?: string): number | undefined {
+  if (!raw) return undefined;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return undefined;
+  if (raw.length === 2) return 2000 + n;
+  return n;
+}
+
+function parseFlexibleDayFirstDate(
+  raw: string
+): { day: number; month: number; year?: number } | null {
+  const v = (raw ?? "").trim().replace(/,/g, " ").replace(/\s+/g, " ");
+  if (!v) return null;
+
+  const numericMatch = v.match(/^(\d{1,2})[\/\-.](\d{1,2})(?:[\/\-.](\d{2,4}))?$/);
+  if (numericMatch) {
+    const [, dayRaw, monthRaw, yearRaw] = numericMatch;
+    const day = Number(dayRaw);
+    const month = Number(monthRaw);
+    const year = normalizeOptionalYear(yearRaw);
+    if (!Number.isFinite(day) || !Number.isFinite(month)) return null;
+    if (day < 1 || day > 31 || month < 1 || month > 12) return null;
+    if (year !== undefined && !isValidDateParts(year, month, day)) return null;
+    return { day, month, year };
+  }
+
+  const textMatch = v.match(/^(\d{1,2})\s+([A-Za-z]+)(?:\s+(\d{2,4}))?$/);
+  if (!textMatch) return null;
+
+  const [, dayRaw, monthRaw, yearRaw] = textMatch;
+  const day = Number(dayRaw);
+  const monthToken = monthRaw.toLowerCase();
+  const monthMap: Record<string, number> = {
+    january: 1,
+    jan: 1,
+    february: 2,
+    feb: 2,
+    march: 3,
+    mar: 3,
+    april: 4,
+    apr: 4,
+    may: 5,
+    june: 6,
+    jun: 6,
+    july: 7,
+    jul: 7,
+    august: 8,
+    aug: 8,
+    september: 9,
+    sept: 9,
+    sep: 9,
+    october: 10,
+    oct: 10,
+    november: 11,
+    nov: 11,
+    december: 12,
+    dec: 12,
+  };
+  const month = monthMap[monthToken];
+  const year = normalizeOptionalYear(yearRaw);
+
+  if (!Number.isFinite(day) || day < 1 || day > 31 || !month) return null;
+  if (year !== undefined && !isValidDateParts(year, month, day)) return null;
+  return { day, month, year };
+}
+
+function matchesFlexibleDayFirstDate(applicable: string, todayISO: string): boolean {
+  const today = parseIsoDateParts(todayISO);
+  if (!today) return false;
+
+  const parsed = parseFlexibleDayFirstDate(applicable);
+  if (!parsed) return false;
+
+  const sameMonthDay = parsed.month === today.month && parsed.day === today.day;
+  if (!sameMonthDay) return false;
+
+  return parsed.year === undefined || parsed.year === today.year;
+}
+
 // Priority for session-count rules: above year / "All Mondays" (1), below an
 // exact ISO date (3); same tier as a month-year match (2).
 const SESSION_PRIORITY = 2;
@@ -148,6 +250,12 @@ function matchesApplicableDate(
 
   if (v === "All Mondays") {
     return ctx.isMonday ? 1 : 0;
+  }
+
+  // Explicit day-first formats used in the sheet, e.g. "24 August" or
+  // "24/08/2026".
+  if (matchesFlexibleDayFirstDate(v, todayISO)) {
+    return 3;
   }
 
   // Try parsing other date formats (best-effort)
