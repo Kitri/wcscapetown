@@ -62,7 +62,7 @@ export default function WeeklyHighlights() {
               <p className="font-spartan font-semibold text-xl leading-tight mb-1">
                 Visitors week in Cape Town
               </p>
-              <p className="text-sm text-text-dark/70">A group of international westies is in Cape Town before Safari Swing — come dance, connect, and share the floor together: Sat 12 Sept Mojo Market, Sun 13 Sept Mojo Salsa, Mon 14 Sept Havana Nights social.</p>
+              <p className="text-sm text-text-dark/70">A group of international westies is in Cape Town before Safari Swing — come dance, connect, and share the floor together: Sat 12 Sept WCS Social at Que Pasa Dance Co, Sun 13 Sept Mojo Salsa (tentative), Mon 14 Sept Havana Nights social.</p>
             </div>
             <span
               className="inline-block shrink-0 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-all hover:opacity-90"
@@ -115,13 +115,12 @@ export default function WeeklyHighlights() {
               <span className="mt-0.5 text-xl">🩷</span>
               <div className="text-left min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-pink-accent mb-0.5">
-                  Tonight! Friday 21 August
+                  Next one in October
                 </p>
                 <p className="font-spartan font-semibold text-base leading-tight mb-1">
                   Monthly WCS Social
                 </p>
-                <p className="text-xs text-text-dark/60">8:30–11:30pm · Scout Hall, Claremont</p>
-                <p className="text-xs text-text-dark/60 mt-0.5">Taster class at 8:30pm</p>
+                <p className="text-xs text-text-dark/60">Scout Hall, Claremont</p>
               </div>
             </Link>
 

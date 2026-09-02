@@ -88,8 +88,7 @@ export default function WhatsOn() {
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs mt-2 font-semibold text-pink-accent">Tonight! Friday 21 August · 8:30–11:30pm</p>
-                <p className="text-xs italic mt-1 text-text-dark/60">Taster class at 8:30pm</p>
+                <p className="text-xs mt-2 font-semibold text-pink-accent">Next one in October</p>
               </a>
             </div>
 
@@ -141,11 +140,31 @@ export default function WhatsOn() {
                   A group of international westies is visiting Cape Town before Safari Swing, and we&apos;ve got exciting chances to mix local and international communities on and off the dance floor.
                 </p>
                 <div className="space-y-2 text-sm text-text-dark/80 mb-4">
-                  <p><span className="font-semibold">Sat 12 Sept:</span> Mojo Market meetup (food + live-music dancing vibe)</p>
-                  <p><span className="font-semibold">Sun 13 Sept:</span> Mojo Salsa hang (WCS on SBK music)</p>
+                  <p><span className="font-semibold">Sat 12 Sept:</span> WCS Social with internationals — Que Pasa Dance Co (see below)</p>
+                  <p><span className="font-semibold">Sun 13 Sept:</span> Mojo Salsa hang (WCS on SBK music) — tentative</p>
                   <p><span className="font-semibold">Mon 14 Sept:</span> Dinner first, then Havana Nights social (visitors joining around 8pm)</p>
                 </div>
               </a>
+
+              {/* WCS Social with Internationals - 12 September */}
+              <div
+                id="wcs-social-internationals"
+                className="group rounded-2xl border-2 p-6 md:p-8 transition-all hover:shadow-xl"
+                style={{ borderColor: 'rgba(219, 64, 156, 0.35)', backgroundColor: 'rgba(219,64,156,0.07)' }}
+              >
+                <div className="inline-block bg-pink-accent text-white px-4 py-1.5 rounded-full font-semibold text-xs mb-4">
+                  SPECIAL SOCIAL · SAT 12 SEPT
+                </div>
+                <h3 className="font-spartan font-semibold text-2xl mb-2">WCS Social with Internationals</h3>
+                <p className="text-sm text-text-dark/75 mb-4">
+                  Join us and our visiting international westies for a social dance night.
+                </p>
+                <div className="space-y-2 text-sm text-text-dark/80">
+                  <p><span className="font-semibold">📅 When:</span> Saturday 12 September · 8:30–11:30pm</p>
+                  <p><span className="font-semibold">📍 Venue:</span> Que Pasa Dance Co, 61 Loop Street, Cape Town</p>
+                  <p><span className="font-semibold">💰 Entry:</span> R50</p>
+                </div>
+              </div>
             </div>
 
           </div>
@@ -338,8 +357,7 @@ export default function WhatsOn() {
             </h2>
 
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
-              <p className="text-lg md:text-xl font-semibold mb-2">📅 Tonight! Friday 21 August</p>
-              <p className="text-base md:text-lg">🕣 8:30–11:30pm · Taster class at 8:30pm</p>
+              <p className="text-lg md:text-xl font-semibold mb-2">📅 Next one in October</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
