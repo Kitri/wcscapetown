@@ -62,9 +62,6 @@ export default function WhatsOn() {
                 <p className="text-xs mt-2 font-semibold text-yellow-accent">
                   {nextMonday === "Tonight!" ? "🎉 Tonight!" : `Next class: ${nextMonday}`}
                 </p>
-                <p className="text-xs mt-1 text-text-dark/60">
-                  31st - all level; 14th - social only with international westie visitors
-                </p>
               </a>
               
               {/* Wednesday Down to Earth Market */}
@@ -88,83 +85,44 @@ export default function WhatsOn() {
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs mt-2 font-semibold text-pink-accent">Next one in October</p>
+                <p className="text-xs mt-2 font-semibold text-pink-accent">Next: Sat 10 October · Strictly Social 🎃</p>
               </a>
             </div>
 
             <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Upcoming Events</h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Workshop */}
+              {/* Strictly Social - 10 October */}
               <a
-                href="/swingstrong"
+                href="#monthly-social"
                 className="group rounded-2xl overflow-hidden transition-all hover:shadow-xl w-full max-w-2xl border-2 flex flex-col md:flex-row"
-                style={{ borderColor: 'rgba(0,180,154,0.4)', backgroundColor: 'rgba(0,180,154,0.04)' }}
+                style={{ borderColor: 'rgba(245,116,32,0.45)', backgroundColor: 'rgba(245,116,32,0.07)' }}
               >
-                {/* Text side */}
                 <div className="flex-1 p-6 md:p-8 flex flex-col justify-center">
-                  <div className="inline-block text-white px-4 py-1.5 rounded-full font-semibold text-xs mb-4 self-start" style={{ backgroundColor: '#00B49A' }}>
-                    INTERNATIONAL WORKSHOP · 6 SEPT
+                  <div className="inline-block text-white px-4 py-1.5 rounded-full font-semibold text-xs mb-4 self-start" style={{ backgroundColor: '#F57420' }}>
+                    EARLY HALLOWEEN PARTY · SAT 10 OCT
                   </div>
-                  <h3 className="font-spartan font-semibold text-2xl mb-1">Swing Strong</h3>
-                  <p className="text-sm text-text-dark/60 mb-1">Mobility &amp; Movement for West Coast Swing</p>
-                  <p className="text-base font-medium text-text-dark/80 mb-3">Jeff Mumford · Cape Town</p>
-                  <p className="text-sm text-text-dark/60 mb-4">Sunday, 6 September · 11:30–15:30 · R350 pp · Pinelands</p>
-                  <span className="inline-block self-start text-white text-sm font-semibold px-5 py-2 rounded-lg" style={{ backgroundColor: '#00B49A' }}>
-                    Find out more &amp; register →
+                  <h3 className="font-spartan font-semibold text-2xl mb-1">Strictly Social</h3>
+                  <p className="text-sm text-text-dark/60 mb-3">Let&apos;s get spooky on the dance floor!</p>
+                  <div className="space-y-1 text-sm text-text-dark/80 mb-4">
+                    <p><span className="font-semibold">📅 When:</span> Saturday 10 October · 8–11 PM</p>
+                    <p><span className="font-semibold">🎓 Taster class:</span> 8 PM</p>
+                    <p><span className="font-semibold">📍 Where:</span> 1st Claremont Scout Group, Claremont</p>
+                    <p><span className="font-semibold">💰 Entry:</span> R50 per person · All welcome</p>
+                  </div>
+                  <span className="inline-block self-start text-white text-sm font-semibold px-5 py-2 rounded-lg" style={{ backgroundColor: '#F57420' }}>
+                    Find out more →
                   </span>
                 </div>
-                {/* Image side */}
-                <div className="shrink-0 md:w-[240px] overflow-hidden">
+                <div className="shrink-0 md:w-[260px] bg-white flex items-center justify-center p-6">
                   <Image
-                    src="/images/jeff_3.jpeg"
-                    alt="Jeff Mumford performing West Coast Swing"
-                    width={480}
-                    height={640}
-                    className="w-full h-auto md:h-full object-cover object-center"
+                    src="/images/strictly social.png"
+                    alt="Strictly Social"
+                    width={469}
+                    height={265}
+                    className="w-full h-auto"
                   />
                 </div>
               </a>
-
-              {/* International westies visiting Cape Town */}
-              <a
-                id="international-westies"
-                href="#monday-classes"
-                className="group rounded-2xl border-2 p-6 md:p-8 transition-all hover:shadow-xl"
-                style={{ borderColor: 'rgba(103, 72, 217, 0.35)', backgroundColor: 'rgba(103,72,217,0.07)' }}
-              >
-                <div className="inline-block bg-purple-accent text-white px-4 py-1.5 rounded-full font-semibold text-xs mb-4">
-                  INTERNATIONAL + LOCAL WESTIES
-                </div>
-                <h3 className="font-spartan font-semibold text-2xl mb-2">Visitors week in Cape Town</h3>
-                <p className="text-sm text-text-dark/75 mb-4">
-                  A group of international westies is visiting Cape Town before Safari Swing, and we&apos;ve got exciting chances to mix local and international communities on and off the dance floor.
-                </p>
-                <div className="space-y-2 text-sm text-text-dark/80 mb-4">
-                  <p><span className="font-semibold">Sat 12 Sept:</span> WCS Social with internationals — Que Pasa Dance Co (see below)</p>
-                  <p><span className="font-semibold">Sun 13 Sept:</span> Mojo Salsa hang (WCS on SBK music) — tentative</p>
-                  <p><span className="font-semibold">Mon 14 Sept:</span> Dinner first, then Havana Nights social (visitors joining around 8pm)</p>
-                </div>
-              </a>
-
-              {/* WCS Social with Internationals - 12 September */}
-              <div
-                id="wcs-social-internationals"
-                className="group rounded-2xl border-2 p-6 md:p-8 transition-all hover:shadow-xl"
-                style={{ borderColor: 'rgba(219, 64, 156, 0.35)', backgroundColor: 'rgba(219,64,156,0.07)' }}
-              >
-                <div className="inline-block bg-pink-accent text-white px-4 py-1.5 rounded-full font-semibold text-xs mb-4">
-                  SPECIAL SOCIAL · SAT 12 SEPT
-                </div>
-                <h3 className="font-spartan font-semibold text-2xl mb-2">WCS Social with Internationals</h3>
-                <p className="text-sm text-text-dark/75 mb-4">
-                  Join us and our visiting international westies for a social dance night.
-                </p>
-                <div className="space-y-2 text-sm text-text-dark/80">
-                  <p><span className="font-semibold">📅 When:</span> Saturday 12 September · 8:30–11:30pm</p>
-                  <p><span className="font-semibold">📍 Venue:</span> Que Pasa Dance Co, 61 Loop Street, Cape Town</p>
-                  <p><span className="font-semibold">💰 Entry:</span> R50</p>
-                </div>
-              </div>
             </div>
 
           </div>
@@ -248,14 +206,6 @@ export default function WhatsOn() {
               </div>
             </div>
 
-            <div className="bg-pink-accent/15 border-2 border-pink-accent/30 rounded-xl p-5 md:p-6 mt-8">
-              <p className="font-semibold text-base md:text-lg mb-3">Please note upcoming Monday schedule changes:</p>
-              <div className="space-y-2 text-sm md:text-base text-text-dark/85">
-                <p><span className="font-semibold">Monday 31 August:</span> All level class at 7:30pm, social from 8:15pm after class.</p>
-                <p className="ml-4">All level = Level 1 + Level 2 (WCS basics required: sugar push, left side pass, underarm turn; better if you also know sugar tuck and whip).</p>
-                <p><span className="font-semibold">Monday 14 September:</span> Social-only night from 7:30pm, with international westie visitors joining after dinner (around 8pm).</p>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -348,7 +298,7 @@ export default function WhatsOn() {
           id="monthly-social"
           className="px-[5%] py-[50px]"
           style={{
-            background: "linear-gradient(135deg, rgba(219, 64, 156, 0.15), rgba(219, 64, 156, 0.05))",
+            background: "linear-gradient(135deg, rgba(245, 116, 32, 0.15), rgba(245, 116, 32, 0.05))",
           }}
         >
           <div className="max-w-[900px] mx-auto">
@@ -356,8 +306,9 @@ export default function WhatsOn() {
               WCS Social
             </h2>
 
-            <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
-              <p className="text-lg md:text-xl font-semibold mb-2">📅 Next one in October</p>
+            <div className="rounded-xl p-6 md:p-8 mb-8 text-center border-2" style={{ backgroundColor: 'rgba(245,116,32,0.18)', borderColor: '#F57420' }}>
+              <p className="text-lg md:text-xl font-semibold mb-1">🎃 Strictly Social — early Halloween party</p>
+              <p className="text-base md:text-lg">📅 Saturday 10 October · 8–11 PM</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
@@ -367,11 +318,11 @@ export default function WhatsOn() {
                 <div className="space-y-3">
                   <div className="bg-white/60 rounded-lg p-4">
                     <p className="font-semibold">Taster Class</p>
-                    <p className="text-sm text-text-dark/70">A short intro class at 8:30pm — perfect for newcomers</p>
+                    <p className="text-sm text-text-dark/70">A short intro class at 8 PM — perfect for newcomers</p>
                   </div>
                   <div className="bg-white/60 rounded-lg p-4">
                     <p className="font-semibold">Social Dancing</p>
-                    <p className="text-sm text-text-dark/70">Open social 8:30–11:30pm</p>
+                    <p className="text-sm text-text-dark/70">Open social 8–11 PM — costumes encouraged!</p>
                   </div>
                   <div className="bg-white/60 rounded-lg p-4">
                     <p className="font-semibold">All Welcome</p>

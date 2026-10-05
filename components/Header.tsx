@@ -29,7 +29,6 @@ export default function Header() {
         <nav className="hidden md:flex items-center gap-8">
           <Link href="/" className="text-text-dark hover:text-yellow-accent transition-colors">Home</Link>
           <Link href="/whats-on" className="text-text-dark hover:text-pink-accent transition-colors">What&apos;s On</Link>
-          <Link href="/swingstrong" className="text-text-dark hover:text-yellow-accent transition-colors">Swing Strong Workshop</Link>
           <Link href="/about-us" className="text-text-dark hover:text-yellow-accent transition-colors">About Us</Link>
           <Link href="/community-culture" className="text-text-dark hover:text-pink-accent transition-colors">Community Culture</Link>
           <Link href="/contact" className="text-text-dark hover:text-pink-accent transition-colors">Contact</Link>
@@ -70,13 +69,6 @@ export default function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               What&apos;s On
-            </Link>
-            <Link 
-              href="/swingstrong" 
-              className="text-text-dark hover:text-yellow-accent transition-colors text-lg"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              Swing Strong Workshop
             </Link>
             <Link 
               href="/about-us" 

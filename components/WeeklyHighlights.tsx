@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 function getNextLabel(targetDay: number): string {
   const now = new Date();
@@ -26,54 +27,40 @@ export default function WeeklyHighlights() {
         </p>
         <div className="flex flex-col gap-3">
 
-          {/* Workshop — featured banner */}
+          {/* Featured: Strictly Halloween Social */}
           <Link
-            href="/swingstrong"
-            className="rounded-xl border-2 p-5 transition-all hover:shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-            style={{ borderColor: '#00B49A', backgroundColor: 'rgba(0,180,154,0.07)' }}
+            href="/whats-on#monthly-social"
+            className="rounded-xl border-2 overflow-hidden transition-all hover:shadow-lg flex flex-col md:flex-row md:items-center gap-4"
+            style={{ borderColor: 'rgba(245,116,32,0.45)', backgroundColor: 'rgba(245,116,32,0.07)' }}
           >
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: '#00B49A' }}>
-                🌍 International Workshop · Sunday 6 September 2026
+            <div className="shrink-0 bg-white flex items-center justify-center p-4 md:w-[200px] self-stretch">
+              <Image
+                src="/images/strictly social.png"
+                alt="Strictly Social"
+                width={469}
+                height={265}
+                className="w-[160px] md:w-full h-auto"
+              />
+            </div>
+            <div className="flex-1 px-5 pb-1 md:py-5 md:px-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: '#F57420' }}>
+                🎃 Early Halloween party · Saturday 10 October
               </p>
               <p className="font-spartan font-bold text-xl md:text-2xl leading-tight mb-1">
-                Jeff Mumford in Cape Town!
+                Strictly Halloween Social
               </p>
-              <p className="text-sm text-text-dark/70">Swing Strong — Mobility &amp; Movement for WCS · 4 Hours · 11:30–15:30 · R350 · Pinelands</p>
+              <p className="text-sm text-text-dark/70">Taster class at 8 PM · Social 8–11 PM · R50 per person · 1st Claremont Scout Group · All welcome</p>
             </div>
             <span
-              className="inline-block shrink-0 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-all hover:opacity-90"
-              style={{ backgroundColor: '#00B49A' }}
+              className="inline-block shrink-0 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-all hover:opacity-90 mx-5 mb-5 md:mb-0 md:mx-0 md:mr-5 self-start md:self-center"
+              style={{ backgroundColor: '#F57420' }}
             >
               Find out more →
             </span>
           </Link>
 
-          {/* International westies visiting Cape Town */}
-          <Link
-            href="/whats-on#international-westies"
-            className="rounded-xl border-2 p-5 transition-all hover:shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-4"
-            style={{ borderColor: 'rgba(103, 72, 217, 0.35)', backgroundColor: 'rgba(103,72,217,0.07)' }}
-          >
-            <div>
-              <p className="text-[11px] font-semibold uppercase tracking-wider mb-1 text-purple-accent">
-                International + local westies
-              </p>
-              <p className="font-spartan font-semibold text-xl leading-tight mb-1">
-                Visitors week in Cape Town
-              </p>
-              <p className="text-sm text-text-dark/70">A group of international westies is in Cape Town before Safari Swing — come dance, connect, and share the floor together: Sat 12 Sept WCS Social at Que Pasa Dance Co, Sun 13 Sept Mojo Salsa (tentative), Mon 14 Sept Havana Nights social.</p>
-            </div>
-            <span
-              className="inline-block shrink-0 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-all hover:opacity-90"
-              style={{ backgroundColor: '#6748D9' }}
-            >
-              Join the vibe →
-            </span>
-          </Link>
-
           {/* Regular events row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
             {/* Monday Classes */}
             <Link
@@ -106,21 +93,6 @@ export default function WeeklyHighlights() {
                   Casual Dancing
                 </p>
                 <p className="text-xs text-text-dark/60">6–8 PM · Down to Earth Market</p>
-              </div>
-            </Link>
-            <Link
-              href="/whats-on#monthly-social"
-              className="flex items-start gap-3 rounded-xl border-2 border-pink-accent/30 hover:border-pink-accent bg-pink-accent/[0.05] hover:bg-pink-accent/[0.1] p-4 transition-all group"
-            >
-              <span className="mt-0.5 text-xl">🩷</span>
-              <div className="text-left min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-pink-accent mb-0.5">
-                  Next one in October
-                </p>
-                <p className="font-spartan font-semibold text-base leading-tight mb-1">
-                  Monthly WCS Social
-                </p>
-                <p className="text-xs text-text-dark/60">Scout Hall, Claremont</p>
               </div>
             </Link>
 
