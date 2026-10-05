@@ -94,14 +94,24 @@ export default function WhatsOn() {
               {/* Strictly Social - 10 October */}
               <a
                 href="#monthly-social"
-                className="group rounded-2xl overflow-hidden transition-all hover:shadow-xl w-full max-w-2xl border-2 flex flex-col md:flex-row"
+                className="group rounded-2xl overflow-hidden transition-all hover:shadow-xl w-full max-w-2xl border-2 flex flex-col"
                 style={{ borderColor: 'rgba(245,116,32,0.45)', backgroundColor: 'rgba(245,116,32,0.07)' }}
               >
-                <div className="flex-1 p-6 md:p-8 flex flex-col justify-center">
+                {/* Title image on top */}
+                <div className="bg-white flex items-center justify-center px-6 pt-6 pb-2">
+                  <Image
+                    src="/images/strictly social.png"
+                    alt="Strictly Social"
+                    width={469}
+                    height={265}
+                    className="w-[260px] md:w-[300px] h-auto"
+                  />
+                </div>
+                <div className="p-6 md:p-8 flex flex-col justify-center">
                   <div className="inline-block text-white px-4 py-1.5 rounded-full font-semibold text-xs mb-4 self-start" style={{ backgroundColor: '#F57420' }}>
                     EARLY HALLOWEEN PARTY · SAT 10 OCT
                   </div>
-                  <h3 className="font-spartan font-semibold text-2xl mb-1">Strictly Social</h3>
+                  <h3 className="font-spartan font-semibold text-2xl mb-1">Strictly Halloween Social</h3>
                   <p className="text-sm text-text-dark/60 mb-3">Let&apos;s get spooky on the dance floor!</p>
                   <div className="space-y-1 text-sm text-text-dark/80 mb-4">
                     <p><span className="font-semibold">📅 When:</span> Saturday 10 October · 8–11 PM</p>
@@ -112,15 +122,6 @@ export default function WhatsOn() {
                   <span className="inline-block self-start text-white text-sm font-semibold px-5 py-2 rounded-lg" style={{ backgroundColor: '#F57420' }}>
                     Find out more →
                   </span>
-                </div>
-                <div className="shrink-0 md:w-[260px] bg-white flex items-center justify-center p-6">
-                  <Image
-                    src="/images/strictly social.png"
-                    alt="Strictly Social"
-                    width={469}
-                    height={265}
-                    className="w-full h-auto"
-                  />
                 </div>
               </a>
             </div>
