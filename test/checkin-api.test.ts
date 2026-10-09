@@ -570,6 +570,65 @@ describe("POST /api/check-in/attendance", () => {
     expect(String(spreadsheetId)).toBeTruthy();
   });
 
+  it("writes two rows when one payment covers 2 people", async () => {
+    const { POST } = await import("../app/api/check-in/attendance/route");
+
+    mockGetSheetValues.mockImplementation(async (_id: string, range: string) => {
+      if (range === "Attendance!A:C") return [["7", "2026-02-03", "Monday Plumstead"]];
+      if (range === "All_members!A:C") return [["99", "Jane", "Doe"]];
+      return [];
+    });
+
+    const res = await POST(
+      jsonRequest("http://localhost/api/check-in/attendance", {
+        member_id: 42,
+        type: "Standard entry",
+        paid_via: "Yoco",
+        paid_amount: 100,
+        event: "Monday Plumstead",
+        paid_for_member_id: 99,
+      })
+    );
+    expect(res.status).toBe(200);
+
+    expect(mockAppendToSheet).toHaveBeenCalledTimes(1);
+    const rows = mockAppendToSheet.mock.calls[0][2] as (string | number)[][];
+    expect(rows).toHaveLength(2);
+    expect(rows[0].slice(0, 7)).toEqual([
+      42, "2026-02-03", "Monday Plumstead", "Yoco", 200, "Standard entry", "paid for 99",
+    ]);
+    expect(rows[1].slice(0, 7)).toEqual([
+      99, "2026-02-03", "Monday Plumstead", "", 0, "Standard entry", "paid by 42",
+    ]);
+  });
+
+  it("rejects paying for someone already checked in, or for yourself", async () => {
+    const { POST } = await import("../app/api/check-in/attendance/route");
+
+    mockGetSheetValues.mockImplementation(async (_id: string, range: string) => {
+      if (range === "Attendance!A:C") return [["99", "2026-02-03", "Monday Plumstead"]];
+      if (range === "All_members!A:C") return [["99", "Jane", "Doe"]];
+      return [];
+    });
+
+    const base = {
+      member_id: 42,
+      type: "Standard entry",
+      paid_via: "Yoco",
+      paid_amount: 100,
+      event: "Monday Plumstead",
+    };
+    let res = await POST(
+      jsonRequest("http://localhost/api/check-in/attendance", { ...base, paid_for_member_id: 99 })
+    );
+    expect(res.status).toBe(409);
+    res = await POST(
+      jsonRequest("http://localhost/api/check-in/attendance", { ...base, paid_for_member_id: 42 })
+    );
+    expect(res.status).toBe(400);
+    expect(mockAppendToSheet).not.toHaveBeenCalled();
+  });
+
   it("returns errors for invalid member IDs or missing type", async () => {
     const { POST } = await import("../app/api/check-in/attendance/route");
 

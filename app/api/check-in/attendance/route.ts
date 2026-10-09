@@ -49,6 +49,9 @@ type Payload = {
   free_entry_reason?: string;
   date?: string; // YYYY-MM-DD (Cape Town)
   event?: string;
+  // Optional: one payment covering a second person. paid_amount is the
+  // per-person amount; the payer's row records 2 x paid_amount.
+  paid_for_member_id?: number;
 };
 
 export async function POST(request: Request) {
@@ -87,6 +90,82 @@ export async function POST(request: Request) {
     }
 
     const today = dateISOParam || formatZaDateISO(date ?? undefined);
+
+    const paidForRaw = body.paid_for_member_id;
+    const hasPaidFor =
+      paidForRaw !== undefined && paidForRaw !== null && String(paidForRaw) !== "";
+    const paid_for_member_id = hasPaidFor ? Number(paidForRaw) : NaN;
+
+    if (hasPaidFor) {
+      if (!Number.isFinite(paid_for_member_id)) {
+        return NextResponse.json({ error: "Invalid paid_for_member_id" }, { status: 400 });
+      }
+      if (paid_for_member_id === member_id) {
+        return NextResponse.json(
+          { error: "Cannot pay for yourself" },
+          { status: 400 }
+        );
+      }
+      if (isMonthlyType(type)) {
+        return NextResponse.json(
+          { error: "Paying for 2 is not supported for monthly passes" },
+          { status: 400 }
+        );
+      }
+
+      // The second person must exist and must not already be checked in.
+      const existing = await getSheetValues(CHECKIN_SPREADSHEET_ID, "Attendance!A:C");
+      for (const row of existing) {
+        const firstCell = (row[0] ?? "").trim().toLowerCase();
+        if (!firstCell || firstCell === "member_id") continue;
+        if (
+          parseMemberId(row[0] ?? "") === paid_for_member_id &&
+          (row[1] ?? "").trim() === today &&
+          (row[2] ?? "").trim() === event
+        ) {
+          return NextResponse.json(
+            { error: `Member ${paid_for_member_id} is already checked in` },
+            { status: 409 }
+          );
+        }
+      }
+      const partnerName = await lookupMemberFullName(paid_for_member_id);
+      if (!partnerName) {
+        return NextResponse.json({ error: "Second member not found" }, { status: 400 });
+      }
+    }
+
+    if (hasPaidFor) {
+      // One row per attendee, but the payer's row carries the full payment so
+      // it matches the single Yoco transaction. The second row is R0.
+      const payerComment = [comment, `paid for ${paid_for_member_id}`]
+        .filter(Boolean)
+        .join(" - ");
+      const partnerType = type.toLowerCase() === "practice" ? type : "Standard entry";
+      await appendToSheet(CHECKIN_SPREADSHEET_ID, "Attendance!A:H", [
+        [
+          member_id,
+          today,
+          event,
+          paid_via,
+          paid_amount * 2,
+          type,
+          payerComment,
+          free_entry_reason,
+        ],
+        [
+          paid_for_member_id,
+          today,
+          event,
+          "",
+          0,
+          partnerType,
+          `paid by ${member_id}`,
+          "",
+        ],
+      ]);
+      return NextResponse.json({ ok: true, free_entry_added: false });
+    }
 
     // Append optional columns: comment (G) + free_entry_reason (H)
     await appendToSheet(CHECKIN_SPREADSHEET_ID, "Attendance!A:H", [

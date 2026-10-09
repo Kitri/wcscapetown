@@ -880,6 +880,14 @@ export default function CheckInClient({
 
   const [comment, setComment] = useState("");
 
+  // "Pay for 2 people": one payment covers the selected member + a second member.
+  const [payForTwo, setPayForTwo] = useState(false);
+  const [partner, setPartner] = useState<Member | null>(null);
+  const [partnerAlreadyCheckedIn, setPartnerAlreadyCheckedIn] = useState(false);
+  const [partnerSearch, setPartnerSearch] = useState("");
+  const [partnerResults, setPartnerResults] = useState<Member[]>([]);
+  const [partnerSearchLoading, setPartnerSearchLoading] = useState(false);
+
   const [checkingIn, setCheckingIn] = useState(false);
   const [banner, setBanner] = useState<{ kind: "ok" | "error"; text: string } | null>(
     null
@@ -1007,9 +1015,19 @@ export default function CheckInClient({
     selectedEvent,
   ]);
 
+  const canPayForTwo = Boolean(
+    selected &&
+      !effectiveFreeEntry?.applies &&
+      selectedType &&
+      !selectedType.toLowerCase().includes("monthly") &&
+      payableAmount > 0
+  );
+  const payForTwoActive = payForTwo && canPayForTwo;
+
   const checkinEnabled = useMemo(() => {
     if (!selected) return false;
     if (alreadyCheckedIn) return false;
+    if (payForTwoActive && (!partner || partnerAlreadyCheckedIn)) return false;
 
     if (effectiveFreeEntry?.applies) {
       if (isDoorVolunteer) {
@@ -1028,6 +1046,9 @@ export default function CheckInClient({
     effectiveFreeEntry,
     freeEntryNeedsPayment,
     isDoorVolunteer,
+    partner,
+    partnerAlreadyCheckedIn,
+    payForTwoActive,
     selected,
     selectedPaidVia,
     selectedType,
@@ -1057,6 +1078,64 @@ export default function CheckInClient({
       cancelled = true;
     };
   }, [authed, selectedDateISO]);
+
+  // Search for the second person when paying for 2
+  useEffect(() => {
+    if (!authed || !payForTwo || partner) return;
+
+    const q = partnerSearch.trim();
+    if (q.length < 3) {
+      setPartnerResults([]);
+      setPartnerSearchLoading(false);
+      return;
+    }
+
+    setPartnerSearchLoading(true);
+    let cancelled = false;
+    const handle = window.setTimeout(async () => {
+      try {
+        const res = await fetchJson<{ results: Member[] }>(
+          `/api/check-in/members?q=${encodeURIComponent(q)}&event=${encodeURIComponent(selectedEvent)}`
+        );
+        if (cancelled) return;
+        setPartnerResults(
+          res.results.filter((m) => m.member_id !== selected?.member_id)
+        );
+      } catch {
+        if (!cancelled) setPartnerResults([]);
+      } finally {
+        if (!cancelled) setPartnerSearchLoading(false);
+      }
+    }, 200);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(handle);
+    };
+  }, [authed, payForTwo, partner, partnerSearch, selected?.member_id, selectedEvent]);
+
+  async function choosePartner(member: Member) {
+    setPartner(member);
+    setPartnerSearch("");
+    setPartnerResults([]);
+    setPartnerAlreadyCheckedIn(false);
+    try {
+      const res = await fetchJson<{ alreadyCheckedIn: boolean }>(
+        `/api/check-in/already-checked-in?member_id=${member.member_id}&date=${encodeURIComponent(selectedDateISO)}&event=${encodeURIComponent(selectedEvent)}`
+      );
+      setPartnerAlreadyCheckedIn(Boolean(res.alreadyCheckedIn));
+    } catch {
+      // Server re-validates on submit.
+    }
+  }
+
+  function clearPayForTwo() {
+    setPayForTwo(false);
+    setPartner(null);
+    setPartnerAlreadyCheckedIn(false);
+    setPartnerSearch("");
+    setPartnerResults([]);
+  }
 
   // Search members
   useEffect(() => {
@@ -1252,6 +1331,7 @@ export default function CheckInClient({
     setSelectedType(null);
     setSelectedPaidVia(null);
     setComment("");
+    clearPayForTwo();
 
     setIgnoreFreeEntry(false);
     setFreeEntry(null);
@@ -1281,6 +1361,11 @@ export default function CheckInClient({
     setSelectedType(null);
     setSelectedPaidVia(null);
     setComment("");
+    setPayForTwo(false);
+    setPartner(null);
+    setPartnerAlreadyCheckedIn(false);
+    setPartnerSearch("");
+    setPartnerResults([]);
     setIgnoreFreeEntry(false);
     setBanner(null);
     setSearch("");
@@ -1369,6 +1454,9 @@ export default function CheckInClient({
             paid_amount: payableAmount,
             comment: comment.trim(),
             free_entry_reason: "",
+            ...(payForTwoActive && partner
+              ? { paid_for_member_id: partner.member_id }
+              : {}),
           };
 
       const payload = {
@@ -2310,11 +2398,92 @@ export default function CheckInClient({
                 {selectedType && (
                   <div className="bg-white rounded-xl border border-text-dark/10 p-4">
                     <div>
-                      <div className="text-text-dark/70 text-sm">Amount</div>
+                      <div className="text-text-dark/70 text-sm">
+                        Amount{payForTwoActive ? " (2 people)" : ""}
+                      </div>
                       <div className="font-spartan font-semibold text-3xl">
-                        {formatZar(payableAmount)}
+                        {formatZar(payForTwoActive ? payableAmount * 2 : payableAmount)}
                       </div>
                     </div>
+
+                    {canPayForTwo && (
+                      <div className="mt-4">
+                        <label className="flex items-center gap-3 font-semibold">
+                          <input
+                            type="checkbox"
+                            className="h-5 w-5"
+                            checked={payForTwo}
+                            onChange={(e) => {
+                              if (e.target.checked) setPayForTwo(true);
+                              else clearPayForTwo();
+                            }}
+                          />
+                          Pay for 2 people
+                        </label>
+
+                        {payForTwo && (
+                          <div className="mt-3 space-y-2">
+                            <div className="text-sm text-text-dark/70">
+                              {selected?.full_name} is paying. Select the other person:
+                            </div>
+
+                            {partner ? (
+                              <div className="flex items-center justify-between gap-3 rounded-xl border-2 border-text-dark/20 px-4 py-3 bg-white">
+                                <div>
+                                  <div className="font-semibold">{partner.full_name}</div>
+                                  <div className="text-sm text-text-dark/70">
+                                    ID {partner.member_id}
+                                  </div>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setPartner(null);
+                                    setPartnerAlreadyCheckedIn(false);
+                                  }}
+                                  className="text-sm underline font-semibold text-text-dark/70"
+                                >
+                                  Change
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <input
+                                  value={partnerSearch}
+                                  onChange={(e) => setPartnerSearch(e.target.value)}
+                                  className="w-full px-4 py-3 rounded-xl border-2 border-text-dark/20 text-lg bg-white"
+                                  placeholder="Search by name (min 3 letters)…"
+                                />
+                                {partnerSearchLoading && (
+                                  <div className="text-sm text-text-dark/70">Searching…</div>
+                                )}
+                                {partnerResults.length > 0 && (
+                                  <div className="rounded-xl border border-text-dark/20 bg-white max-h-60 overflow-auto divide-y divide-text-dark/10">
+                                    {partnerResults.map((m) => (
+                                      <button
+                                        key={m.member_id}
+                                        type="button"
+                                        onClick={() => void choosePartner(m)}
+                                        className="w-full text-left px-4 py-3 hover:bg-yellow-accent/20"
+                                      >
+                                        <span className="font-semibold">{m.full_name}</span>
+                                        <span className="text-text-dark/60"> • ID {m.member_id}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </>
+                            )}
+
+                            {partner && partnerAlreadyCheckedIn && (
+                              <div className="text-pink-accent font-semibold">
+                                {partner.full_name} is already checked in for this event.
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     <label className="block mt-4 space-y-2">
                       <div className="font-semibold">Comment (optional)</div>
