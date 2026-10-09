@@ -36,10 +36,6 @@ function isMonthlyType(type: string): boolean {
   return (type ?? "").trim().toLowerCase().includes("monthly");
 }
 
-function normalizeBoolCell(v: boolean): string {
-  return v ? "TRUE" : "";
-}
-
 type Payload = {
   member_id?: number;
   type?: string;
@@ -197,20 +193,17 @@ export async function POST(request: Request) {
         const eventLower = event.toLowerCase();
         const isMonday =
           eventLower.includes("monday") && eventLower.includes("plumstead");
-        const isTuesday =
-          eventLower.includes("tuesday") && eventLower.includes("pinelands");
 
-        // Only add monthly passes for Monday/Tuesday events.
-        if (!isMonday && !isTuesday) {
-          free_entry_error = "Monthly free entry is only supported for Monday or Tuesday events.";
+        // Only add monthly passes for Monday events.
+        if (!isMonday) {
+          free_entry_error = "Monthly free entry is only supported for Monday events.";
         } else {
           const monthYear = formatZaMonthYear(date ?? undefined);
-          const fullName = await lookupMemberFullName(member_id);
 
-          // Avoid duplicates: if the row already exists for this month + event, don't add again.
+          // Avoid duplicates: if the row already exists for this month, don't add again.
           const existing = await getSheetValues(
             CHECKIN_SPREADSHEET_ID,
-            "'Free Entry'!A:I"
+            "'Free Entry'!A:F"
           );
 
           let alreadyExists = false;
@@ -224,38 +217,22 @@ export async function POST(request: Request) {
             const entryType = (row[2] ?? "").trim().toLowerCase();
             const applicable = (row[3] ?? "").trim();
 
-            const mondayCell = (row[6] ?? "").trim().toLowerCase();
-            const tuesdayCell = (row[7] ?? "").trim().toLowerCase();
-            const monday =
-              mondayCell === "true" || mondayCell === "yes" || mondayCell === "1";
-            const tuesday =
-              tuesdayCell === "true" ||
-              tuesdayCell === "yes" ||
-              tuesdayCell === "1";
-
-            if (
-              entryType === "monthly" &&
-              applicable === monthYear &&
-              monday === isMonday &&
-              tuesday === isTuesday
-            ) {
+            if (entryType === "monthly" && applicable === monthYear) {
               alreadyExists = true;
               break;
             }
           }
 
           if (!alreadyExists) {
-            await appendToSheet(CHECKIN_SPREADSHEET_ID, "'Free Entry'!A:I", [
+            // Column B (full name) is a lookup formula in the sheet; leave it untouched.
+            await appendToSheet(CHECKIN_SPREADSHEET_ID, "'Free Entry'!A:F", [
               [
                 member_id,
-                fullName,
+                null,
                 "monthly",
                 monthYear,
                 "Member has paid for the month, they can just sign in",
                 "monthly",
-                normalizeBoolCell(isMonday),
-                normalizeBoolCell(isTuesday),
-                "", // Social column
               ],
             ]);
             free_entry_added = true;

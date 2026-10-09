@@ -37,23 +37,39 @@ export async function GET(request: Request) {
 
     const today = dateISOParam || formatZaDateISO(date ?? undefined);
 
-    // Attendance columns: A member_id, B date, C event
-    const rows = await getSheetValues(CHECKIN_SPREADSHEET_ID, "Attendance!A:C");
+    // Attendance columns: A member_id, B date, C event, F type, H free_entry_reason
+    const rows = await getSheetValues(CHECKIN_SPREADSHEET_ID, "Attendance!A:H");
+
+    let alreadyCheckedIn = false;
+    // Only one welcoming committee member per event: once someone has checked in
+    // as one today, the option is withdrawn for everybody else.
+    let welcomingCommitteeCheckedIn = false;
 
     for (const row of rows) {
       const firstCell = (row[0] ?? "").trim().toLowerCase();
       if (firstCell === "member_id") continue;
 
-      const id = parseMemberId(row[0] ?? "");
       const dateCell = (row[1] ?? "").trim();
       const eventCell = (row[2] ?? "").trim();
+      if (dateCell !== today || eventCell !== eventName) continue;
 
-      if (id === member_id && dateCell === today && eventCell === eventName) {
-        return NextResponse.json({ alreadyCheckedIn: true, today, event: eventName });
+      if (parseMemberId(row[0] ?? "") === member_id) alreadyCheckedIn = true;
+
+      const typeAndReason = `${row[5] ?? ""} ${row[7] ?? ""}`.toLowerCase();
+      if (
+        typeAndReason.includes("welcoming committee") ||
+        typeAndReason.includes("door volunteer")
+      ) {
+        welcomingCommitteeCheckedIn = true;
       }
     }
 
-    return NextResponse.json({ alreadyCheckedIn: false, today, event: eventName });
+    return NextResponse.json({
+      alreadyCheckedIn,
+      welcomingCommitteeCheckedIn,
+      today,
+      event: eventName,
+    });
   } catch (error) {
     console.error("Already-checked-in error:", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });

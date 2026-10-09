@@ -73,6 +73,9 @@ const STRICTLY_SOCIAL_TYPES = ["Social only"] as const;
 
 const LEVEL_2_TUESDAY_PRICE = 50;
 
+// Door volunteers pay a reduced, editable amount (default 50% of their entry price).
+const WELCOMING_TYPE = "Welcoming committee";
+
 const ZA_TIME_ZONE = "Africa/Johannesburg";
 
 const CHECKIN_EVENT_OPTIONS = [
@@ -880,6 +883,10 @@ export default function CheckInClient({
 
   const [comment, setComment] = useState("");
 
+  const [volunteerAmount, setVolunteerAmount] = useState("");
+  // Someone has already checked in as the welcoming committee for this event/date.
+  const [welcomingCommitteeTaken, setWelcomingCommitteeTaken] = useState(false);
+
   // "Pay for 2 people": one payment covers the selected member + a second member.
   const [payForTwo, setPayForTwo] = useState(false);
   const [partner, setPartner] = useState<Member | null>(null);
@@ -946,13 +953,17 @@ export default function CheckInClient({
 
   const payableAmount = useMemo(() => {
     if (!selectedType) return 0;
+    if (selectedType === WELCOMING_TYPE) {
+      const v = Number(volunteerAmount);
+      return Number.isFinite(v) && v > 0 ? v : 0;
+    }
     // Level 2 Tuesday discount: R50 for all options
     if (isLevel2TuesdayDiscount) {
       return LEVEL_2_TUESDAY_PRICE;
     }
     const amount = costs?.costs?.[selectedType];
     return typeof amount === "number" ? amount : 0;
-  }, [costs, selectedType, isLevel2TuesdayDiscount]);
+  }, [costs, selectedType, isLevel2TuesdayDiscount, volunteerAmount]);
 
   const thursdayPracticeAmount = useMemo(() => {
     const amount = costs?.costs?.Practice;
@@ -989,6 +1000,20 @@ export default function CheckInClient({
     return isPensionerOrStudent ? 40 : 50;
   }, [selected]);
 
+  // 50% of the member's normal entry price (pensioner/student rate if on record).
+  const volunteerDefaultAmount = useMemo(() => {
+    const ps = normalizePensionerStudent(selected?.pensionerStudent ?? "");
+    const base =
+      ps === "pensioner"
+        ? costs?.costs?.Pensioner
+        : ps === "student"
+          ? costs?.costs?.Student
+          : costs?.costs?.["Standard entry"];
+    return typeof base === "number" && base > 0
+      ? Math.round(base / 2)
+      : welcomingCommitteeAmount;
+  }, [costs, selected, welcomingCommitteeAmount]);
+
   const freeEntryPaidAmount = useMemo(() => {
     if (!effectiveFreeEntry?.applies) return 0;
     const raw = Number(effectiveFreeEntry.paid_amount_override ?? 0);
@@ -1020,6 +1045,7 @@ export default function CheckInClient({
       !effectiveFreeEntry?.applies &&
       selectedType &&
       !selectedType.toLowerCase().includes("monthly") &&
+      selectedType !== WELCOMING_TYPE &&
       payableAmount > 0
   );
   const payForTwoActive = payForTwo && canPayForTwo;
@@ -1040,6 +1066,16 @@ export default function CheckInClient({
       return true;
     }
 
+    if (selectedType === WELCOMING_TYPE) {
+      const amt = Number(volunteerAmount);
+      return (
+        volunteerAmount.trim() !== "" &&
+        Number.isFinite(amt) &&
+        amt >= 0 &&
+        (amt === 0 || Boolean(selectedPaidVia))
+      );
+    }
+
     return Boolean(selectedType && selectedPaidVia);
   }, [
     alreadyCheckedIn,
@@ -1052,6 +1088,7 @@ export default function CheckInClient({
     selected,
     selectedPaidVia,
     selectedType,
+    volunteerAmount,
     welcomingCommitteeAmount,
   ]);
 
@@ -1331,6 +1368,8 @@ export default function CheckInClient({
     setSelectedType(null);
     setSelectedPaidVia(null);
     setComment("");
+    setVolunteerAmount("");
+    setWelcomingCommitteeTaken(false);
     clearPayForTwo();
 
     setIgnoreFreeEntry(false);
@@ -1342,13 +1381,14 @@ export default function CheckInClient({
         fetchJson<FreeEntryResponse>(
           `/api/check-in/free-entry?member_id=${member.member_id}&date=${encodeURIComponent(selectedDateISO)}&event=${encodeURIComponent(selectedEvent)}`
         ).catch(() => ({ applies: false, today: costs?.today ?? "" } as const)),
-        fetchJson<{ alreadyCheckedIn: boolean }>(
+        fetchJson<{ alreadyCheckedIn: boolean; welcomingCommitteeCheckedIn?: boolean }>(
           `/api/check-in/already-checked-in?member_id=${member.member_id}&date=${encodeURIComponent(selectedDateISO)}&event=${encodeURIComponent(selectedEvent)}`
-        ).catch(() => ({ alreadyCheckedIn: false })),
+        ).catch(() => ({ alreadyCheckedIn: false, welcomingCommitteeCheckedIn: false })),
       ]);
 
       setFreeEntry(freeEntryRes);
       setAlreadyCheckedIn(Boolean(checkedRes.alreadyCheckedIn));
+      setWelcomingCommitteeTaken(Boolean(checkedRes.welcomingCommitteeCheckedIn));
     } finally {
       setFreeEntryLoading(false);
     }
@@ -1361,6 +1401,8 @@ export default function CheckInClient({
     setSelectedType(null);
     setSelectedPaidVia(null);
     setComment("");
+    setVolunteerAmount("");
+    setWelcomingCommitteeTaken(false);
     setPayForTwo(false);
     setPartner(null);
     setPartnerAlreadyCheckedIn(false);
@@ -1450,10 +1492,14 @@ export default function CheckInClient({
         : {
             member_id: selected.member_id,
             type: selectedType,
-            paid_via: selectedPaidVia,
+            paid_via:
+              selectedType === WELCOMING_TYPE && payableAmount === 0
+                ? ""
+                : selectedPaidVia,
             paid_amount: payableAmount,
             comment: comment.trim(),
-            free_entry_reason: "",
+            free_entry_reason:
+              selectedType === WELCOMING_TYPE ? "welcoming committee" : "",
             ...(payForTwoActive && partner
               ? { paid_for_member_id: partner.member_id }
               : {}),
@@ -2268,8 +2314,7 @@ export default function CheckInClient({
                     </div>
                     {isNewcomerTeacher ? (
                       <div className="mt-2 text-text-dark/80">
-                        This person is listed as the newcomer teacher for Monday.
-                        There should only be one newcomer teacher each Monday.
+                        First timers should go to {selected?.first_name}.
                       </div>
                     ) : (
                       effectiveFreeEntry.details && (
@@ -2375,6 +2420,24 @@ export default function CheckInClient({
                       </PillButton>
                     );
                   })}
+                  {selectedEvent.toLowerCase().includes("monday") && !welcomingCommitteeTaken && (
+                    <PillButton
+                      selected={selectedType === WELCOMING_TYPE}
+                      onClick={() => {
+                        setSelectedType(WELCOMING_TYPE);
+                        setVolunteerAmount(String(volunteerDefaultAmount));
+                        clearPayForTwo();
+                      }}
+                      disabled={!costs}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>Door volunteer (welcoming committee)</div>
+                        <div className="font-semibold text-text-dark/70">
+                          {costs ? formatZar(volunteerDefaultAmount) : ""}
+                        </div>
+                      </div>
+                    </PillButton>
+                  )}
                 </div>
 
                 <div className="bg-white rounded-xl border border-text-dark/10 p-4 mb-4">
@@ -2398,12 +2461,34 @@ export default function CheckInClient({
                 {selectedType && (
                   <div className="bg-white rounded-xl border border-text-dark/10 p-4">
                     <div>
-                      <div className="text-text-dark/70 text-sm">
-                        Amount{payForTwoActive ? " (2 people)" : ""}
-                      </div>
-                      <div className="font-spartan font-semibold text-3xl">
-                        {formatZar(payForTwoActive ? payableAmount * 2 : payableAmount)}
-                      </div>
+                      {selectedType === WELCOMING_TYPE ? (
+                        <label className="block space-y-2">
+                          <div className="text-text-dark/70 text-sm">
+                            Amount (default {formatZar(volunteerDefaultAmount)} — edit if needed)
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-spartan font-semibold text-3xl">R</span>
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              min={0}
+                              step="any"
+                              value={volunteerAmount}
+                              onChange={(e) => setVolunteerAmount(e.target.value)}
+                              className="w-40 px-4 py-2 rounded-xl border-2 border-text-dark/20 font-spartan font-semibold text-3xl bg-white"
+                            />
+                          </div>
+                        </label>
+                      ) : (
+                        <>
+                          <div className="text-text-dark/70 text-sm">
+                            Amount{payForTwoActive ? " (2 people)" : ""}
+                          </div>
+                          <div className="font-spartan font-semibold text-3xl">
+                            {formatZar(payForTwoActive ? payableAmount * 2 : payableAmount)}
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     {canPayForTwo && (

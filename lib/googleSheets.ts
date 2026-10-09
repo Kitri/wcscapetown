@@ -76,7 +76,7 @@ export async function getSheetValues(
 export async function appendToSheet(
   spreadsheetId: string,
   range: string,
-  values: (string | number)[][]
+  values: (string | number | null)[][]
 ) {
   try {
     const response = await sheets.spreadsheets.values.append({

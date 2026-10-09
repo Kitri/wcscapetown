@@ -8,6 +8,7 @@ import {
   parseZaDateISO,
 } from "@/lib/zaDate";
 import { CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
+import { getTeacherRoleForDate } from "@/lib/server/teacherRoster";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
 
 type FreeEntryMatch = {
@@ -18,39 +19,6 @@ type FreeEntryMatch = {
   applicable_date: string;
   paid_amount_override?: number;
 };
-
-function parseBoolean(raw: string): boolean {
-  const v = (raw ?? "").trim().toLowerCase();
-  return v === "true" || v === "yes" || v === "1";
-}
-
-function matchesEvent(row: string[], event: string): boolean {
-  // Columns: A=member_id, B=name, C=entry_type, D=applicable_date, E=details, F=reason,
-  //          G=Monday Plumstead, H=Tuesday Pinelands, I=Social
-  const mondayPlumstead = parseBoolean(row[6] ?? "");
-  const tuesdayPinelands = parseBoolean(row[7] ?? "");
-  const social = parseBoolean(row[8] ?? "");
-
-  // If none are set, assume it applies to all events (backward compatibility)
-  if (!mondayPlumstead && !tuesdayPinelands && !social) {
-    return true;
-  }
-
-  const eventLower = event.toLowerCase();
-  if (eventLower.includes("monday") && eventLower.includes("plumstead")) {
-    return mondayPlumstead;
-  }
-  if (eventLower.includes("tuesday") && eventLower.includes("pinelands")) {
-    return tuesdayPinelands;
-  }
-  // For "Social" events or any event with "social" in the name
-  if (eventLower.includes("social")) {
-    return social;
-  }
-  // For other events (Thursday, Saturday, etc.), check if any matching column is set
-  // Default: if no specific column matches, don't grant free entry
-  return false;
-}
 
 function parseMemberId(raw: string): number {
   const digits = raw.replace(/[^0-9]/g, "");
@@ -216,39 +184,28 @@ function countConsumedSessions(
 function matchesApplicableDate(
   applicable: string,
   todayISO: string,
-  ctx: { monthYear: string; isMonday: boolean },
-  opts: { hasEventFilters: boolean }
+  ctx: { monthYear: string; isMonday: boolean }
 ): number {
   // returns priority (higher is better), or 0 if no match
   const v = applicable.trim();
   if (!v) return 0;
 
-  // Exact ISO date
+  // Exact ISO date: applies to whatever event is being checked in
   if (/^\d{4}-\d{2}-\d{2}$/.test(v)) {
     return v === todayISO ? 3 : 0;
   }
 
-  // Year only (e.g. "2026")
-  // Same event-filter logic as month-year: if event filters are set, let them decide;
-  // otherwise legacy behavior (Monday only). Lower priority than month-year.
+  // Year only (e.g. "2026"): Mondays in that year
   if (/^\d{4}$/.test(v)) {
-    const todayYear = todayISO.slice(0, 4);
-    if (v !== todayYear) return 0;
-    if (opts.hasEventFilters) return 1;
-    return ctx.isMonday ? 1 : 0;
+    return v === todayISO.slice(0, 4) && ctx.isMonday ? 1 : 0;
   }
 
-  // Month-year (e.g. "February 2026")
-  // - If this row has event filters (Monday/Tues/Social columns), let the event filters decide the day.
-  // - If it has NO event filters, keep the legacy behavior: apply only on Mondays.
+  // Month-year (e.g. "February 2026"): Mondays in that month
   if (/^[A-Za-z]+\s+\d{4}$/.test(v)) {
-    if (opts.hasEventFilters) {
-      return v === ctx.monthYear ? 2 : 0;
-    }
     return v === ctx.monthYear && ctx.isMonday ? 2 : 0;
   }
 
-  if (v === "All Mondays") {
+  if (v.toLowerCase() === "all mondays") {
     return ctx.isMonday ? 1 : 0;
   }
 
@@ -382,10 +339,11 @@ export async function GET(request: Request) {
       isMonday: date ? isZaMonday(date) : isZaMonday(),
     };
 
-    // Read columns A:I to include the new event filter columns
+    // Columns: A member_id, B name (lookup), C entry_type, D applicable_date,
+    //          E details, F reason
     const rows = await getSheetValues(
       CHECKIN_SPREADSHEET_ID,
-      "'Free Entry'!A:I"
+      "'Free Entry'!A:F"
     );
 
     let best: (FreeEntryMatch & { priority: number }) | null = null;
@@ -411,9 +369,6 @@ export async function GET(request: Request) {
       const [idRaw, , entry_type, applicable_date, details, reason] = row;
       const id = parseMemberId(idRaw ?? "");
       if (!Number.isFinite(id) || id !== member_id) continue;
-
-      // Check event filter if an event is specified
-      if (eventParam && !matchesEvent(row, eventParam)) continue;
 
       let match: (FreeEntryMatch & { priority: number }) | null = null;
 
@@ -450,14 +405,7 @@ export async function GET(request: Request) {
         // remaining <= 0: allowance used up — leave match null so the operator
         // falls through to normal paid entry (silent fallback).
       } else {
-        const hasEventFilters =
-          parseBoolean(row[6] ?? "") ||
-          parseBoolean(row[7] ?? "") ||
-          parseBoolean(row[8] ?? "");
-
-        const priority = matchesApplicableDate(applicable_date ?? "", todayISO, ctx, {
-          hasEventFilters,
-        });
+        const priority = matchesApplicableDate(applicable_date ?? "", todayISO, ctx);
 
         if (priority) {
           match = {
@@ -485,6 +433,30 @@ export async function GET(request: Request) {
         (match.priority === best.priority && matchIsDoorVol && !bestIsDoorVol)
       ) {
         best = match;
+      }
+    }
+
+    // Teachers come from the live teaching roster (only looked up for members
+    // listed in the Teachers tab). A roster failure must never block check-in.
+    const isMondayEvent = !eventParam || eventParam.toLowerCase().includes("monday");
+    if (isMondayEvent) {
+      try {
+        const teacherRole = await getTeacherRoleForDate(member_id, todayISO);
+        if (teacherRole) {
+          best = {
+            member_id,
+            entry_type: "Teacher",
+            details:
+              teacherRole === "newcomer teacher"
+                ? "Newcomer teacher."
+                : "Teaching today.",
+            reason: teacherRole,
+            applicable_date: todayISO,
+            priority: 4,
+          };
+        }
+      } catch (e) {
+        console.error("Teacher roster lookup error:", e);
       }
     }
 

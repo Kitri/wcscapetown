@@ -66,13 +66,16 @@ describe("POST /api/check-in/auth", () => {
 });
 
 describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     mockGetSheetValues.mockReset();
     mockFormatZaDateISO.mockReset();
     mockFormatZaMonthYear.mockReset();
     mockIsZaMonday.mockReset();
     mockParseZaDateISO.mockReset();
     mockGetZaWeekday.mockReset();
+
+    // Teacher lookups are cached at module level; start every test clean.
+    (await import("../lib/server/teacherRoster")).clearTeacherRosterCache();
 
     mockFormatZaDateISO.mockImplementation(() => "2026-02-03");
     mockFormatZaMonthYear.mockImplementation(() => "February 2026");
@@ -250,7 +253,7 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
     });
 
     mockGetSheetValues.mockImplementation(async (_sheetId: string, range: string) => {
-      if (range === "'Free Entry'!A:I") {
+      if (range === "'Free Entry'!A:F") {
         return [["member_id", "", "entry_type", "applicable_date", "details", "reason"]];
       }
       if (range === "Attendance!A:H") {
@@ -295,7 +298,7 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
     });
 
     mockGetSheetValues.mockImplementation(async (_sheetId: string, range: string) => {
-      if (range === "'Free Entry'!A:I") {
+      if (range === "'Free Entry'!A:F") {
         return [["member_id", "", "entry_type", "applicable_date", "details", "reason"]];
       }
       if (range === "Attendance!A:H") {
@@ -324,7 +327,7 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
     const { GET } = await import("../app/api/check-in/free-entry/route");
 
     mockGetSheetValues.mockImplementation(async (_sheetId: string, range: string) => {
-      if (range === "'Free Entry'!A:I") {
+      if (range === "'Free Entry'!A:F") {
         return [
           ["member_id", "name", "entry_type", "applicable_date", "details", "reason"],
           ["123", "Test Member", "Free session", "5 sessions", "Welcome pass", "welcome 5-pass", "", "", ""],
@@ -363,7 +366,7 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
     const { GET } = await import("../app/api/check-in/free-entry/route");
 
     mockGetSheetValues.mockImplementation(async (_sheetId: string, range: string) => {
-      if (range === "'Free Entry'!A:I") {
+      if (range === "'Free Entry'!A:F") {
         return [
           ["member_id", "name", "entry_type", "applicable_date", "details", "reason"],
           ["123", "Test Member", "Free session", "5 sessions", "", "welcome 5-pass", "", "", ""],
@@ -399,7 +402,7 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
     const { GET } = await import("../app/api/check-in/free-entry/route");
 
     mockGetSheetValues.mockImplementation(async (_sheetId: string, range: string) => {
-      if (range === "'Free Entry'!A:I") {
+      if (range === "'Free Entry'!A:F") {
         return [
           ["member_id", "name", "entry_type", "applicable_date", "details", "reason"],
           ["123", "Test Member", "Free session", "2 sessions", "", "welcome 2-pass", "", "", ""],
@@ -529,6 +532,126 @@ describe("POST /api/check-in/members (new member registration)", () => {
   });
 });
 
+describe("GET /api/check-in/free-entry (live teaching roster)", () => {
+  const TEACHERS = [
+    ["member_id", "roster name", "name"],
+    ["11", "Michael E", "Michael Eadie"],
+    ["12", "Michael R", "Michael Rapson"],
+    ["13", "Priyanka", "Priyanka K"],
+    ["14", "Liam", "Liam J"],
+    ["", "Kristen", ""], // guest: known name, no member id
+  ];
+  const ROSTER = [
+    ["Date", "Venue", "L1 primary", "L1 assistant", "L2 primary", "L2 assistant", "Newcomer"],
+    ["2026-10-05", "Havana", "Liam", "Priyanka (Co-teaching)", "Michael E", "", "None"],
+    ["2026-10-12", "Havana", "Kristen - All level", "", "", "", "Priyanka, Michael R"],
+    ["2026-10-19", "Havana", "Liam", "None", "Priyanka and Michael E", "", ""],
+    ["2026-10-26", "Havana", "Mercia, Michael E and Liam and Victoria are not in CT this day"],
+  ];
+
+  let rosterReads = 0;
+
+  beforeEach(async () => {
+    mockGetSheetValues.mockReset();
+    mockFormatZaDateISO.mockReset();
+    mockFormatZaMonthYear.mockReset();
+    mockIsZaMonday.mockReset();
+    mockParseZaDateISO.mockReset();
+    mockGetZaWeekday.mockReset();
+    (await import("../lib/server/teacherRoster")).clearTeacherRosterCache();
+    rosterReads = 0;
+
+    mockFormatZaMonthYear.mockImplementation(() => "October 2026");
+    mockIsZaMonday.mockImplementation(() => true);
+    mockGetZaWeekday.mockImplementation(() => "Monday");
+    mockParseZaDateISO.mockImplementation((v?: unknown) =>
+      typeof v === "string" ? new Date(`${v}T12:00:00+02:00`) : null
+    );
+
+    mockGetSheetValues.mockImplementation(async (sheetId: string, range: string) => {
+      if (range === "Teachers!A:B") return TEACHERS;
+      if (range === "'Teaching Roster'!A:G") {
+        rosterReads += 1;
+        void sheetId;
+        return ROSTER;
+      }
+      return [["member_id", "", "entry_type", "applicable_date", "details", "reason"]];
+    });
+  });
+
+  async function lookup(memberId: number, date: string) {
+    mockFormatZaDateISO.mockImplementation(() => date);
+    const { GET } = await import("../app/api/check-in/free-entry/route");
+    const res = await GET(
+      new Request(
+        `http://localhost/api/check-in/free-entry?member_id=${memberId}&date=${date}&event=Monday%20Plumstead`
+      )
+    );
+    expect(res.status).toBe(200);
+    return res.json();
+  }
+
+  it("gives a rostered class teacher free entry as Teacher", async () => {
+    // "Priyanka (Co-teaching)" in the L1 assistant column
+    const data = await lookup(13, "2026-10-05");
+    expect(data).toMatchObject({ applies: true, entry_type: "Teacher", reason: "teacher" });
+  });
+
+  it("treats column G as the newcomer teacher, including comma-separated names", async () => {
+    let data = await lookup(13, "2026-10-12");
+    expect(data).toMatchObject({ applies: true, entry_type: "Teacher", reason: "newcomer teacher" });
+    data = await lookup(12, "2026-10-12");
+    expect(data).toMatchObject({ applies: true, reason: "newcomer teacher" });
+  });
+
+  it("handles 'X and Y' cells and ignores 'None'", async () => {
+    expect(await lookup(13, "2026-10-19")).toMatchObject({ applies: true, reason: "teacher" });
+    expect(await lookup(11, "2026-10-19")).toMatchObject({ applies: true, reason: "teacher" });
+    expect((await lookup(14, "2026-10-19")).applies).toBe(true); // Liam in L1 primary
+  });
+
+  it("does not grant free entry from a cell it cannot fully recognise (guest / note)", async () => {
+    // L1 primary "Kristen - All level" is not a clean known name, and the note row must not match anyone
+    expect((await lookup(14, "2026-10-12")).applies).toBe(false);
+    expect((await lookup(11, "2026-10-26")).applies).toBe(false);
+    expect((await lookup(14, "2026-10-26")).applies).toBe(false);
+  });
+
+  it("does not apply to teachers not on the roster that day, or on dates with no roster row", async () => {
+    expect((await lookup(12, "2026-10-05")).applies).toBe(false);
+    expect((await lookup(13, "2026-11-02")).applies).toBe(false);
+  });
+
+  it("never reads the roster for members who are not in the Teachers tab", async () => {
+    const data = await lookup(999, "2026-10-05");
+    expect(data.applies).toBe(false);
+    expect(rosterReads).toBe(0);
+  });
+
+  it("still lets check-in continue if the roster cannot be read", async () => {
+    mockGetSheetValues.mockImplementation(async (_s: string, range: string) => {
+      if (range === "Teachers!A:B") return TEACHERS;
+      if (range === "'Teaching Roster'!A:G") throw new Error("no access");
+      return [["member_id", "", "entry_type", "applicable_date", "details", "reason"]];
+    });
+    const data = await lookup(13, "2026-10-05");
+    expect(data.applies).toBe(false);
+  });
+
+  it("a newcomer-teacher roster entry outranks a core 'All Mondays' row", async () => {
+    mockGetSheetValues.mockImplementation(async (_s: string, range: string) => {
+      if (range === "Teachers!A:B") return TEACHERS;
+      if (range === "'Teaching Roster'!A:G") return ROSTER;
+      return [
+        ["member_id", "", "entry_type", "applicable_date", "details", "reason"],
+        ["13", "Priyanka", "Core", "All Mondays", "", "core"],
+      ];
+    });
+    const data = await lookup(13, "2026-10-12");
+    expect(data).toMatchObject({ entry_type: "Teacher", reason: "newcomer teacher" });
+  });
+});
+
 describe("POST /api/check-in/attendance", () => {
   beforeEach(() => {
     mockAppendToSheet.mockReset();
@@ -627,6 +750,76 @@ describe("POST /api/check-in/attendance", () => {
     );
     expect(res.status).toBe(400);
     expect(mockAppendToSheet).not.toHaveBeenCalled();
+  });
+
+  it("adds a monthly pass to Free Entry without writing column B", async () => {
+    const { POST } = await import("../app/api/check-in/attendance/route");
+    mockFormatZaMonthYear.mockImplementation(() => "February 2026");
+    mockGetSheetValues.mockResolvedValue([]);
+
+    const res = await POST(
+      jsonRequest("http://localhost/api/check-in/attendance", {
+        member_id: 42,
+        type: "Monthly",
+        paid_via: "Yoco",
+        paid_amount: 300,
+        event: "Monday Plumstead",
+      })
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ free_entry_added: true });
+
+    const freeEntryCall = mockAppendToSheet.mock.calls.find((c) => c[1] === "'Free Entry'!A:F");
+    expect(freeEntryCall).toBeTruthy();
+    const row = (freeEntryCall![2] as unknown[][])[0];
+    expect(row).toEqual([42, null, "monthly", "February 2026", expect.any(String), "monthly"]);
+  });
+
+  it("records a welcoming committee check-in with a custom amount", async () => {
+    const { POST } = await import("../app/api/check-in/attendance/route");
+    const res = await POST(
+      jsonRequest("http://localhost/api/check-in/attendance", {
+        member_id: 5,
+        type: "Welcoming committee",
+        paid_via: "Cash",
+        paid_amount: 30,
+        free_entry_reason: "welcoming committee",
+        event: "Monday Plumstead",
+      })
+    );
+    expect(res.status).toBe(200);
+    const rows = mockAppendToSheet.mock.calls[0][2] as (string | number)[][];
+    expect(rows[0][4]).toBe(30);
+    expect(rows[0][5]).toBe("Welcoming committee");
+    expect(rows[0][7]).toBe("welcoming committee");
+    expect(mockAppendToSheet).toHaveBeenCalledTimes(1); // not a monthly pass
+  });
+
+  it("flags when a welcoming committee member has already checked in today", async () => {
+    const { GET } = await import("../app/api/check-in/already-checked-in/route");
+    mockFormatZaDateISO.mockImplementation(() => "2026-10-12");
+    mockGetSheetValues.mockResolvedValue([
+      ["member_id", "date", "event", "paid_via", "paid_amount", "type", "comment", "free_entry_reason"],
+      ["5", "2026-10-12", "Monday Plumstead", "Cash", "50", "Welcoming committee", "", "welcoming committee"],
+      ["6", "2026-10-05", "Monday Plumstead", "", "0", "Welcoming committee", "", "welcoming committee"],
+    ]);
+
+    const call = async (id: number, date: string) =>
+      (
+        await GET(
+          new Request(
+            `http://localhost/api/check-in/already-checked-in?member_id=${id}&date=${date}&event=Monday%20Plumstead`
+          )
+        )
+      ).json();
+
+    expect(await call(9, "2026-10-12")).toMatchObject({
+      alreadyCheckedIn: false,
+      welcomingCommitteeCheckedIn: true,
+    });
+    expect(await call(5, "2026-10-12")).toMatchObject({ alreadyCheckedIn: true });
+    // a volunteer from a different week doesn't count
+    expect(await call(9, "2026-10-19")).toMatchObject({ welcomingCommitteeCheckedIn: false });
   });
 
   it("returns errors for invalid member IDs or missing type", async () => {
