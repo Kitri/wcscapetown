@@ -6,10 +6,12 @@ jest.mock("@/lib/server/checkinAuth", () => ({
 
 const mockGetSheetValues = jest.fn();
 const mockAppendToSheet = jest.fn();
+const mockDeleteSheetRowByNumber = jest.fn();
 
 jest.mock("@/lib/googleSheets", () => ({
   getSheetValues: (...args: unknown[]) => mockGetSheetValues(...args),
   appendToSheet: (...args: unknown[]) => mockAppendToSheet(...args),
+  deleteSheetRowByNumber: (...args: unknown[]) => mockDeleteSheetRowByNumber(...args),
 }));
 
 const mockFormatZaDateISO = jest.fn();
@@ -256,8 +258,8 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
       if (range === "'Free Entry'!A:F") {
         return [["member_id", "", "entry_type", "applicable_date", "details", "reason"]];
       }
-      if (range === "Attendance!A:H") {
-        return [["123", "2026-02-03", "Tuesday Pinelands", "Cash", "50", "Standard entry", "", ""]];
+      if (range === "Attendance!A:I") {
+        return [["123", "Test Member", "2026-02-03", "Tuesday Pinelands", "Cash", "50", "Standard entry", "", ""]];
       }
       return [];
     });
@@ -301,8 +303,8 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
       if (range === "'Free Entry'!A:F") {
         return [["member_id", "", "entry_type", "applicable_date", "details", "reason"]];
       }
-      if (range === "Attendance!A:H") {
-        return [["123", "2026-02-03", "Tuesday Pinelands", "", "0", "Teacher", "", ""]];
+      if (range === "Attendance!A:I") {
+        return [["123", "Test Member", "2026-02-03", "Tuesday Pinelands", "", "0", "Teacher", "", ""]];
       }
       return [];
     });
@@ -333,12 +335,12 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
           ["123", "Test Member", "Free session", "5 sessions", "Welcome pass", "welcome 5-pass", "", "", ""],
         ];
       }
-      if (range === "Attendance!A:H") {
+      if (range === "Attendance!A:I") {
         // 2 of 5 already used -> this is session 3, 3 remaining
         return [
-          ["member_id", "date", "event", "paid_via", "paid_amount", "type", "comment", "free_entry_reason"],
-          ["123", "2026-01-05", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
-          ["123", "2026-01-12", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
+          ["member_id", "name", "date", "event", "paid_via", "paid_amount", "type", "comment", "free_entry_reason"],
+          ["123", "Test Member", "2026-01-05", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
+          ["123", "Test Member", "2026-01-12", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
         ];
       }
       return [];
@@ -372,13 +374,13 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
           ["123", "Test Member", "Free session", "5 sessions", "", "welcome 5-pass", "", "", ""],
         ];
       }
-      if (range === "Attendance!A:H") {
+      if (range === "Attendance!A:I") {
         // 4 of 5 already used -> this is the 5th and last session
         return [
-          ["123", "2026-01-05", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
-          ["123", "2026-01-12", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
-          ["123", "2026-01-19", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
-          ["123", "2026-01-26", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
+          ["123", "Test Member", "2026-01-05", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
+          ["123", "Test Member", "2026-01-12", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
+          ["123", "Test Member", "2026-01-19", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
+          ["123", "Test Member", "2026-01-26", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
         ];
       }
       return [];
@@ -408,11 +410,11 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
           ["123", "Test Member", "Free session", "2 sessions", "", "welcome 2-pass", "", "", ""],
         ];
       }
-      if (range === "Attendance!A:H") {
+      if (range === "Attendance!A:I") {
         // Both sessions already used
         return [
-          ["123", "2026-01-05", "Monday Plumstead", "", "0", "Free session", "", "welcome 2-pass"],
-          ["123", "2026-01-12", "Monday Plumstead", "", "0", "Free session", "", "welcome 2-pass"],
+          ["123", "Test Member", "2026-01-05", "Monday Plumstead", "", "0", "Free session", "", "welcome 2-pass"],
+          ["123", "Test Member", "2026-01-12", "Monday Plumstead", "", "0", "Free session", "", "welcome 2-pass"],
         ];
       }
       return [];
@@ -652,6 +654,36 @@ describe("GET /api/check-in/free-entry (live teaching roster)", () => {
   });
 });
 
+describe("POST /api/check-in/revert", () => {
+  it("moves the row to the reverted sheet in its original (no name column) layout", async () => {
+    mockAppendToSheet.mockReset();
+    mockDeleteSheetRowByNumber.mockReset();
+    mockParseZaDateISO.mockImplementation((v?: unknown) =>
+      typeof v === "string" ? new Date(`${v}T12:00:00+02:00`) : null
+    );
+    mockGetSheetValues.mockResolvedValue([
+      ["member_id", "name", "date", "event", "paid_via", "paid_amount", "type", "comment", "free_entry_reason"],
+      ["42", "Test Member", "2026-02-03", "Monday Plumstead", "Yoco", "100", "Standard entry", "hi", "Promo"],
+    ]);
+
+    const { POST } = await import("../app/api/check-in/revert/route");
+    const res = await POST(
+      jsonRequest("http://localhost/api/check-in/revert", {
+        member_id: 42,
+        date: "2026-02-03",
+        event: "Monday Plumstead",
+        revert_reason: "mistake",
+        rowNumber: 2,
+      })
+    );
+    expect(res.status).toBe(200);
+    expect(mockAppendToSheet.mock.calls[0][2]).toEqual([
+      ["42", "2026-02-03", "Monday Plumstead", "Yoco", "100", "Standard entry", "hi", "Promo", "mistake"],
+    ]);
+    expect(mockDeleteSheetRowByNumber).toHaveBeenCalledWith(expect.anything(), "Attendance", 2);
+  });
+});
+
 describe("POST /api/check-in/attendance", () => {
   beforeEach(() => {
     mockAppendToSheet.mockReset();
@@ -678,16 +710,18 @@ describe("POST /api/check-in/attendance", () => {
 
     expect(mockAppendToSheet).toHaveBeenCalledTimes(1);
     const [spreadsheetId, range, rows] = mockAppendToSheet.mock.calls[0];
-    expect(range).toBe("Attendance!A:H");
+    expect(range).toBe("Attendance!A:I");
 
     const row = (rows as (string | number)[][])[0];
+    // Column B (name) is a lookup in the sheet: never written.
     expect(row[0]).toBe(42);
-    expect(row[1]).toBe("2026-02-03");
-    expect(row[3]).toBe("Yoco");
-    expect(row[4]).toBe(100);
-    expect(row[5]).toBe("Member");
-    expect(row[6]).toBe("Paid at door");
-    expect(row[7]).toBe("Promo");
+    expect(row[1]).toBeNull();
+    expect(row[2]).toBe("2026-02-03");
+    expect(row[4]).toBe("Yoco");
+    expect(row[5]).toBe(100);
+    expect(row[6]).toBe("Member");
+    expect(row[7]).toBe("Paid at door");
+    expect(row[8]).toBe("Promo");
 
     // spreadsheetId is passed through from config; just assert it exists
     expect(String(spreadsheetId)).toBeTruthy();
@@ -697,7 +731,7 @@ describe("POST /api/check-in/attendance", () => {
     const { POST } = await import("../app/api/check-in/attendance/route");
 
     mockGetSheetValues.mockImplementation(async (_id: string, range: string) => {
-      if (range === "Attendance!A:C") return [["7", "2026-02-03", "Monday Plumstead"]];
+      if (range === "Attendance!A:D") return [["7", "Test Member", "2026-02-03", "Monday Plumstead"]];
       if (range === "All_members!A:C") return [["99", "Jane", "Doe"]];
       return [];
     });
@@ -717,11 +751,11 @@ describe("POST /api/check-in/attendance", () => {
     expect(mockAppendToSheet).toHaveBeenCalledTimes(1);
     const rows = mockAppendToSheet.mock.calls[0][2] as (string | number)[][];
     expect(rows).toHaveLength(2);
-    expect(rows[0].slice(0, 7)).toEqual([
-      42, "2026-02-03", "Monday Plumstead", "Yoco", 200, "Standard entry", "paid for 99",
+    expect(rows[0].slice(0, 8)).toEqual([
+      42, null, "2026-02-03", "Monday Plumstead", "Yoco", 200, "Standard entry", "paid for 99",
     ]);
-    expect(rows[1].slice(0, 7)).toEqual([
-      99, "2026-02-03", "Monday Plumstead", "", 0, "Standard entry", "paid by 42",
+    expect(rows[1].slice(0, 8)).toEqual([
+      99, null, "2026-02-03", "Monday Plumstead", "", 0, "Standard entry", "paid by 42",
     ]);
   });
 
@@ -729,7 +763,7 @@ describe("POST /api/check-in/attendance", () => {
     const { POST } = await import("../app/api/check-in/attendance/route");
 
     mockGetSheetValues.mockImplementation(async (_id: string, range: string) => {
-      if (range === "Attendance!A:C") return [["99", "2026-02-03", "Monday Plumstead"]];
+      if (range === "Attendance!A:D") return [["99", "Test Member", "2026-02-03", "Monday Plumstead"]];
       if (range === "All_members!A:C") return [["99", "Jane", "Doe"]];
       return [];
     });
@@ -789,9 +823,9 @@ describe("POST /api/check-in/attendance", () => {
     );
     expect(res.status).toBe(200);
     const rows = mockAppendToSheet.mock.calls[0][2] as (string | number)[][];
-    expect(rows[0][4]).toBe(30);
-    expect(rows[0][5]).toBe("Welcoming committee");
-    expect(rows[0][7]).toBe("welcoming committee");
+    expect(rows[0][5]).toBe(30);
+    expect(rows[0][6]).toBe("Welcoming committee");
+    expect(rows[0][8]).toBe("welcoming committee");
     expect(mockAppendToSheet).toHaveBeenCalledTimes(1); // not a monthly pass
   });
 
@@ -799,9 +833,9 @@ describe("POST /api/check-in/attendance", () => {
     const { GET } = await import("../app/api/check-in/already-checked-in/route");
     mockFormatZaDateISO.mockImplementation(() => "2026-10-12");
     mockGetSheetValues.mockResolvedValue([
-      ["member_id", "date", "event", "paid_via", "paid_amount", "type", "comment", "free_entry_reason"],
-      ["5", "2026-10-12", "Monday Plumstead", "Cash", "50", "Welcoming committee", "", "welcoming committee"],
-      ["6", "2026-10-05", "Monday Plumstead", "", "0", "Welcoming committee", "", "welcoming committee"],
+      ["member_id", "name", "date", "event", "paid_via", "paid_amount", "type", "comment", "free_entry_reason"],
+      ["5", "Test Member", "2026-10-12", "Monday Plumstead", "Cash", "50", "Welcoming committee", "", "welcoming committee"],
+      ["6", "Test Member", "2026-10-05", "Monday Plumstead", "", "0", "Welcoming committee", "", "welcoming committee"],
     ]);
 
     const call = async (id: number, date: string) =>

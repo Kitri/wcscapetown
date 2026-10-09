@@ -3,6 +3,7 @@ import { getSheetValues } from "@/lib/googleSheets";
 import { formatZaDateISO, parseZaDateISO } from "@/lib/zaDate";
 import { CHECKIN_EVENT_NAME, CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
+import { ATT_COL } from "@/lib/server/attendanceColumns";
 
 function parseMemberId(raw: string): number {
   const digits = raw.replace(/[^0-9]/g, "");
@@ -54,8 +55,7 @@ export async function GET(request: Request) {
       if (full_name) idToName.set(id, full_name);
     }
 
-    // Attendance: A member_id, B date, C event, D paid_via, E amount, F type, G comment
-    const attendanceRows = await getSheetValues(CHECKIN_SPREADSHEET_ID, "Attendance!A:G");
+    const attendanceRows = await getSheetValues(CHECKIN_SPREADSHEET_ID, "Attendance!A:H");
 
     const items: Item[] = [];
     for (let i = 0; i < attendanceRows.length; i++) {
@@ -64,14 +64,15 @@ export async function GET(request: Request) {
       if (!firstCell || firstCell === "member_id") continue;
 
       const id = parseMemberId(row[0] ?? "");
-      const dateCell = (row[1] ?? "").trim();
-      const eventCell = (row[2] ?? "").trim();
+      const dateCell = (row[ATT_COL.date] ?? "").trim();
+      const eventCell = (row[ATT_COL.event] ?? "").trim();
       if (!Number.isFinite(id) || dateCell !== today || eventCell !== eventName) continue;
 
-      const paid_via = (row[3] ?? "").trim();
-      const paid_amount = Number(String(row[4] ?? "").replace(/[^0-9.]/g, "")) || 0;
-      const type = (row[5] ?? "").trim();
-      const comment = (row[6] ?? "").trim();
+      const paid_via = (row[ATT_COL.paidVia] ?? "").trim();
+      const paid_amount =
+        Number(String(row[ATT_COL.amount] ?? "").replace(/[^0-9.]/g, "")) || 0;
+      const type = (row[ATT_COL.type] ?? "").trim();
+      const comment = (row[ATT_COL.comment] ?? "").trim();
 
       items.push({
         member_id: id,

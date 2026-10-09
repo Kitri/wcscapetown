@@ -62,11 +62,11 @@ type NewMemberPayload = {
   visitor?: boolean;
 };
 
-const BASE_TYPES = ["Standard entry", "Pensioner", "Student", "Social only"] as const;
+const BASE_TYPES = ["Standard entry", "Student", "Pensioner", "Social only"] as const;
 const MONTHLY_TYPES = [
   "Monthly",
-  "Pensioner monthly",
   "Student monthly",
+  "Pensioner monthly",
 ] as const;
 const THURSDAY_TYPES = ["Practice"] as const;
 const STRICTLY_SOCIAL_TYPES = ["Social only"] as const;
@@ -1465,6 +1465,32 @@ export default function CheckInClient({
     step1Mode,
   ]);
 
+  const renderTypeButton = (t: string) => {
+                    // For Level 2 Tuesday, show fixed R50 price
+                    const displayPrice = isLevel2TuesdayDiscount
+                      ? LEVEL_2_TUESDAY_PRICE
+                      : (costs?.costs?.[t] ?? 0);
+                    const typeLabel =
+                      isStrictlySocialEvent && t === "Social only" ? "Social R50" : t;
+                    return (
+                      <PillButton
+                        key={t}
+                        selected={selectedType === t}
+                        onClick={() => {
+                          setSelectedType(t);
+                        }}
+                        disabled={!costs}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>{typeLabel}</div>
+                          <div className="font-semibold text-text-dark/70">
+                            {costs ? formatZar(displayPrice) : ""}
+                          </div>
+                        </div>
+                      </PillButton>
+                    );
+  };
+
   async function doCheckIn() {
     if (!selected || !checkinEnabled) return;
 
@@ -2395,31 +2421,19 @@ export default function CheckInClient({
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-                  {typeOptions.map((t) => {
-                    // For Level 2 Tuesday, show fixed R50 price
-                    const displayPrice = isLevel2TuesdayDiscount
-                      ? LEVEL_2_TUESDAY_PRICE
-                      : (costs?.costs?.[t] ?? 0);
-                    const typeLabel =
-                      isStrictlySocialEvent && t === "Social only" ? "Social R50" : t;
-                    return (
-                      <PillButton
-                        key={t}
-                        selected={selectedType === t}
-                        onClick={() => {
-                          setSelectedType(t);
-                        }}
-                        disabled={!costs}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div>{typeLabel}</div>
-                          <div className="font-semibold text-text-dark/70">
-                            {costs ? formatZar(displayPrice) : ""}
-                          </div>
-                        </div>
-                      </PillButton>
-                    );
-                  })}
+                  <div className="flex flex-col gap-3">
+                    {typeOptions
+                      .filter((t) => !t.toLowerCase().includes("monthly"))
+                      .map((t) => renderTypeButton(t))}
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {typeOptions
+                      .filter((t) => t.toLowerCase().includes("monthly"))
+                      .map((t) => renderTypeButton(t))}
+                  </div>
+                </div>
+
+                <div className="flex flex-col mb-4">
                   {selectedEvent.toLowerCase().includes("monday") && !welcomingCommitteeTaken && (
                     <PillButton
                       selected={selectedType === WELCOMING_TYPE}

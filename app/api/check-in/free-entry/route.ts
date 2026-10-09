@@ -10,6 +10,7 @@ import {
 import { CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
 import { getTeacherRoleForDate } from "@/lib/server/teacherRoster";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
+import { ATT_COL, ATTENDANCE_RANGE } from "@/lib/server/attendanceColumns";
 
 type FreeEntryMatch = {
   member_id: number;
@@ -150,8 +151,8 @@ function parseSessionLimit(applicable: string): number | null {
 }
 
 // Count how many times a member has already used a given session-based free
-// entry. Matches on the rule's reason (Attendance col H) when the rule has one,
-// otherwise on the entry type (col F) — both are written when a free check-in
+// entry. Matches on the rule's reason (Attendance col I) when the rule has one,
+// otherwise on the entry type (col G) — both are written when a free check-in
 // is recorded, so either uniquely identifies the grant.
 function countConsumedSessions(
   attendanceRows: string[][],
@@ -172,8 +173,8 @@ function countConsumedSessions(
     if (!Number.isFinite(id) || id !== memberId) continue;
 
     if (useReason) {
-      if ((row[7] ?? "").trim().toLowerCase() === reasonKey) count += 1;
-    } else if (typeKey && (row[5] ?? "").trim().toLowerCase() === typeKey) {
+      if ((row[ATT_COL.reason] ?? "").trim().toLowerCase() === reasonKey) count += 1;
+    } else if (typeKey && (row[ATT_COL.type] ?? "").trim().toLowerCase() === typeKey) {
       count += 1;
     }
   }
@@ -275,7 +276,7 @@ function isDoorVolunteerEntry(entryType: string, reason: string): boolean {
 }
 
 async function getTuesdayComboForMember(memberId: number, thursdayDate: Date): Promise<FreeEntryMatch | null> {
-  const attendanceRows = await getSheetValues(CHECKIN_SPREADSHEET_ID, "Attendance!A:H");
+  const attendanceRows = await getSheetValues(CHECKIN_SPREADSHEET_ID, ATTENDANCE_RANGE);
   const tuesdayISO = tuesdayDateForSameWeekIso(thursdayDate);
 
   for (const row of attendanceRows) {
@@ -285,14 +286,14 @@ async function getTuesdayComboForMember(memberId: number, thursdayDate: Date): P
     const id = parseMemberId(row[0] ?? "");
     if (!Number.isFinite(id) || id !== memberId) continue;
 
-    const attendanceDate = (row[1] ?? "").trim();
+    const attendanceDate = (row[ATT_COL.date] ?? "").trim();
     if (attendanceDate !== tuesdayISO) continue;
 
-    const event = (row[2] ?? "").trim().toLowerCase();
+    const event = (row[ATT_COL.event] ?? "").trim().toLowerCase();
     if (!event.includes("tuesday")) continue;
 
-    const type = (row[5] ?? "").trim();
-    const paidAmount = parseAmount(row[4] ?? "");
+    const type = (row[ATT_COL.type] ?? "").trim();
+    const paidAmount = parseAmount(row[ATT_COL.amount] ?? "");
     const teacherNoPay = isTeacherEntryType(type) && paidAmount <= 0;
 
     return {
@@ -356,7 +357,7 @@ export async function GET(request: Request) {
       if (!attendanceRowsCache) {
         attendanceRowsCache = await getSheetValues(
           CHECKIN_SPREADSHEET_ID,
-          "Attendance!A:H"
+          ATTENDANCE_RANGE
         );
       }
       return attendanceRowsCache;

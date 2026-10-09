@@ -7,6 +7,7 @@ import {
 import { parseZaDateISO } from "@/lib/zaDate";
 import { CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
+import { ATT_COL, ATTENDANCE_RANGE } from "@/lib/server/attendanceColumns";
 
 type Payload = {
   member_id?: number;
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
 
     const attendanceRows = await getSheetValues(
       CHECKIN_SPREADSHEET_ID,
-      "Attendance!A:H"
+      ATTENDANCE_RANGE
     );
 
     let matchRow: string[] | null = null;
@@ -74,8 +75,8 @@ export async function POST(request: Request) {
       }
 
       const id = parseMemberId(row[0] ?? "");
-      const dateCell = (row[1] ?? "").trim();
-      const eventCell = (row[2] ?? "").trim();
+      const dateCell = (row[ATT_COL.date] ?? "").trim();
+      const eventCell = (row[ATT_COL.event] ?? "").trim();
 
       if (id !== member_id || dateCell !== dateISO || eventCell !== event) {
         return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -90,8 +91,8 @@ export async function POST(request: Request) {
         if (!firstCell || firstCell === "member_id") continue;
 
         const id = parseMemberId(row[0] ?? "");
-        const dateCell = (row[1] ?? "").trim();
-        const eventCell = (row[2] ?? "").trim();
+        const dateCell = (row[ATT_COL.date] ?? "").trim();
+        const eventCell = (row[ATT_COL.event] ?? "").trim();
 
         if (id === member_id && dateCell === dateISO && eventCell === event) {
           matchRow = row;
@@ -106,7 +107,12 @@ export async function POST(request: Request) {
 
     // Move to "Check in reverted" sheet.
     await appendToSheet(CHECKIN_SPREADSHEET_ID, "'Check in reverted'!A:I", [
-      [...matchRow.slice(0, 8), revert_reason],
+      // Keep the reverted sheet's own layout (no name column): A member_id, then C..I.
+      [
+        matchRow[ATT_COL.memberId] ?? "",
+        ...matchRow.slice(ATT_COL.date, ATT_COL.reason + 1),
+        revert_reason,
+      ],
     ]);
 
     // Remove from Attendance sheet.

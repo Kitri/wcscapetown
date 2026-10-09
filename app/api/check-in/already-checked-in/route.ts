@@ -3,6 +3,7 @@ import { getSheetValues } from "@/lib/googleSheets";
 import { formatZaDateISO, parseZaDateISO } from "@/lib/zaDate";
 import { CHECKIN_EVENT_NAME, CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
+import { ATT_COL, ATTENDANCE_RANGE } from "@/lib/server/attendanceColumns";
 
 function parseMemberId(raw: string): number {
   const digits = raw.replace(/[^0-9]/g, "");
@@ -37,8 +38,7 @@ export async function GET(request: Request) {
 
     const today = dateISOParam || formatZaDateISO(date ?? undefined);
 
-    // Attendance columns: A member_id, B date, C event, F type, H free_entry_reason
-    const rows = await getSheetValues(CHECKIN_SPREADSHEET_ID, "Attendance!A:H");
+    const rows = await getSheetValues(CHECKIN_SPREADSHEET_ID, ATTENDANCE_RANGE);
 
     let alreadyCheckedIn = false;
     // Only one welcoming committee member per event: once someone has checked in
@@ -49,13 +49,13 @@ export async function GET(request: Request) {
       const firstCell = (row[0] ?? "").trim().toLowerCase();
       if (firstCell === "member_id") continue;
 
-      const dateCell = (row[1] ?? "").trim();
-      const eventCell = (row[2] ?? "").trim();
+      const dateCell = (row[ATT_COL.date] ?? "").trim();
+      const eventCell = (row[ATT_COL.event] ?? "").trim();
       if (dateCell !== today || eventCell !== eventName) continue;
 
       if (parseMemberId(row[0] ?? "") === member_id) alreadyCheckedIn = true;
 
-      const typeAndReason = `${row[5] ?? ""} ${row[7] ?? ""}`.toLowerCase();
+      const typeAndReason = `${row[ATT_COL.type] ?? ""} ${row[ATT_COL.reason] ?? ""}`.toLowerCase();
       if (
         typeAndReason.includes("welcoming committee") ||
         typeAndReason.includes("door volunteer")

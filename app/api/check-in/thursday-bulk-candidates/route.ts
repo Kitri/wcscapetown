@@ -3,6 +3,7 @@ import { getSheetValues } from "@/lib/googleSheets";
 import { formatZaDateISO, parseZaDateISO } from "@/lib/zaDate";
 import { CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
+import { ATT_COL } from "@/lib/server/attendanceColumns";
 
 type Candidate = {
   member_id: number;
@@ -50,7 +51,7 @@ export async function GET(request: Request) {
     }
 
     const [attendanceRows, memberRows] = await Promise.all([
-      getSheetValues(CHECKIN_SPREADSHEET_ID, "Attendance!A:C"),
+      getSheetValues(CHECKIN_SPREADSHEET_ID, "Attendance!A:D"),
       getSheetValues(CHECKIN_SPREADSHEET_ID, "All_members!A:C"),
     ]);
 
@@ -62,8 +63,8 @@ export async function GET(request: Request) {
       if (!firstCell || firstCell === "member_id") continue;
 
       const memberId = parseMemberId(row[0] ?? "");
-      const dateCell = (row[1] ?? "").trim();
-      const eventCell = (row[2] ?? "").trim();
+      const dateCell = (row[ATT_COL.date] ?? "").trim();
+      const eventCell = (row[ATT_COL.event] ?? "").trim();
 
       if (eventCell !== eventName || !isIsoDate(dateCell)) continue;
 
@@ -101,8 +102,8 @@ export async function GET(request: Request) {
       const memberId = parseMemberId(row[0] ?? "");
       if (!Number.isFinite(memberId)) continue;
 
-      const dateCell = (row[1] ?? "").trim();
-      const eventCell = (row[2] ?? "").trim();
+      const dateCell = (row[ATT_COL.date] ?? "").trim();
+      const eventCell = (row[ATT_COL.event] ?? "").trim();
       if (eventCell !== eventName || !sessionDateSet.has(dateCell)) continue;
 
       const existing = candidateMap.get(memberId);

@@ -6,6 +6,7 @@ import {
   CHECKIN_SPREADSHEET_ID,
 } from "@/lib/server/checkinConfig";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
+import { ATT_COL, ATTENDANCE_RANGE } from "@/lib/server/attendanceColumns";
 
 function parseMemberId(raw: string): number {
   const digits = raw.replace(/[^0-9]/g, "");
@@ -110,14 +111,14 @@ export async function POST(request: Request) {
       }
 
       // The second person must exist and must not already be checked in.
-      const existing = await getSheetValues(CHECKIN_SPREADSHEET_ID, "Attendance!A:C");
+      const existing = await getSheetValues(CHECKIN_SPREADSHEET_ID, "Attendance!A:D");
       for (const row of existing) {
         const firstCell = (row[0] ?? "").trim().toLowerCase();
         if (!firstCell || firstCell === "member_id") continue;
         if (
           parseMemberId(row[0] ?? "") === paid_for_member_id &&
-          (row[1] ?? "").trim() === today &&
-          (row[2] ?? "").trim() === event
+          (row[ATT_COL.date] ?? "").trim() === today &&
+          (row[ATT_COL.event] ?? "").trim() === event
         ) {
           return NextResponse.json(
             { error: `Member ${paid_for_member_id} is already checked in` },
@@ -138,9 +139,10 @@ export async function POST(request: Request) {
         .filter(Boolean)
         .join(" - ");
       const partnerType = type.toLowerCase() === "practice" ? type : "Standard entry";
-      await appendToSheet(CHECKIN_SPREADSHEET_ID, "Attendance!A:H", [
+      await appendToSheet(CHECKIN_SPREADSHEET_ID, ATTENDANCE_RANGE, [
         [
           member_id,
+          null, // column B: name lookup
           today,
           event,
           paid_via,
@@ -151,6 +153,7 @@ export async function POST(request: Request) {
         ],
         [
           paid_for_member_id,
+          null,
           today,
           event,
           "",
@@ -163,10 +166,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, free_entry_added: false });
     }
 
-    // Append optional columns: comment (G) + free_entry_reason (H)
-    await appendToSheet(CHECKIN_SPREADSHEET_ID, "Attendance!A:H", [
+    // Column B is a name lookup in the sheet, so it is skipped (null).
+    // Columns: C date, D event, E paid_via, F amount, G type, H comment, I free_entry_reason
+    await appendToSheet(CHECKIN_SPREADSHEET_ID, ATTENDANCE_RANGE, [
       [
         member_id,
+        null,
         today,
         event,
         paid_via,
