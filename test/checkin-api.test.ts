@@ -486,6 +486,43 @@ describe("POST /api/check-in/members (new member registration)", () => {
     expect(rows[0][2]).toBe("Lovelace");
   });
 
+  it("records student/pensioner in column F and defaults the level to First timer", async () => {
+    const { POST } = await import("../app/api/check-in/members/route");
+    mockGetSheetValues.mockResolvedValue([["member_id"], ["10"]]);
+
+    let res = await POST(
+      jsonRequest("http://localhost/api/check-in/members", {
+        firstName: "Stu",
+        surname: "Dent",
+        concession: "student",
+      })
+    );
+    expect(res.status).toBe(200);
+    expect((await res.json()).member).toMatchObject({ pensionerStudent: "Student", level: "First timer" });
+    let row = (mockAppendToSheet.mock.calls[0][2] as (string | number)[][])[0];
+    expect(row[4]).toBe("First timer");
+    expect(row[5]).toBe("Student");
+
+    mockAppendToSheet.mockReset();
+    res = await POST(
+      jsonRequest("http://localhost/api/check-in/members", {
+        firstName: "Pen",
+        surname: "Sioner",
+        level: "2",
+        concession: "pensioner",
+      })
+    );
+    row = (mockAppendToSheet.mock.calls[0][2] as (string | number)[][])[0];
+    expect(row[5]).toBe("Pensioner");
+
+    mockAppendToSheet.mockReset();
+    await POST(
+      jsonRequest("http://localhost/api/check-in/members", { firstName: "No", surname: "Concession" })
+    );
+    row = (mockAppendToSheet.mock.calls[0][2] as (string | number)[][])[0];
+    expect(row[5]).toBe("");
+  });
+
   it("returns errors for invalid input", async () => {
     const { POST } = await import("../app/api/check-in/members/route");
 

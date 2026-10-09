@@ -57,17 +57,12 @@ type NewMemberPayload = {
   feedbackConsent?: boolean;
   role: "Lead" | "Follow" | "I don't know";
   level: "first timer" | "1" | "2";
+  concession?: "pensioner" | "student";
   level2Reason?: "International experience" | "Teacher approval received";
   howFoundUs?: string;
   visitor?: boolean;
 };
 
-const BASE_TYPES = ["Standard entry", "Student", "Pensioner", "Social only"] as const;
-const MONTHLY_TYPES = [
-  "Monthly",
-  "Student monthly",
-  "Pensioner monthly",
-] as const;
 const THURSDAY_TYPES = ["Practice"] as const;
 const STRICTLY_SOCIAL_TYPES = ["Social only"] as const;
 
@@ -351,7 +346,8 @@ function AddNewPersonForm({
   const [email, setEmail] = useState("");
   const [feedbackConsent, setFeedbackConsent] = useState(false);
   const [role, setRole] = useState<NewMemberPayload["role"]>("I don't know");
-  const [level, setLevel] = useState<NewMemberPayload["level"]>("1");
+  const [level, setLevel] = useState<NewMemberPayload["level"]>("first timer");
+  const [concession, setConcession] = useState<"" | "pensioner" | "student">("");
   const [howFoundUs, setHowFoundUs] = useState("");
   const [visitor, setVisitor] = useState(false);
   const [level2Reason, setLevel2Reason] = useState<
@@ -433,6 +429,7 @@ function AddNewPersonForm({
         feedbackConsent,
         role,
         level,
+        concession: concession || undefined,
         level2Reason:
           level === "2"
             ? (level2Reason as NewMemberPayload["level2Reason"])
@@ -456,7 +453,8 @@ function AddNewPersonForm({
       setEmail("");
       setFeedbackConsent(false);
       setRole("I don't know");
-      setLevel("1");
+      setLevel("first timer");
+      setConcession("");
       setHowFoundUs("");
       setVisitor(false);
       setLevel2Reason("");
@@ -662,6 +660,19 @@ function AddNewPersonForm({
             </div>
           )}
         </div>
+
+        <label className="space-y-2 block">
+          <div className="font-semibold">Student or pensioner (optional)</div>
+          <select
+            value={concession}
+            onChange={(e) => setConcession(e.target.value as "" | "pensioner" | "student")}
+            className="w-full px-4 py-3 rounded-xl border-2 border-text-dark/20 text-lg bg-white"
+          >
+            <option value="">Neither</option>
+            <option value="student">Student</option>
+            <option value="pensioner">Pensioner</option>
+          </select>
+        </label>
 
         {level === "2" && (
           <label className="space-y-2">
@@ -946,10 +957,28 @@ export default function CheckInClient({
     if (isLevel2TuesdayDiscount) {
       return ["Standard entry", "Social only"] as const;
     }
-    const base = [...BASE_TYPES];
-    const monthly = costs?.showMonthly ? [...MONTHLY_TYPES] : [];
-    return [...base, ...monthly];
-  }, [costs?.showMonthly, isLevel2TuesdayDiscount, isThursdayEvent, isStrictlySocialEvent]);
+    // Only offer the entry types that apply to this member's record.
+    const category = normalizePensionerStudent(selected?.pensionerStudent ?? "");
+    const base =
+      category === "pensioner"
+        ? ["Pensioner", "Social only"]
+        : category === "student"
+          ? ["Student", "Social only"]
+          : ["Standard entry", "Social only"];
+    const monthlyType =
+      category === "pensioner"
+        ? "Pensioner monthly"
+        : category === "student"
+          ? "Student monthly"
+          : "Monthly";
+    return costs?.showMonthly ? [...base, monthlyType] : base;
+  }, [
+    costs?.showMonthly,
+    isLevel2TuesdayDiscount,
+    isThursdayEvent,
+    isStrictlySocialEvent,
+    selected?.pensionerStudent,
+  ]);
 
   const payableAmount = useMemo(() => {
     if (!selectedType) return 0;
@@ -2530,9 +2559,6 @@ export default function CheckInClient({
                               <div className="flex items-center justify-between gap-3 rounded-xl border-2 border-text-dark/20 px-4 py-3 bg-white">
                                 <div>
                                   <div className="font-semibold">{partner.full_name}</div>
-                                  <div className="text-sm text-text-dark/70">
-                                    ID {partner.member_id}
-                                  </div>
                                 </div>
                                 <button
                                   type="button"
@@ -2566,7 +2592,6 @@ export default function CheckInClient({
                                         className="w-full text-left px-4 py-3 hover:bg-yellow-accent/20"
                                       >
                                         <span className="font-semibold">{m.full_name}</span>
-                                        <span className="text-text-dark/60"> • ID {m.member_id}</span>
                                       </button>
                                     ))}
                                   </div>

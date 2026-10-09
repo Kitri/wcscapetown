@@ -112,7 +112,18 @@ function mapLevelToSheet(level: string): string {
     case "2":
       return "Level 2";
     default:
-      return "Level 1";
+      return "First timer";
+  }
+}
+
+function mapConcessionToSheet(concession?: string): string {
+  switch ((concession ?? "").trim().toLowerCase()) {
+    case "pensioner":
+      return "Pensioner";
+    case "student":
+      return "Student";
+    default:
+      return "";
   }
 }
 
@@ -155,6 +166,7 @@ type NewMemberPayload = {
   feedbackConsent?: boolean;
   role?: "Lead" | "Follow" | "I don't know";
   level?: "first timer" | "1" | "2";
+  concession?: "pensioner" | "student";
   level2Reason?: "International experience" | "Teacher approval received";
   howFoundUs?: string;
   visitor?: boolean;
@@ -225,7 +237,8 @@ export async function POST(request: Request) {
     const today = dateISOParam || formatZaDateISO(date ?? undefined);
 
     const role = mapRoleToSheet(body.role ?? "I don't know");
-    const level = mapLevelToSheet(body.level ?? "1");
+    const level = mapLevelToSheet(body.level ?? "first timer");
+    const pensionerStudent = mapConcessionToSheet(body.concession);
 
     // Keep the original columns intact, then add extra intake columns to the right.
     // Column order now includes pensioner/student between level and first_date.
@@ -235,7 +248,7 @@ export async function POST(request: Request) {
       surname,
       role,
       level,
-      "", // pensioner/student (leave blank)
+      pensionerStudent, // column F: Pensioner / Student / blank
       today, // first_date
       "", // last_date (leave blank on creation)
       event,
@@ -257,7 +270,7 @@ export async function POST(request: Request) {
       full_name: `${firstName} ${surname}`.trim(),
       role,
       level,
-      pensionerStudent: "",
+      pensionerStudent,
     };
 
     return NextResponse.json({ member: created });
