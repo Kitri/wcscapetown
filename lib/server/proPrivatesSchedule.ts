@@ -144,11 +144,34 @@ type BookedSheetInfo = {
   columns: BookedColumnMap;
 };
 
+// Per-45-minute rates are kept out of source control. Provide them via the
+// PRO_PRIVATES_RATES_45 env var as JSON, e.g. {"igor":0,"fernanda":0,"harold":0,"kristen":0}
+function loadRates45(): Record<ProId, number> {
+  const rates: Record<ProId, number> = { igor: 0, fernanda: 0, harold: 0, kristen: 0 };
+  const raw = process.env.PRO_PRIVATES_RATES_45;
+  if (!raw) {
+    console.warn("PRO_PRIVATES_RATES_45 is not set; pro rates default to 0");
+    return rates;
+  }
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    for (const id of Object.keys(rates) as ProId[]) {
+      const value = Number(parsed[id]);
+      if (Number.isFinite(value) && value >= 0) rates[id] = value;
+    }
+  } catch {
+    console.warn("PRO_PRIVATES_RATES_45 is not valid JSON; pro rates default to 0");
+  }
+  return rates;
+}
+
+const RATES_45 = loadRates45();
+
 const PROS: readonly ProConfig[] = [
-  { id: "igor", name: "Igor", currency: "EUR", rate45: 110 },
-  { id: "fernanda", name: "Fernanda", currency: "EUR", rate45: 100 },
-  { id: "harold", name: "Harold", currency: "GBP", rate45: 45 },
-  { id: "kristen", name: "Kristen", currency: "GBP", rate45: 45 },
+  { id: "igor", name: "Igor", currency: "EUR", rate45: RATES_45.igor },
+  { id: "fernanda", name: "Fernanda", currency: "EUR", rate45: RATES_45.fernanda },
+  { id: "harold", name: "Harold", currency: "GBP", rate45: RATES_45.harold },
+  { id: "kristen", name: "Kristen", currency: "GBP", rate45: RATES_45.kristen },
 ] as const;
 
 const PRO_BY_ID: Record<ProId, ProConfig> = PROS.reduce(
