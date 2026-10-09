@@ -9,6 +9,7 @@ import {
 } from "@/lib/zaDate";
 import { CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
 import { getTeacherRoleForDate } from "@/lib/server/teacherRoster";
+import { ROLLOVER_REASON_PREFIX } from "@/lib/server/monthlyRollover";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
 import { ATT_COL, ATTENDANCE_RANGE } from "@/lib/server/attendanceColumns";
 
@@ -348,6 +349,9 @@ export async function GET(request: Request) {
     );
 
     let best: (FreeEntryMatch & { priority: number }) | null = null;
+    // True when a monthly pass covers today (teachers / volunteers on a pass are
+    // still free, but the day is recorded so it can be credited next month).
+    let monthlyActive = false;
 
     // Session-count rules need the member's attendance history to know how many
     // free sessions have already been used. Load it lazily (once) so date-only
@@ -422,6 +426,10 @@ export async function GET(request: Request) {
 
       if (!match) continue;
 
+      if ((match.entry_type ?? "").toLowerCase().includes("monthly")) {
+        monthlyActive = true;
+      }
+
       // Prefer door volunteer entries over monthly at the same priority
       const matchIsDoorVol = isDoorVolunteerEntry(match.entry_type, match.reason);
       const bestIsDoorVol = best
@@ -451,7 +459,10 @@ export async function GET(request: Request) {
               teacherRole === "newcomer teacher"
                 ? "Newcomer teacher."
                 : "Teaching today.",
-            reason: teacherRole,
+            // On a monthly pass the class is recorded so it rolls over as a credit.
+            reason: monthlyActive
+              ? `${ROLLOVER_REASON_PREFIX} ${teacherRole}`
+              : teacherRole,
             applicable_date: todayISO,
             priority: 4,
           };

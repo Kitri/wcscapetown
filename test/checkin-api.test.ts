@@ -677,6 +677,22 @@ describe("GET /api/check-in/free-entry (live teaching roster)", () => {
     expect(data.applies).toBe(false);
   });
 
+  it("records a rostered teacher on a monthly pass as a rollover class", async () => {
+    mockGetSheetValues.mockImplementation(async (_s: string, range: string) => {
+      if (range === "Teachers!A:B") return TEACHERS;
+      if (range === "'Teaching Roster'!A:G") return ROSTER;
+      return [
+        ["member_id", "", "entry_type", "applicable_date", "details", "reason"],
+        ["13", "Priyanka", "monthly", "October 2026", "paid for the month", "monthly"],
+      ];
+    });
+    const data = await lookup(13, "2026-10-05");
+    expect(data).toMatchObject({ entry_type: "Teacher", reason: "monthly rollover: teacher" });
+    // newcomer teacher keeps the phrase the front end looks for
+    const newcomer = await lookup(13, "2026-10-12");
+    expect(newcomer.reason).toBe("monthly rollover: newcomer teacher");
+  });
+
   it("a newcomer-teacher roster entry outranks a core 'All Mondays' row", async () => {
     mockGetSheetValues.mockImplementation(async (_s: string, range: string) => {
       if (range === "Teachers!A:B") return TEACHERS;
@@ -846,6 +862,23 @@ describe("POST /api/check-in/attendance", () => {
     expect(row).toEqual([42, null, "monthly", "February 2026", expect.any(String), "monthly"]);
   });
 
+  it("still adds the Free Entry month when the pass is fully covered by rollover credit (R0)", async () => {
+    const { POST } = await import("../app/api/check-in/attendance/route");
+    mockFormatZaMonthYear.mockImplementation(() => "November 2026");
+    mockGetSheetValues.mockResolvedValue([]);
+
+    const res = await POST(
+      jsonRequest("http://localhost/api/check-in/attendance", {
+        member_id: 8,
+        type: "Monthly",
+        paid_via: "Cash",
+        paid_amount: 0,
+        event: "Monday Plumstead",
+      })
+    );
+    expect(await res.json()).toMatchObject({ free_entry_added: true });
+  });
+
   it("records a welcoming committee check-in with a custom amount", async () => {
     const { POST } = await import("../app/api/check-in/attendance/route");
     const res = await POST(
@@ -864,6 +897,49 @@ describe("POST /api/check-in/attendance", () => {
     expect(rows[0][6]).toBe("Welcoming committee");
     expect(rows[0][8]).toBe("welcoming committee");
     expect(mockAppendToSheet).toHaveBeenCalledTimes(1); // not a monthly pass
+  });
+
+  it("works out the rollover credit since the member's last monthly purchase", async () => {
+    const { GET } = await import("../app/api/check-in/already-checked-in/route");
+    mockFormatZaDateISO.mockImplementation(() => "2026-11-02");
+    const H = ["member_id", "name", "date", "event", "paid_via", "paid_amount", "type", "comment", "free_entry_reason"];
+    const ev = "Monday Plumstead";
+    mockGetSheetValues.mockResolvedValue([
+      H,
+      // Rei (7): pays for the month, volunteers once, then attends normally
+      ["7", "Rei", "2026-10-05", ev, "Yoco", "300", "Monthly", "", ""],
+      ["7", "Rei", "2026-10-12", ev, "", "0", "Welcoming committee", "", "monthly rollover: welcoming committee"],
+      ["7", "Rei", "2026-10-19", ev, "", "0", "monthly", "", "monthly"],
+      ["7", "Rei", "2026-10-26", ev, "", "0", "monthly", "", "monthly"],
+      // Ada (8): old credit used up by a later purchase, then teaches twice
+      ["8", "Ada", "2026-09-07", ev, "Cash", "300", "Monthly", "", ""],
+      ["8", "Ada", "2026-09-14", ev, "", "0", "Teacher", "", "monthly rollover: teacher"],
+      ["8", "Ada", "2026-10-05", ev, "Cash", "262.5", "Monthly", "", ""],
+      ["8", "Ada", "2026-10-12", ev, "", "0", "Teacher", "", "monthly rollover: newcomer teacher"],
+      ["8", "Ada", "2026-10-19", ev, "", "0", "Teacher", "", "monthly rollover: teacher"],
+      // Cy (10): volunteers on a pass, then spends R20 of the credit on a day entry
+      ["10", "Cy", "2026-10-05", ev, "Yoco", "300", "Monthly", "", ""],
+      ["10", "Cy", "2026-10-12", ev, "", "0", "Welcoming committee", "", "monthly rollover: welcoming committee"],
+      ["10", "Cy", "2026-11-02", ev, "Cash", "80", "Standard entry", "Rollover credit used: R20.00 (from 1 day volunteered)", "rollover_credit"],
+      // someone else's rows never count
+      ["9", "Bo", "2026-10-12", ev, "", "0", "Teacher", "", "monthly rollover: teacher"],
+    ]);
+
+    const credit = async (id: number) =>
+      (
+        await (
+          await GET(
+            new Request(
+              `http://localhost/api/check-in/already-checked-in?member_id=${id}&date=2026-11-02&event=Monday%20Plumstead`
+            )
+          )
+        ).json()
+      ).rolloverCredit;
+
+    expect(await credit(7)).toEqual({ teacherClasses: 0, volunteerClasses: 1, creditUsed: 0 });
+    expect(await credit(8)).toEqual({ teacherClasses: 2, volunteerClasses: 0, creditUsed: 0 });
+    expect(await credit(10)).toEqual({ teacherClasses: 0, volunteerClasses: 1, creditUsed: 20 });
+    expect(await credit(99)).toEqual({ teacherClasses: 0, volunteerClasses: 0, creditUsed: 0 });
   });
 
   it("flags when a welcoming committee member has already checked in today", async () => {

@@ -68,6 +68,12 @@ const STRICTLY_SOCIAL_TYPES = ["Social only"] as const;
 
 const LEVEL_2_TUESDAY_PRICE = 50;
 
+// Reason prefix that marks a teacher / volunteer class worked on a monthly pass.
+const ROLLOVER_REASON_PREFIX = "monthly rollover:";
+// Fixed value (used for analysis); the amount goes in the comment.
+const CREDIT_USED_REASON = "rollover_credit";
+const NO_ROLLOVER = { teacherClasses: 0, volunteerClasses: 0, creditUsed: 0 };
+
 // Door volunteers pay a reduced, editable amount (default 50% of their entry price).
 const WELCOMING_TYPE = "Welcoming committee";
 
@@ -196,7 +202,7 @@ function mostRecentDateForWeekday(targetWeekday: CheckinWeekday, referenceDateIS
 }
 
 function formatZar(amount: number): string {
-  return `R${amount}`;
+  return Number.isInteger(amount) ? `R${amount}` : `R${amount.toFixed(2)}`;
 }
 
 function formatRole(role: string): string {
@@ -895,6 +901,13 @@ export default function CheckInClient({
   const [comment, setComment] = useState("");
 
   const [volunteerAmount, setVolunteerAmount] = useState("");
+  // Teacher / volunteer classes worked on a monthly pass since the last purchase;
+  // credited against the next monthly purchase.
+  const [rolloverCredit, setRolloverCredit] = useState(NO_ROLLOVER);
+  // Spend earned credit on this entry (on by default).
+  const [useRolloverCredit, setUseRolloverCredit] = useState(true);
+  // A member on a monthly pass who is also the door volunteer tonight.
+  const [monthlyVolunteer, setMonthlyVolunteer] = useState(false);
   // Someone has already checked in as the welcoming committee for this event/date.
   const [welcomingCommitteeTaken, setWelcomingCommitteeTaken] = useState(false);
 
@@ -980,6 +993,65 @@ export default function CheckInClient({
     selected?.pensionerStudent,
   ]);
 
+  const isMonthlySelected = Boolean(selectedType?.toLowerCase().includes("monthly"));
+  const selectedBasePrice =
+    selectedType && selectedType !== WELCOMING_TYPE ? (costs?.costs?.[selectedType] ?? 0) : 0;
+
+  // A monthly class is worth (monthly price / 4). A teacher class earns that in full,
+  // a door-volunteer class half of it. Earned credit is deducted from the next
+  // monthly purchase, or from a day entry if they don't buy a pass.
+  const memberMonthlyPrice = useMemo(() => {
+    const category = normalizePensionerStudent(selected?.pensionerStudent ?? "");
+    const type =
+      category === "pensioner"
+        ? "Pensioner monthly"
+        : category === "student"
+          ? "Student monthly"
+          : "Monthly";
+    return costs?.costs?.[type] ?? 0;
+  }, [costs, selected?.pensionerStudent]);
+
+  const rolloverEarned = useMemo(() => {
+    const classes = rolloverCredit.teacherClasses + rolloverCredit.volunteerClasses * 0.5;
+    return Math.round(classes * (memberMonthlyPrice / 4) * 100) / 100;
+  }, [memberMonthlyPrice, rolloverCredit]);
+
+  const rolloverAvailable = Math.max(
+    0,
+    Math.round((rolloverEarned - rolloverCredit.creditUsed) * 100) / 100
+  );
+
+  // Credit goes towards a monthly pass or a Standard / Student / Pensioner day entry
+  // (not Social only, Practice or the door volunteer's own entry).
+  const rolloverEligibleType =
+    isMonthlySelected ||
+    selectedType === "Standard entry" ||
+    selectedType === "Student" ||
+    selectedType === "Pensioner";
+
+  const rolloverCreditApplies =
+    useRolloverCredit &&
+    rolloverEligibleType &&
+    !payForTwo &&
+    !isLevel2TuesdayDiscount &&
+    selectedEvent.toLowerCase().includes("monday");
+
+  const rolloverCreditAmount = rolloverCreditApplies
+    ? Math.min(rolloverAvailable, selectedBasePrice)
+    : 0;
+
+  // e.g. "Rollover credit used: R37.50 (from 2 days taught, 1 day volunteered)"
+  const rolloverCreditNote = useMemo(() => {
+    if (rolloverCreditAmount <= 0) return "";
+    const days = (n: number, verb: string) => `${n} day${n === 1 ? "" : "s"} ${verb}`;
+    const parts: string[] = [];
+    if (rolloverCredit.teacherClasses) parts.push(days(rolloverCredit.teacherClasses, "taught"));
+    if (rolloverCredit.volunteerClasses) {
+      parts.push(days(rolloverCredit.volunteerClasses, "volunteered"));
+    }
+    return `Rollover credit used: ${formatZar(rolloverCreditAmount)} (from ${parts.join(", ")})`;
+  }, [rolloverCredit, rolloverCreditAmount]);
+
   const payableAmount = useMemo(() => {
     if (!selectedType) return 0;
     if (selectedType === WELCOMING_TYPE) {
@@ -991,8 +1063,15 @@ export default function CheckInClient({
       return LEVEL_2_TUESDAY_PRICE;
     }
     const amount = costs?.costs?.[selectedType];
-    return typeof amount === "number" ? amount : 0;
-  }, [costs, selectedType, isLevel2TuesdayDiscount, volunteerAmount]);
+    if (typeof amount !== "number") return 0;
+    return Math.max(0, amount - rolloverCreditAmount);
+  }, [
+    costs,
+    selectedType,
+    isLevel2TuesdayDiscount,
+    volunteerAmount,
+    rolloverCreditAmount,
+  ]);
 
   const thursdayPracticeAmount = useMemo(() => {
     const amount = costs?.costs?.Practice;
@@ -1016,6 +1095,13 @@ export default function CheckInClient({
     if (!freeEntry?.applies) return false;
     return isWelcomingCommitteeFreeEntry(freeEntry.entry_type, freeEntry.reason);
   }, [freeEntry]);
+
+  // Member holds a monthly pass for today (so entry is free, whatever else they do).
+  const isMonthlyFreeEntry = useMemo(() => {
+    if (!effectiveFreeEntry?.applies) return false;
+    return String(effectiveFreeEntry.entry_type).toLowerCase().includes("monthly");
+  }, [effectiveFreeEntry]);
+  const monthlyVolunteerActive = monthlyVolunteer && isMonthlyFreeEntry && !welcomingCommitteeTaken;
 
   const isNewcomerTeacher = useMemo(() => {
     if (!effectiveFreeEntry?.applies) return false;
@@ -1105,7 +1191,8 @@ export default function CheckInClient({
       );
     }
 
-    return Boolean(selectedType && selectedPaidVia);
+    // An entry fully covered by rollover credit costs R0, so no payment method needed.
+    return Boolean(selectedType && (selectedPaidVia || payableAmount === 0));
   }, [
     alreadyCheckedIn,
     effectiveFreeEntry,
@@ -1114,6 +1201,7 @@ export default function CheckInClient({
     partner,
     partnerAlreadyCheckedIn,
     payForTwoActive,
+    payableAmount,
     selected,
     selectedPaidVia,
     selectedType,
@@ -1399,6 +1487,9 @@ export default function CheckInClient({
     setComment("");
     setVolunteerAmount("");
     setWelcomingCommitteeTaken(false);
+    setRolloverCredit(NO_ROLLOVER);
+    setUseRolloverCredit(true);
+    setMonthlyVolunteer(false);
     clearPayForTwo();
 
     setIgnoreFreeEntry(false);
@@ -1410,14 +1501,25 @@ export default function CheckInClient({
         fetchJson<FreeEntryResponse>(
           `/api/check-in/free-entry?member_id=${member.member_id}&date=${encodeURIComponent(selectedDateISO)}&event=${encodeURIComponent(selectedEvent)}`
         ).catch(() => ({ applies: false, today: costs?.today ?? "" } as const)),
-        fetchJson<{ alreadyCheckedIn: boolean; welcomingCommitteeCheckedIn?: boolean }>(
+        fetchJson<{
+          alreadyCheckedIn: boolean;
+          welcomingCommitteeCheckedIn?: boolean;
+          rolloverCredit?: { teacherClasses: number; volunteerClasses: number; creditUsed: number };
+        }>(
           `/api/check-in/already-checked-in?member_id=${member.member_id}&date=${encodeURIComponent(selectedDateISO)}&event=${encodeURIComponent(selectedEvent)}`
-        ).catch(() => ({ alreadyCheckedIn: false, welcomingCommitteeCheckedIn: false })),
+        ).catch(() => ({
+          alreadyCheckedIn: false,
+          welcomingCommitteeCheckedIn: false,
+          rolloverCredit: undefined,
+        })),
       ]);
 
       setFreeEntry(freeEntryRes);
       setAlreadyCheckedIn(Boolean(checkedRes.alreadyCheckedIn));
       setWelcomingCommitteeTaken(Boolean(checkedRes.welcomingCommitteeCheckedIn));
+      setRolloverCredit(
+        checkedRes.rolloverCredit ?? NO_ROLLOVER
+      );
     } finally {
       setFreeEntryLoading(false);
     }
@@ -1432,6 +1534,9 @@ export default function CheckInClient({
     setComment("");
     setVolunteerAmount("");
     setWelcomingCommitteeTaken(false);
+    setRolloverCredit(NO_ROLLOVER);
+    setUseRolloverCredit(true);
+    setMonthlyVolunteer(false);
     setPayForTwo(false);
     setPartner(null);
     setPartnerAlreadyCheckedIn(false);
@@ -1526,7 +1631,18 @@ export default function CheckInClient({
     setBanner(null);
     setCheckingIn(true);
     try {
-      const payloadBase = effectiveFreeEntry?.applies
+      const payloadBase = monthlyVolunteerActive
+        ? {
+            // Free tonight (monthly pass), but recorded as the door volunteer so it
+            // counts towards next month's discount.
+            member_id: selected.member_id,
+            type: WELCOMING_TYPE,
+            paid_via: "",
+            paid_amount: 0,
+            comment: comment.trim(),
+            free_entry_reason: `${ROLLOVER_REASON_PREFIX} welcoming committee`,
+          }
+        : effectiveFreeEntry?.applies
         ? isDoorVolunteer
           ? {
               member_id: selected.member_id,
@@ -1552,9 +1668,15 @@ export default function CheckInClient({
                 ? ""
                 : selectedPaidVia,
             paid_amount: payableAmount,
-            comment: comment.trim(),
+            comment: [comment.trim(), rolloverCreditNote].filter(Boolean).join(" - "),
+            // Monthly purchases must keep an empty reason (that is how a purchase is
+            // recognised). Day entries get the fixed reason; the amount is in the notes.
             free_entry_reason:
-              selectedType === WELCOMING_TYPE ? "welcoming committee" : "",
+              selectedType === WELCOMING_TYPE
+                ? "welcoming committee"
+                : rolloverCreditAmount > 0 && !isMonthlySelected
+                  ? CREDIT_USED_REASON
+                  : "",
             ...(payForTwoActive && partner
               ? { paid_for_member_id: partner.member_id }
               : {}),
@@ -2378,6 +2500,24 @@ export default function CheckInClient({
                       </div>
                       )
                     )}
+                    {isMonthlyFreeEntry &&
+                      !welcomingCommitteeTaken &&
+                      selectedEvent.toLowerCase().includes("monday") && (
+                        <label className="mt-4 flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            className="mt-1 h-5 w-5"
+                            checked={monthlyVolunteer}
+                            onChange={(e) => setMonthlyVolunteer(e.target.checked)}
+                          />
+                          <div>
+                            <div className="font-semibold">Door volunteer tonight</div>
+                            <div className="text-sm text-text-dark/70">
+                              Still free (paid for the month). Counts towards next month&apos;s discount.
+                            </div>
+                          </div>
+                        </label>
+                      )}
                     {freeEntryNeedsPayment && (
                       <div className="mt-4 bg-white rounded-xl border border-text-dark/10 p-4">
                         <div className="font-semibold mb-2">
@@ -2530,6 +2670,25 @@ export default function CheckInClient({
                           <div className="font-spartan font-semibold text-3xl">
                             {formatZar(payForTwoActive ? payableAmount * 2 : payableAmount)}
                           </div>
+                          {rolloverAvailable > 0 && rolloverEligibleType && !payForTwo && (
+                            <label className="mt-2 flex items-start gap-2 text-sm">
+                              <input
+                                type="checkbox"
+                                className="mt-0.5 h-4 w-4"
+                                checked={useRolloverCredit}
+                                onChange={(e) => setUseRolloverCredit(e.target.checked)}
+                              />
+                              <span>
+                                Use rollover credit ({formatZar(rolloverAvailable)} available from
+                                classes taught / volunteered on a monthly pass)
+                                {rolloverCreditAmount > 0 && (
+                                  <span className="block text-text-dark/70">
+                                    {formatZar(selectedBasePrice)} − {formatZar(rolloverCreditAmount)} credit
+                                  </span>
+                                )}
+                              </span>
+                            </label>
+                          )}
                         </>
                       )}
                     </div>

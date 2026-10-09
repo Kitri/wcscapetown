@@ -186,7 +186,7 @@ export async function POST(request: Request) {
     // (Do not do this when they are just signing in with existing free entry.)
     const paidForMonthly =
       isMonthlyType(type) &&
-      paid_amount > 0 &&
+      paid_amount >= 0 &&
       (paid_via === "Cash" || paid_via === "Yoco") &&
       !free_entry_reason;
 

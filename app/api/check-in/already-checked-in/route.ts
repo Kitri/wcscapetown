@@ -4,6 +4,7 @@ import { formatZaDateISO, parseZaDateISO } from "@/lib/zaDate";
 import { CHECKIN_EVENT_NAME, CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
 import { ATT_COL, ATTENDANCE_RANGE } from "@/lib/server/attendanceColumns";
+import { countRolloverClasses } from "@/lib/server/monthlyRollover";
 
 function parseMemberId(raw: string): number {
   const digits = raw.replace(/[^0-9]/g, "");
@@ -64,9 +65,14 @@ export async function GET(request: Request) {
       }
     }
 
+    // Teacher / volunteer classes worked on a monthly pass: credited against the
+    // next monthly purchase.
+    const rolloverCredit = countRolloverClasses(rows, member_id, parseMemberId);
+
     return NextResponse.json({
       alreadyCheckedIn,
       welcomingCommitteeCheckedIn,
+      rolloverCredit,
       today,
       event: eventName,
     });
