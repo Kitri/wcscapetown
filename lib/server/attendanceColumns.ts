@@ -10,6 +10,7 @@ export const ATT_COL = {
   type: 6, // G
   comment: 7, // H
   reason: 8, // I (free_entry_reason)
+  timestamp: 9, // J (when the check-in was recorded, Cape Town time)
 } as const;
 
-export const ATTENDANCE_RANGE = "Attendance!A:I";
+export const ATTENDANCE_RANGE = "Attendance!A:J";

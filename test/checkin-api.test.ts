@@ -258,7 +258,7 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
       if (range === "'Free Entry'!A:F") {
         return [["member_id", "", "entry_type", "applicable_date", "details", "reason"]];
       }
-      if (range === "Attendance!A:I") {
+      if (range === "Attendance!A:J") {
         return [["123", "Test Member", "2026-02-03", "Tuesday Pinelands", "Cash", "50", "Standard entry", "", ""]];
       }
       return [];
@@ -303,7 +303,7 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
       if (range === "'Free Entry'!A:F") {
         return [["member_id", "", "entry_type", "applicable_date", "details", "reason"]];
       }
-      if (range === "Attendance!A:I") {
+      if (range === "Attendance!A:J") {
         return [["123", "Test Member", "2026-02-03", "Tuesday Pinelands", "", "0", "Teacher", "", ""]];
       }
       return [];
@@ -335,7 +335,7 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
           ["123", "Test Member", "Free session", "5 sessions", "Welcome pass", "welcome 5-pass", "", "", ""],
         ];
       }
-      if (range === "Attendance!A:I") {
+      if (range === "Attendance!A:J") {
         // 2 of 5 already used -> this is session 3, 3 remaining
         return [
           ["member_id", "name", "date", "event", "paid_via", "paid_amount", "type", "comment", "free_entry_reason"],
@@ -374,7 +374,7 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
           ["123", "Test Member", "Free session", "5 sessions", "", "welcome 5-pass", "", "", ""],
         ];
       }
-      if (range === "Attendance!A:I") {
+      if (range === "Attendance!A:J") {
         // 4 of 5 already used -> this is the 5th and last session
         return [
           ["123", "Test Member", "2026-01-05", "Monday Plumstead", "", "0", "Free session", "", "welcome 5-pass"],
@@ -410,7 +410,7 @@ describe("GET /api/check-in/free-entry (parseMemberId + matchesApplicableDate)",
           ["123", "Test Member", "Free session", "2 sessions", "", "welcome 2-pass", "", "", ""],
         ];
       }
-      if (range === "Attendance!A:I") {
+      if (range === "Attendance!A:J") {
         // Both sessions already used
         return [
           ["123", "Test Member", "2026-01-05", "Monday Plumstead", "", "0", "Free session", "", "welcome 2-pass"],
@@ -763,7 +763,7 @@ describe("POST /api/check-in/attendance", () => {
 
     expect(mockAppendToSheet).toHaveBeenCalledTimes(1);
     const [spreadsheetId, range, rows] = mockAppendToSheet.mock.calls[0];
-    expect(range).toBe("Attendance!A:I");
+    expect(range).toBe("Attendance!A:J");
 
     const row = (rows as (string | number)[][])[0];
     // Column B (name) is a lookup in the sheet: never written.
@@ -775,6 +775,8 @@ describe("POST /api/check-in/attendance", () => {
     expect(row[6]).toBe("Member");
     expect(row[7]).toBe("Paid at door");
     expect(row[8]).toBe("Promo");
+    // J: when it was recorded (Cape Town time), for matching against Yoco
+    expect(row[9]).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
 
     // spreadsheetId is passed through from config; just assert it exists
     expect(String(spreadsheetId)).toBeTruthy();
@@ -804,6 +806,8 @@ describe("POST /api/check-in/attendance", () => {
     expect(mockAppendToSheet).toHaveBeenCalledTimes(1);
     const rows = mockAppendToSheet.mock.calls[0][2] as (string | number)[][];
     expect(rows).toHaveLength(2);
+    expect(rows[0][9]).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/);
+    expect(rows[1][9]).toBe(rows[0][9]);
     expect(rows[0].slice(0, 8)).toEqual([
       42, null, "2026-02-03", "Monday Plumstead", "Yoco", 200, "Standard entry", "paid for 99",
     ]);
@@ -879,6 +883,28 @@ describe("POST /api/check-in/attendance", () => {
     expect(await res.json()).toMatchObject({ free_entry_added: true });
   });
 
+  it("a monthly pass bought with rollover credit is still a purchase and carries the fixed reason", async () => {
+    const { POST } = await import("../app/api/check-in/attendance/route");
+    mockFormatZaMonthYear.mockImplementation(() => "November 2026");
+    mockGetSheetValues.mockResolvedValue([]);
+
+    const res = await POST(
+      jsonRequest("http://localhost/api/check-in/attendance", {
+        member_id: 8,
+        type: "Monthly",
+        paid_via: "Yoco",
+        paid_amount: 262.5,
+        comment: "Rollover credit used: R37.50 (from 1 day volunteered)",
+        free_entry_reason: "rollover_credit",
+        event: "Monday Plumstead",
+      })
+    );
+    expect(await res.json()).toMatchObject({ free_entry_added: true });
+    const row = (mockAppendToSheet.mock.calls[0][2] as unknown[][])[0];
+    expect(row[5]).toBe(262.5);
+    expect(row[8]).toBe("rollover_credit");
+  });
+
   it("records a welcoming committee check-in with a custom amount", async () => {
     const { POST } = await import("../app/api/check-in/attendance/route");
     const res = await POST(
@@ -921,6 +947,10 @@ describe("POST /api/check-in/attendance", () => {
       ["10", "Cy", "2026-10-05", ev, "Yoco", "300", "Monthly", "", ""],
       ["10", "Cy", "2026-10-12", ev, "", "0", "Welcoming committee", "", "monthly rollover: welcoming committee"],
       ["10", "Cy", "2026-11-02", ev, "Cash", "80", "Standard entry", "Rollover credit used: R20.00 (from 1 day volunteered)", "rollover_credit"],
+      // Em (12): pass bought WITH credit (reason rollover_credit) still resets the count
+      ["12", "Em", "2026-09-07", ev, "Yoco", "300", "Monthly", "", ""],
+      ["12", "Em", "2026-09-14", ev, "", "0", "Welcoming committee", "", "monthly rollover: welcoming committee"],
+      ["12", "Em", "2026-10-05", ev, "Yoco", "262.5", "Monthly", "Rollover credit used: R37.50 (from 1 day volunteered)", "rollover_credit"],
       // someone else's rows never count
       ["9", "Bo", "2026-10-12", ev, "", "0", "Teacher", "", "monthly rollover: teacher"],
     ]);
@@ -936,10 +966,48 @@ describe("POST /api/check-in/attendance", () => {
         ).json()
       ).rolloverCredit;
 
-    expect(await credit(7)).toEqual({ teacherClasses: 0, volunteerClasses: 1, creditUsed: 0 });
-    expect(await credit(8)).toEqual({ teacherClasses: 2, volunteerClasses: 0, creditUsed: 0 });
-    expect(await credit(10)).toEqual({ teacherClasses: 0, volunteerClasses: 1, creditUsed: 20 });
-    expect(await credit(99)).toEqual({ teacherClasses: 0, volunteerClasses: 0, creditUsed: 0 });
+    const none = { teacherClasses: 0, volunteerClasses: 0 };
+    expect(await credit(7)).toEqual({ teacherClasses: 0, volunteerClasses: 1, creditUsed: 0, earlierThisMonth: none });
+    expect(await credit(8)).toEqual({ teacherClasses: 2, volunteerClasses: 0, creditUsed: 0, earlierThisMonth: none });
+    expect(await credit(10)).toEqual({ teacherClasses: 0, volunteerClasses: 1, creditUsed: 20, earlierThisMonth: none });
+    expect(await credit(12)).toEqual({ teacherClasses: 0, volunteerClasses: 0, creditUsed: 0, earlierThisMonth: none });
+    expect(await credit(99)).toEqual({ teacherClasses: 0, volunteerClasses: 0, creditUsed: 0, earlierThisMonth: none });
+  });
+
+  it("counts teaching / volunteering earlier this month (no pass) towards a monthly purchase", async () => {
+    const { GET } = await import("../app/api/check-in/already-checked-in/route");
+    mockFormatZaDateISO.mockImplementation(() => "2026-10-12");
+    const H = ["member_id", "name", "date", "event", "paid_via", "paid_amount", "type", "comment", "free_entry_reason"];
+    const ev = "Monday Plumstead";
+    mockGetSheetValues.mockResolvedValue([
+      H,
+      // Rei (7): pays R50 as door volunteer in week 1 (no pass), now week 2
+      ["7", "Rei", "2026-10-05", ev, "Cash", "50", "Welcoming committee", "", "welcoming committee"],
+      // Ada (8): teaches for free in week 1 (roster), plus a September teaching day
+      ["8", "Ada", "2026-09-28", ev, "", "0", "Teacher", "", "teacher"],
+      ["8", "Ada", "2026-10-05", ev, "", "0", "Teacher", "", "newcomer teacher"],
+      // Cy (10): volunteered in week 1, then bought a pass the same week: nothing left
+      ["10", "Cy", "2026-10-05", ev, "Cash", "50", "Welcoming committee", "", "welcoming committee"],
+      ["10", "Cy", "2026-10-05", ev, "Yoco", "300", "Monthly", "", ""],
+      // Di (11): ordinary paying entries never count
+      ["11", "Di", "2026-10-05", ev, "Yoco", "100", "Standard entry", "", ""],
+    ]);
+    const credit = async (id: number) =>
+      (
+        await (
+          await GET(
+            new Request(
+              `http://localhost/api/check-in/already-checked-in?member_id=${id}&date=2026-10-12&event=Monday%20Plumstead`
+            )
+          )
+        ).json()
+      ).rolloverCredit;
+
+    expect((await credit(7)).earlierThisMonth).toEqual({ teacherClasses: 0, volunteerClasses: 1 });
+    // only this month's teaching day counts (the September one does not)
+    expect((await credit(8)).earlierThisMonth).toEqual({ teacherClasses: 1, volunteerClasses: 0 });
+    expect((await credit(10)).earlierThisMonth).toEqual({ teacherClasses: 0, volunteerClasses: 0 });
+    expect((await credit(11)).earlierThisMonth).toEqual({ teacherClasses: 0, volunteerClasses: 0 });
   });
 
   it("flags when a welcoming committee member has already checked in today", async () => {

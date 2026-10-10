@@ -72,7 +72,18 @@ const LEVEL_2_TUESDAY_PRICE = 50;
 const ROLLOVER_REASON_PREFIX = "monthly rollover:";
 // Fixed value (used for analysis); the amount goes in the comment.
 const CREDIT_USED_REASON = "rollover_credit";
-const NO_ROLLOVER = { teacherClasses: 0, volunteerClasses: 0, creditUsed: 0 };
+type RolloverCreditInfo = {
+  teacherClasses: number;
+  volunteerClasses: number;
+  creditUsed: number;
+  earlierThisMonth: { teacherClasses: number; volunteerClasses: number };
+};
+const NO_ROLLOVER: RolloverCreditInfo = {
+  teacherClasses: 0,
+  volunteerClasses: 0,
+  creditUsed: 0,
+  earlierThisMonth: { teacherClasses: 0, volunteerClasses: 0 },
+};
 
 // Door volunteers pay a reduced, editable amount (default 50% of their entry price).
 const WELCOMING_TYPE = "Welcoming committee";
@@ -903,7 +914,7 @@ export default function CheckInClient({
   const [volunteerAmount, setVolunteerAmount] = useState("");
   // Teacher / volunteer classes worked on a monthly pass since the last purchase;
   // credited against the next monthly purchase.
-  const [rolloverCredit, setRolloverCredit] = useState(NO_ROLLOVER);
+  const [rolloverCredit, setRolloverCredit] = useState<RolloverCreditInfo>(NO_ROLLOVER);
   // Spend earned credit on this entry (on by default).
   const [useRolloverCredit, setUseRolloverCredit] = useState(true);
   // A member on a monthly pass who is also the door volunteer tonight.
@@ -1011,10 +1022,25 @@ export default function CheckInClient({
     return costs?.costs?.[type] ?? 0;
   }, [costs, selected?.pensionerStudent]);
 
+  // Days that count for this entry. Days taught / volunteered on a pass can go towards
+  // the next pass or a day entry; days earlier this month WITHOUT a pass only count
+  // when buying a monthly pass (a day entry already got its own discount that day).
+  const creditDays = useMemo(
+    () => ({
+      teacher:
+        rolloverCredit.teacherClasses +
+        (isMonthlySelected ? rolloverCredit.earlierThisMonth.teacherClasses : 0),
+      volunteer:
+        rolloverCredit.volunteerClasses +
+        (isMonthlySelected ? rolloverCredit.earlierThisMonth.volunteerClasses : 0),
+    }),
+    [rolloverCredit, isMonthlySelected]
+  );
+
   const rolloverEarned = useMemo(() => {
-    const classes = rolloverCredit.teacherClasses + rolloverCredit.volunteerClasses * 0.5;
+    const classes = creditDays.teacher + creditDays.volunteer * 0.5;
     return Math.round(classes * (memberMonthlyPrice / 4) * 100) / 100;
-  }, [memberMonthlyPrice, rolloverCredit]);
+  }, [memberMonthlyPrice, creditDays]);
 
   const rolloverAvailable = Math.max(
     0,
@@ -1040,17 +1066,24 @@ export default function CheckInClient({
     ? Math.min(rolloverAvailable, selectedBasePrice)
     : 0;
 
+  // e.g. "1 day welcoming committee volunteer" / "2 days teaching and 1 day welcoming committee volunteer"
+  const rolloverSourceText = useMemo(() => {
+    const days = (n: number) => `${n} day${n === 1 ? "" : "s"}`;
+    const parts: string[] = [];
+    if (creditDays.teacher) parts.push(`${days(creditDays.teacher)} teaching`);
+    if (creditDays.volunteer) parts.push(`${days(creditDays.volunteer)} welcoming committee volunteer`);
+    return parts.join(" and ");
+  }, [creditDays]);
+
   // e.g. "Rollover credit used: R37.50 (from 2 days taught, 1 day volunteered)"
   const rolloverCreditNote = useMemo(() => {
     if (rolloverCreditAmount <= 0) return "";
     const days = (n: number, verb: string) => `${n} day${n === 1 ? "" : "s"} ${verb}`;
     const parts: string[] = [];
-    if (rolloverCredit.teacherClasses) parts.push(days(rolloverCredit.teacherClasses, "taught"));
-    if (rolloverCredit.volunteerClasses) {
-      parts.push(days(rolloverCredit.volunteerClasses, "volunteered"));
-    }
+    if (creditDays.teacher) parts.push(days(creditDays.teacher, "taught"));
+    if (creditDays.volunteer) parts.push(days(creditDays.volunteer, "volunteered"));
     return `Rollover credit used: ${formatZar(rolloverCreditAmount)} (from ${parts.join(", ")})`;
-  }, [rolloverCredit, rolloverCreditAmount]);
+  }, [creditDays, rolloverCreditAmount]);
 
   const payableAmount = useMemo(() => {
     if (!selectedType) return 0;
@@ -1504,7 +1537,7 @@ export default function CheckInClient({
         fetchJson<{
           alreadyCheckedIn: boolean;
           welcomingCommitteeCheckedIn?: boolean;
-          rolloverCredit?: { teacherClasses: number; volunteerClasses: number; creditUsed: number };
+          rolloverCredit?: RolloverCreditInfo;
         }>(
           `/api/check-in/already-checked-in?member_id=${member.member_id}&date=${encodeURIComponent(selectedDateISO)}&event=${encodeURIComponent(selectedEvent)}`
         ).catch(() => ({
@@ -1633,13 +1666,15 @@ export default function CheckInClient({
     try {
       const payloadBase = monthlyVolunteerActive
         ? {
-            // Free tonight (monthly pass), but recorded as the door volunteer so it
-            // counts towards next month's discount.
+            // Free tonight (monthly pass): the type stays "monthly", and the note plus
+            // the reason mark the day as welcoming committee so it earns credit.
             member_id: selected.member_id,
-            type: WELCOMING_TYPE,
+            type: (effectiveFreeEntry?.applies && effectiveFreeEntry.entry_type) || "monthly",
             paid_via: "",
             paid_amount: 0,
-            comment: comment.trim(),
+            comment: [comment.trim(), "Also welcoming committee, credit to roll over"]
+              .filter(Boolean)
+              .join(" - "),
             free_entry_reason: `${ROLLOVER_REASON_PREFIX} welcoming committee`,
           }
         : effectiveFreeEntry?.applies
@@ -1669,12 +1704,12 @@ export default function CheckInClient({
                 : selectedPaidVia,
             paid_amount: payableAmount,
             comment: [comment.trim(), rolloverCreditNote].filter(Boolean).join(" - "),
-            // Monthly purchases must keep an empty reason (that is how a purchase is
-            // recognised). Day entries get the fixed reason; the amount is in the notes.
+            // Whenever rollover credit is applied (day entry or monthly purchase) the
+            // reason is the fixed value "rollover_credit"; the amount is in the notes.
             free_entry_reason:
               selectedType === WELCOMING_TYPE
                 ? "welcoming committee"
-                : rolloverCreditAmount > 0 && !isMonthlySelected
+                : rolloverCreditAmount > 0
                   ? CREDIT_USED_REASON
                   : "",
             ...(payForTwoActive && partner
@@ -2679,13 +2714,7 @@ export default function CheckInClient({
                                 onChange={(e) => setUseRolloverCredit(e.target.checked)}
                               />
                               <span>
-                                Use rollover credit ({formatZar(rolloverAvailable)} available from
-                                classes taught / volunteered on a monthly pass)
-                                {rolloverCreditAmount > 0 && (
-                                  <span className="block text-text-dark/70">
-                                    {formatZar(selectedBasePrice)} − {formatZar(rolloverCreditAmount)} credit
-                                  </span>
-                                )}
+                                Use credit from {rolloverSourceText}
                               </span>
                             </label>
                           )}

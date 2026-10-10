@@ -67,7 +67,7 @@ export async function GET(request: Request) {
 
     // Teacher / volunteer classes worked on a monthly pass: credited against the
     // next monthly purchase.
-    const rolloverCredit = countRolloverClasses(rows, member_id, parseMemberId);
+    const rolloverCredit = countRolloverClasses(rows, member_id, parseMemberId, today);
 
     return NextResponse.json({
       alreadyCheckedIn,

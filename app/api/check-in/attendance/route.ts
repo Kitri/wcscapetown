@@ -7,6 +7,7 @@ import {
 } from "@/lib/server/checkinConfig";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
 import { ATT_COL, ATTENDANCE_RANGE } from "@/lib/server/attendanceColumns";
+import { formatZaTimestamp } from "@/lib/server/timestamp";
 
 function parseMemberId(raw: string): number {
   const digits = raw.replace(/[^0-9]/g, "");
@@ -132,6 +133,8 @@ export async function POST(request: Request) {
       }
     }
 
+    const timestamp = formatZaTimestamp();
+
     if (hasPaidFor) {
       // One row per attendee, but the payer's row carries the full payment so
       // it matches the single Yoco transaction. The second row is R0.
@@ -150,6 +153,7 @@ export async function POST(request: Request) {
           type,
           payerComment,
           free_entry_reason,
+          timestamp,
         ],
         [
           paid_for_member_id,
@@ -161,13 +165,14 @@ export async function POST(request: Request) {
           partnerType,
           `paid by ${member_id}`,
           "",
+          timestamp,
         ],
       ]);
       return NextResponse.json({ ok: true, free_entry_added: false });
     }
 
     // Column B is a name lookup in the sheet, so it is skipped (null).
-    // Columns: C date, D event, E paid_via, F amount, G type, H comment, I free_entry_reason
+    // Columns: C date, D event, E paid_via, F amount, G type, H comment, I free_entry_reason, J timestamp
     await appendToSheet(CHECKIN_SPREADSHEET_ID, ATTENDANCE_RANGE, [
       [
         member_id,
@@ -179,6 +184,7 @@ export async function POST(request: Request) {
         type,
         comment,
         free_entry_reason,
+        timestamp,
       ],
     ]);
 
@@ -188,7 +194,7 @@ export async function POST(request: Request) {
       isMonthlyType(type) &&
       paid_amount >= 0 &&
       (paid_via === "Cash" || paid_via === "Yoco") &&
-      !free_entry_reason;
+      (!free_entry_reason || free_entry_reason === "rollover_credit");
 
     let free_entry_added = false;
     let free_entry_error: string | undefined;
