@@ -10,6 +10,10 @@ export const ROLLOVER_REASON_PREFIX = "monthly rollover:";
 // "Rollover credit used: R37.50 (from 1 day volunteered)".
 export const CREDIT_USED_REASON = "rollover_credit";
 
+// Rollover credit only starts being tracked from this date. Earlier attendance was
+// priced under the old manual arrangement and is settled, so it is ignored here.
+export const ROLLOVER_START_ISO = "2026-10-01";
+
 function parseCreditUsed(comment: string): number {
   const m = (comment ?? "").match(/rollover credit used:?\s*R?\s*(\d+(?:\.\d+)?)/i);
   const n = m ? Number(m[1]) : NaN;
@@ -26,6 +30,9 @@ export type RolloverCredit = {
   // Days taught / volunteered earlier THIS MONTH without a pass. Only counts when
   // buying a monthly pass later in the same month.
   earlierThisMonth: { teacherClasses: number; volunteerClasses: number };
+  // Rand paid on this member's Monday entries this month since their last monthly
+  // purchase (deducted from a monthly purchase made later in the month).
+  paidEarlierThisMonth: number;
 };
 
 function isMonthlyPurchaseRow(row: string[]): boolean {
@@ -57,12 +64,15 @@ export function countRolloverClasses(
   let creditUsed = 0;
   let earlierTeacher = 0;
   let earlierVolunteer = 0;
+  let paidEarlier = 0;
   const thisMonth = todayISO.slice(0, 7);
 
   for (const row of attendanceRows) {
     const firstCell = (row[ATT_COL.memberId] ?? "").trim().toLowerCase();
     if (!firstCell || firstCell === "member_id") continue;
     if (parseMemberId(row[ATT_COL.memberId] ?? "") !== memberId) continue;
+    const rowDate = (row[ATT_COL.date] ?? "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}/.test(rowDate) || rowDate < ROLLOVER_START_ISO) continue;
 
     if (isMonthlyPurchaseRow(row)) {
       teacherClasses = 0;
@@ -70,7 +80,21 @@ export function countRolloverClasses(
       creditUsed = 0;
       earlierTeacher = 0;
       earlierVolunteer = 0;
+      paidEarlier = 0;
       continue;
+    }
+
+    {
+      const d = (row[ATT_COL.date] ?? "").trim();
+      const ev = (row[ATT_COL.event] ?? "").trim().toLowerCase();
+      if (d.startsWith(thisMonth) && ev.includes("monday")) {
+        const amt = Number((row[ATT_COL.amount] ?? "").toString().replace(/[^\d.]/g, ""));
+        if (Number.isFinite(amt) && amt > 0) {
+          // A payer row for two people holds 2x the amount: only count their half.
+          const forTwo = /^paid for\s/i.test((row[ATT_COL.comment] ?? "").trim());
+          paidEarlier += forTwo ? amt / 2 : amt;
+        }
+      }
     }
 
     const reason = (row[ATT_COL.reason] ?? "").trim().toLowerCase();
@@ -101,5 +125,6 @@ export function countRolloverClasses(
     volunteerClasses,
     creditUsed,
     earlierThisMonth: { teacherClasses: earlierTeacher, volunteerClasses: earlierVolunteer },
+    paidEarlierThisMonth: Math.round(paidEarlier * 100) / 100,
   };
 }

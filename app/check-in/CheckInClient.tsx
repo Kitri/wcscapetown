@@ -1,5 +1,7 @@
 "use client";
 
+import { dayEntryCredit, monthlyPriceBreakdown } from "@/lib/monthlyPrice";
+
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -77,12 +79,14 @@ type RolloverCreditInfo = {
   volunteerClasses: number;
   creditUsed: number;
   earlierThisMonth: { teacherClasses: number; volunteerClasses: number };
+  paidEarlierThisMonth: number;
 };
 const NO_ROLLOVER: RolloverCreditInfo = {
   teacherClasses: 0,
   volunteerClasses: 0,
   creditUsed: 0,
   earlierThisMonth: { teacherClasses: 0, volunteerClasses: 0 },
+  paidEarlierThisMonth: 0,
 };
 
 // Door volunteers pay a reduced, editable amount (default 50% of their entry price).
@@ -1011,16 +1015,16 @@ export default function CheckInClient({
   // A monthly class is worth (monthly price / 4). A teacher class earns that in full,
   // a door-volunteer class half of it. Earned credit is deducted from the next
   // monthly purchase, or from a day entry if they don't buy a pass.
-  const memberMonthlyPrice = useMemo(() => {
-    const category = normalizePensionerStudent(selected?.pensionerStudent ?? "");
-    const type =
-      category === "pensioner"
-        ? "Pensioner monthly"
-        : category === "student"
-          ? "Student monthly"
-          : "Monthly";
-    return costs?.costs?.[type] ?? 0;
-  }, [costs, selected?.pensionerStudent]);
+
+  // Buying a monthly pass tonight and also volunteering on the door tonight: tonight's
+  // volunteering is discounted off THIS pass.
+  const buyingMonthlyVolunteer =
+    monthlyVolunteer &&
+    isMonthlySelected &&
+    !welcomingCommitteeTaken &&
+    !payForTwo &&
+    selectedEvent.toLowerCase().includes("monday");
+  const tonightVolunteer = buyingMonthlyVolunteer ? 1 : 0;
 
   // Days that count for this entry. Days taught / volunteered on a pass can go towards
   // the next pass or a day entry; days earlier this month WITHOUT a pass only count
@@ -1032,20 +1036,43 @@ export default function CheckInClient({
         (isMonthlySelected ? rolloverCredit.earlierThisMonth.teacherClasses : 0),
       volunteer:
         rolloverCredit.volunteerClasses +
-        (isMonthlySelected ? rolloverCredit.earlierThisMonth.volunteerClasses : 0),
+        (isMonthlySelected ? rolloverCredit.earlierThisMonth.volunteerClasses : 0) +
+        tonightVolunteer,
     }),
-    [rolloverCredit, isMonthlySelected]
+    [rolloverCredit, isMonthlySelected, tonightVolunteer]
   );
 
-  const rolloverEarned = useMemo(() => {
-    const classes = creditDays.teacher + creditDays.volunteer * 0.5;
-    return Math.round(classes * (memberMonthlyPrice / 4) * 100) / 100;
-  }, [memberMonthlyPrice, creditDays]);
-
-  const rolloverAvailable = Math.max(
-    0,
-    Math.round((rolloverEarned - rolloverCredit.creditUsed) * 100) / 100
+  const monthlyBreakdown = useMemo(
+    () =>
+      monthlyPriceBreakdown({
+        monthlyPrice: selectedBasePrice,
+        passTeacher: rolloverCredit.teacherClasses,
+        passVolunteer: rolloverCredit.volunteerClasses,
+        creditUsedRand: rolloverCredit.creditUsed,
+        earlierTeacher: rolloverCredit.earlierThisMonth.teacherClasses,
+        earlierVolunteer: rolloverCredit.earlierThisMonth.volunteerClasses + tonightVolunteer,
+        paidEarlier: rolloverCredit.paidEarlierThisMonth ?? 0,
+        useCredit: useRolloverCredit,
+      }),
+    [selectedBasePrice, rolloverCredit, useRolloverCredit, tonightVolunteer]
   );
+
+  // Day entries: credit is worth the day price (taught day = free, volunteered day =
+  // half). Monthly passes use monthlyBreakdown instead.
+  const dayCreditAvailable = dayEntryCredit(
+    selectedBasePrice,
+    creditDays.teacher,
+    creditDays.volunteer,
+    rolloverCredit.creditUsed
+  );
+
+  const rolloverAvailable = isMonthlySelected
+    ? Math.max(
+        monthlyBreakdown.availableCredit,
+        // keep the checkbox visible when only money already paid applies
+        (rolloverCredit.paidEarlierThisMonth ?? 0) > 0 ? 0.01 : 0
+      )
+    : dayCreditAvailable;
 
   // Credit goes towards a monthly pass or a Standard / Student / Pensioner day entry
   // (not Social only, Practice or the door volunteer's own entry).
@@ -1063,8 +1090,14 @@ export default function CheckInClient({
     selectedEvent.toLowerCase().includes("monday");
 
   const rolloverCreditAmount = rolloverCreditApplies
-    ? Math.min(rolloverAvailable, selectedBasePrice)
+    ? isMonthlySelected
+      ? monthlyBreakdown.creditApplied
+      : Math.min(rolloverAvailable, selectedBasePrice)
     : 0;
+
+  // Money already paid on Monday entries this month, deducted from a monthly pass.
+  const paidEarlierDeduction =
+    rolloverCreditApplies && isMonthlySelected ? monthlyBreakdown.paidEarlierDeduction : 0;
 
   // e.g. "1 day welcoming committee volunteer" / "2 days teaching and 1 day welcoming committee volunteer"
   const rolloverSourceText = useMemo(() => {
@@ -1077,13 +1110,18 @@ export default function CheckInClient({
 
   // e.g. "Rollover credit used: R37.50 (from 2 days taught, 1 day volunteered)"
   const rolloverCreditNote = useMemo(() => {
-    if (rolloverCreditAmount <= 0) return "";
+    if (rolloverCreditAmount <= 0 && paidEarlierDeduction <= 0) return "";
     const days = (n: number, verb: string) => `${n} day${n === 1 ? "" : "s"} ${verb}`;
     const parts: string[] = [];
     if (creditDays.teacher) parts.push(days(creditDays.teacher, "taught"));
     if (creditDays.volunteer) parts.push(days(creditDays.volunteer, "volunteered"));
-    return `Rollover credit used: ${formatZar(rolloverCreditAmount)} (from ${parts.join(", ")})`;
-  }, [creditDays, rolloverCreditAmount]);
+    const base =
+      rolloverCreditAmount > 0
+        ? `Rollover credit used: ${formatZar(rolloverCreditAmount)} (from ${parts.join(", ")})`
+        : "";
+    const paid = paidEarlierDeduction > 0 ? `Less ${formatZar(paidEarlierDeduction)} already paid this month` : "";
+    return [base, paid].filter(Boolean).join(" - ");
+  }, [creditDays, rolloverCreditAmount, paidEarlierDeduction]);
 
   const payableAmount = useMemo(() => {
     if (!selectedType) return 0;
@@ -1097,13 +1135,14 @@ export default function CheckInClient({
     }
     const amount = costs?.costs?.[selectedType];
     if (typeof amount !== "number") return 0;
-    return Math.max(0, amount - rolloverCreditAmount);
+    return Math.max(0, amount - rolloverCreditAmount - paidEarlierDeduction);
   }, [
     costs,
     selectedType,
     isLevel2TuesdayDiscount,
     volunteerAmount,
     rolloverCreditAmount,
+    paidEarlierDeduction,
   ]);
 
   const thursdayPracticeAmount = useMemo(() => {
@@ -1666,13 +1705,13 @@ export default function CheckInClient({
     try {
       const payloadBase = monthlyVolunteerActive
         ? {
-            // Free tonight (monthly pass): the type stays "monthly", and the note plus
-            // the reason mark the day as welcoming committee so it earns credit.
+            // Free tonight (monthly pass): recorded as a Welcoming committee day so it
+            // is easy to see on the sheet; the reason keeps it earning rollover credit.
             member_id: selected.member_id,
-            type: (effectiveFreeEntry?.applies && effectiveFreeEntry.entry_type) || "monthly",
+            type: WELCOMING_TYPE,
             paid_via: "",
             paid_amount: 0,
-            comment: [comment.trim(), "Also welcoming committee, credit to roll over"]
+            comment: [comment.trim(), "On monthly pass, welcoming committee - credit to roll over"]
               .filter(Boolean)
               .join(" - "),
             free_entry_reason: `${ROLLOVER_REASON_PREFIX} welcoming committee`,
@@ -1709,12 +1748,13 @@ export default function CheckInClient({
             free_entry_reason:
               selectedType === WELCOMING_TYPE
                 ? "welcoming committee"
-                : rolloverCreditAmount > 0
+                : rolloverCreditAmount > 0 || paidEarlierDeduction > 0
                   ? CREDIT_USED_REASON
                   : "",
             ...(payForTwoActive && partner
               ? { paid_for_member_id: partner.member_id }
               : {}),
+            ...(buyingMonthlyVolunteer ? { also_volunteer: true } : {}),
           };
 
       const payload = {
@@ -2705,6 +2745,22 @@ export default function CheckInClient({
                           <div className="font-spartan font-semibold text-3xl">
                             {formatZar(payForTwoActive ? payableAmount * 2 : payableAmount)}
                           </div>
+                          {isMonthlySelected &&
+                            !welcomingCommitteeTaken &&
+                            !payForTwo &&
+                            selectedEvent.toLowerCase().includes("monday") && (
+                              <label className="mt-2 flex items-start gap-2 text-sm">
+                                <input
+                                  type="checkbox"
+                                  className="mt-0.5 h-4 w-4"
+                                  checked={monthlyVolunteer}
+                                  onChange={(e) => setMonthlyVolunteer(e.target.checked)}
+                                />
+                                <span>
+                                  Door volunteer tonight too (discounts this month&apos;s pass)
+                                </span>
+                              </label>
+                            )}
                           {rolloverAvailable > 0 && rolloverEligibleType && !payForTwo && (
                             <label className="mt-2 flex items-start gap-2 text-sm">
                               <input
@@ -2714,7 +2770,12 @@ export default function CheckInClient({
                                 onChange={(e) => setUseRolloverCredit(e.target.checked)}
                               />
                               <span>
-                                Use credit from {rolloverSourceText}
+                                {rolloverSourceText
+                                  ? `Use credit from ${rolloverSourceText}`
+                                  : "Deduct amount already paid this month"}
+                                {rolloverSourceText && paidEarlierDeduction > 0
+                                  ? ` (less ${formatZar(paidEarlierDeduction)} already paid this month)`
+                                  : ""}
                               </span>
                             </label>
                           )}

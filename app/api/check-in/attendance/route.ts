@@ -50,6 +50,9 @@ type Payload = {
   // Optional: one payment covering a second person. paid_amount is the
   // per-person amount; the payer's row records 2 x paid_amount.
   paid_for_member_id?: number;
+  // Buying a monthly pass AND being door volunteer the same night: a free
+  // "Welcoming committee" row is written just before the purchase row.
+  also_volunteer?: boolean;
 };
 
 export async function POST(request: Request) {
@@ -169,6 +172,29 @@ export async function POST(request: Request) {
         ],
       ]);
       return NextResponse.json({ ok: true, free_entry_added: false });
+    }
+
+    if (
+      body.also_volunteer === true &&
+      isMonthlyType(type) &&
+      event.toLowerCase().includes("monday")
+    ) {
+      // Written BEFORE the purchase row: the discount is already in this pass's price,
+      // and the purchase resets the rollover count so it is not credited again.
+      await appendToSheet(CHECKIN_SPREADSHEET_ID, ATTENDANCE_RANGE, [
+        [
+          member_id,
+          null,
+          today,
+          event,
+          "",
+          0,
+          "Welcoming committee",
+          "Welcoming committee, discount applied to this month's pass",
+          "welcoming committee",
+          timestamp,
+        ],
+      ]);
     }
 
     // Column B is a name lookup in the sheet, so it is skipped (null).
