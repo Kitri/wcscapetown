@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 
 function getNextLabel(targetDay: number): string {
   const now = new Date();
@@ -26,38 +25,6 @@ export default function WeeklyHighlights() {
           What&apos;s On
         </p>
         <div className="flex flex-col gap-3">
-
-          {/* Featured: Strictly Halloween Social */}
-          <Link
-            href="/whats-on#monthly-social"
-            className="rounded-xl border-2 overflow-hidden transition-all hover:shadow-lg flex flex-col md:flex-row md:items-center gap-4"
-            style={{ borderColor: 'rgba(245,116,32,0.45)', backgroundColor: 'rgba(245,116,32,0.07)' }}
-          >
-            <div className="shrink-0 bg-white flex items-center justify-center p-4 md:w-[200px] self-stretch">
-              <Image
-                src="/images/strictly social.png"
-                alt="Strictly Social"
-                width={469}
-                height={265}
-                className="w-[160px] md:w-full h-auto"
-              />
-            </div>
-            <div className="flex-1 px-5 pb-1 md:py-5 md:px-0">
-              <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: '#F57420' }}>
-                🎃 Early Halloween party · Saturday 10 October
-              </p>
-              <p className="font-spartan font-bold text-xl md:text-2xl leading-tight mb-1">
-                Strictly Halloween Social
-              </p>
-              <p className="text-sm text-text-dark/70">Taster class at 8 PM · Social 8–11 PM · R50 per person · 1st Claremont Scout Group · All welcome</p>
-            </div>
-            <span
-              className="inline-block shrink-0 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-all hover:opacity-90 mx-5 mb-5 md:mb-0 md:mx-0 md:mr-5 self-start md:self-center"
-              style={{ backgroundColor: '#F57420' }}
-            >
-              Find out more →
-            </span>
-          </Link>
 
           {/* Regular events row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

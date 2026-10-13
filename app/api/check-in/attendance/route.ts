@@ -50,6 +50,10 @@ type Payload = {
   // Optional: one payment covering a second person. paid_amount is the
   // per-person amount; the payer's row records 2 x paid_amount.
   paid_for_member_id?: number;
+  // With paid_for_member_id: what the second person's own entry costs and its type
+  // (a student / pensioner partner pays a different price). Default: same as payer.
+  partner_amount?: number;
+  partner_type?: string;
   // Buying a monthly pass AND being door volunteer the same night: a free
   // "Welcoming committee" row is written just before the purchase row.
   also_volunteer?: boolean;
@@ -141,10 +145,25 @@ export async function POST(request: Request) {
     if (hasPaidFor) {
       // One row per attendee, but the payer's row carries the full payment so
       // it matches the single Yoco transaction. The second row is R0.
-      const payerComment = [comment, `paid for ${paid_for_member_id}`]
+      const ALLOWED_PARTNER_TYPES = ["Standard entry", "Student", "Pensioner", "Practice", "Social only"];
+      const requestedPartnerType = (body.partner_type ?? "").trim();
+      const partnerType =
+        ALLOWED_PARTNER_TYPES.find((t) => t.toLowerCase() === requestedPartnerType.toLowerCase()) ??
+        (type.toLowerCase() === "practice" ? type : "Standard entry");
+      const partnerAmountRaw = Number(body.partner_amount);
+      const partnerAmount =
+        body.partner_amount !== undefined && Number.isFinite(partnerAmountRaw) && partnerAmountRaw >= 0
+          ? partnerAmountRaw
+          : paid_amount;
+      // Comment keeps "paid for <id>"; the partner's share is only added when it
+      // differs from the payer's, so the payer's own share can be worked out later.
+      const payerComment = [
+        comment,
+        `paid for ${paid_for_member_id}`,
+        partnerAmount !== paid_amount ? `partner share R${partnerAmount}` : "",
+      ]
         .filter(Boolean)
         .join(" - ");
-      const partnerType = type.toLowerCase() === "practice" ? type : "Standard entry";
       await appendToSheet(CHECKIN_SPREADSHEET_ID, ATTENDANCE_RANGE, [
         [
           member_id,
@@ -152,7 +171,7 @@ export async function POST(request: Request) {
           today,
           event,
           paid_via,
-          paid_amount * 2,
+          paid_amount + partnerAmount,
           type,
           payerComment,
           free_entry_reason,

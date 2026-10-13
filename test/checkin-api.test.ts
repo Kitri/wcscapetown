@@ -816,6 +816,28 @@ describe("POST /api/check-in/attendance", () => {
     ]);
   });
 
+  it("charges the second person their own category price (R100 + R80 = R180)", async () => {
+    const { POST } = await import("../app/api/check-in/attendance/route");
+    mockGetSheetValues.mockImplementation(async (_id: string, range: string) => {
+      if (range === "Attendance!A:D") return [];
+      if (range === "All_members!A:C") return [["99", "Jane", "Doe"]];
+      return [];
+    });
+    mockAppendToSheet.mockReset();
+    const res = await POST(
+      jsonRequest("http://localhost/api/check-in/attendance", {
+        member_id: 42, type: "Standard entry", paid_via: "Yoco", paid_amount: 100,
+        event: "Monday Plumstead", paid_for_member_id: 99, partner_amount: 80, partner_type: "Student",
+      })
+    );
+    expect(res.status).toBe(200);
+    const rows = mockAppendToSheet.mock.calls[0][2] as (string | number)[][];
+    expect(rows[0][5]).toBe(180);
+    expect(rows[0][7]).toBe("paid for 99 - partner share R80");
+    expect(rows[1][5]).toBe(0);
+    expect(rows[1][6]).toBe("Student");
+  });
+
   it("rejects paying for someone already checked in, or for yourself", async () => {
     const { POST } = await import("../app/api/check-in/attendance/route");
 

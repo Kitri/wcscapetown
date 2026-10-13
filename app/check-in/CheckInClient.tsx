@@ -1237,6 +1237,24 @@ export default function CheckInClient({
   );
   const payForTwoActive = payForTwo && canPayForTwo;
 
+  // The second person pays their own category's price (student / pensioner / standard)
+  // when the payer is buying a day entry; for Practice / Social only it is the same.
+  const partnerEntryType = useMemo(() => {
+    if (!partner || !selectedType) return selectedType;
+    if (!["Standard entry", "Student", "Pensioner"].includes(selectedType)) return selectedType;
+    const ps = normalizePensionerStudent(partner.pensionerStudent ?? "");
+    return ps === "pensioner" ? "Pensioner" : ps === "student" ? "Student" : "Standard entry";
+  }, [partner, selectedType]);
+  const partnerAmount = useMemo(() => {
+    if (!partner || !partnerEntryType) return 0;
+    if (partnerEntryType === selectedType || isLevel2TuesdayDiscount) return payableAmount;
+    const price = costs?.costs?.[partnerEntryType];
+    return typeof price === "number" ? price : payableAmount;
+  }, [partner, partnerEntryType, selectedType, isLevel2TuesdayDiscount, payableAmount, costs]);
+  // Total taken in one payment; stays at the payer's own amount until the second
+  // person has been chosen.
+  const totalDue = payForTwoActive && partner ? payableAmount + partnerAmount : payableAmount;
+
   const checkinEnabled = useMemo(() => {
     if (!selected) return false;
     if (alreadyCheckedIn) return false;
@@ -1752,7 +1770,11 @@ export default function CheckInClient({
                   ? CREDIT_USED_REASON
                   : "",
             ...(payForTwoActive && partner
-              ? { paid_for_member_id: partner.member_id }
+              ? {
+                  paid_for_member_id: partner.member_id,
+                  partner_amount: partnerAmount,
+                  partner_type: partnerEntryType,
+                }
               : {}),
             ...(buyingMonthlyVolunteer ? { also_volunteer: true } : {}),
           };
@@ -2740,11 +2762,17 @@ export default function CheckInClient({
                       ) : (
                         <>
                           <div className="text-text-dark/70 text-sm">
-                            Amount{payForTwoActive ? " (2 people)" : ""}
+                            Amount{payForTwoActive && partner ? " (2 people)" : ""}
                           </div>
                           <div className="font-spartan font-semibold text-3xl">
-                            {formatZar(payForTwoActive ? payableAmount * 2 : payableAmount)}
+                            {formatZar(totalDue)}
                           </div>
+                          {payForTwoActive && partner && (
+                            <div className="text-text-dark/70 text-sm">
+                              {selected?.first_name} {formatZar(payableAmount)} + {partner.first_name}{" "}
+                              {formatZar(partnerAmount)}
+                            </div>
+                          )}
                           {isMonthlySelected &&
                             !welcomingCommitteeTaken &&
                             !payForTwo &&

@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Header from "@/components/Header";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +15,7 @@ function getNextOccurrence(targetDay: number): string {
 export default function WhatsOn() {
   const nextMonday = getNextOccurrence(1);
   const nextWednesday = getNextOccurrence(3);
+  const nextThursday = getNextOccurrence(4);
   return (
     <>
       <Header />
@@ -50,7 +50,7 @@ export default function WhatsOn() {
         <section className="px-[5%] py-[40px] bg-white">
           <div className="max-w-[1100px] mx-auto">
             <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Regular Events</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
               {/* Monday Classes */}
               <a href="#monday-classes" className="group border-2 border-yellow-accent/30 hover:border-yellow-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-yellow-accent text-text-dark px-4 py-2 rounded-full font-semibold text-xs mb-3">
@@ -64,6 +64,20 @@ export default function WhatsOn() {
                 </p>
               </a>
               
+              {/* Thursday Practice Session */}
+              <a href="#practice-session" className="group border-2 border-purple-accent/30 hover:border-purple-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
+                <div className="inline-block bg-purple-accent text-white px-4 py-2 rounded-full font-semibold text-xs mb-3">
+                  EVERY THURSDAY
+                </div>
+                <h3 className="font-spartan font-semibold text-lg mb-2">WCS Practice Session</h3>
+                <p className="text-sm text-text-dark/70 mb-1">7:45–9:30 PM</p>
+                <p className="text-sm text-text-dark/70">Pinelands North Primary School</p>
+                <p className="text-xs mt-2 font-semibold text-purple-accent">
+                  {nextThursday === "Tonight!" ? "🎉 Tonight!" : `Next: ${nextThursday}`}
+                </p>
+                <p className="text-xs italic mt-1 text-text-dark/60">Open practice session</p>
+              </a>
+
               {/* Wednesday Down to Earth Market */}
               <a href="#down-to-earth" className="group border-2 border-text-dark/20 hover:border-text-dark/40 rounded-xl p-6 text-center transition-all hover:shadow-lg">
                 <div className="inline-block bg-text-dark/10 text-text-dark px-4 py-2 rounded-full font-semibold text-xs mb-3">
@@ -85,47 +99,9 @@ export default function WhatsOn() {
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs mt-2 font-semibold text-pink-accent">Next: Sat 10 October · Strictly Social 🎃</p>
+                <p className="text-xs mt-2 font-semibold text-pink-accent">Next: November tbd</p>
               </a>
             </div>
-
-            <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Upcoming Events</h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Strictly Social - 10 October */}
-              <a
-                href="#monthly-social"
-                className="group rounded-2xl overflow-hidden transition-all hover:shadow-xl w-full max-w-2xl border-2 flex flex-col"
-                style={{ borderColor: 'rgba(245,116,32,0.45)', backgroundColor: 'rgba(245,116,32,0.07)' }}
-              >
-                {/* Title image on top */}
-                <div className="bg-white flex items-center justify-center px-6 pt-6 pb-2">
-                  <Image
-                    src="/images/strictly social.png"
-                    alt="Strictly Social"
-                    width={469}
-                    height={265}
-                    className="w-[260px] md:w-[300px] h-auto"
-                  />
-                </div>
-                <div className="p-6 md:p-8 flex flex-col justify-center">
-                  <div className="inline-block text-white px-4 py-1.5 rounded-full font-semibold text-xs mb-4 self-start" style={{ backgroundColor: '#F57420' }}>
-                    EARLY HALLOWEEN PARTY · SAT 10 OCT
-                  </div>
-                  <h3 className="font-spartan font-semibold text-2xl mb-1">Strictly Halloween Social</h3>
-                  <p className="text-sm text-text-dark/60 mb-3">Let&apos;s get spooky on the dance floor!</p>
-                  <div className="space-y-1 text-sm text-text-dark/80 mb-4">
-                    <p><span className="font-semibold">📅 When:</span> Saturday 10 October · 8–11 PM</p>
-                    <p><span className="font-semibold">🎓 Taster class:</span> 8 PM</p>
-                    <p><span className="font-semibold">📍 Where:</span> 1st Claremont Scout Group, Claremont</p>
-                    <p><span className="font-semibold">💰 Entry:</span> R50 per person · All welcome</p>
-                  </div>
-                  <span className="inline-block self-start text-white text-sm font-semibold px-5 py-2 rounded-lg" style={{ backgroundColor: '#F57420' }}>
-                    Find out more →
-                  </span>
-                </div>
-              </a>
-            </div>
-
           </div>
         </section>
 
@@ -294,12 +270,73 @@ export default function WhatsOn() {
           </div>
         </section>
 
+        {/* Thursday Practice Session - Full Details */}
+        <section
+          id="practice-session"
+          className="px-[5%] py-[50px]"
+          style={{
+            background: "linear-gradient(135deg, rgba(103, 72, 217, 0.12), rgba(103, 72, 217, 0.04))",
+          }}
+        >
+          <div className="max-w-[900px] mx-auto">
+            <h2 className="font-spartan font-semibold text-[28px] md:text-[36px] text-center mb-6">
+              WCS Practice Session
+            </h2>
+
+            <div className="bg-white/70 rounded-xl p-6 md:p-8 mb-8 text-center">
+              <p className="text-lg md:text-xl font-semibold mb-2">A friendly space to practise your West Coast Swing</p>
+              <p className="text-base md:text-lg text-text-dark/80">
+                Bring something you&apos;d like to work on and dance it with different partners.
+                Not sure what to practise? Try what we did in class on Monday :)
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              <div>
+                <h3 className="font-spartan font-semibold text-xl mb-4">What to Expect</h3>
+                <div className="space-y-3">
+                  <div className="bg-white/60 rounded-lg p-4">
+                    <p className="font-semibold">Pair up and share</p>
+                    <p className="text-sm text-text-dark/70">Tell your partner what you&apos;re practising, then dance it to one song</p>
+                  </div>
+                  <div className="bg-white/60 rounded-lg p-4">
+                    <p className="font-semibold">Chat, then go again</p>
+                    <p className="text-sm text-text-dark/70">A minute without music to talk it through, then another song. Then we swap partners</p>
+                  </div>
+                  <div className="bg-white/60 rounded-lg p-4">
+                    <p className="font-semibold">Sometimes a theme</p>
+                    <p className="text-sm text-text-dark/70">Some Thursdays we pick a theme for the first half and practise it together</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-spartan font-semibold text-xl mb-4">Details</h3>
+                <div className="space-y-4 text-base md:text-lg">
+                  <div>
+                    <p className="font-semibold mb-1">📅 When</p>
+                    <p>Every Thursday · 7:45–9:30 PM</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold mb-1">📍 Where</p>
+                    <p>Pinelands North Primary School<br />Pinelands, Cape Town</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold mb-1">💰 Cost</p>
+                    <p>R50 per person · everyone in our community is welcome</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Monthly Social - Full Details */}
         <section 
           id="monthly-social"
           className="px-[5%] py-[50px]"
           style={{
-            background: "linear-gradient(135deg, rgba(245, 116, 32, 0.15), rgba(245, 116, 32, 0.05))",
+            background: "linear-gradient(135deg, rgba(219, 64, 156, 0.15), rgba(219, 64, 156, 0.05))",
           }}
         >
           <div className="max-w-[900px] mx-auto">
@@ -307,9 +344,9 @@ export default function WhatsOn() {
               WCS Social
             </h2>
 
-            <div className="rounded-xl p-6 md:p-8 mb-8 text-center border-2" style={{ backgroundColor: 'rgba(245,116,32,0.18)', borderColor: '#F57420' }}>
-              <p className="text-lg md:text-xl font-semibold mb-1">🎃 Strictly Social — early Halloween party</p>
-              <p className="text-base md:text-lg">📅 Saturday 10 October · 8–11 PM</p>
+            <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
+              <p className="text-lg md:text-xl font-semibold mb-1">Next: November tbd</p>
+              <p className="text-base md:text-lg">Date and details to be announced</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
@@ -319,11 +356,11 @@ export default function WhatsOn() {
                 <div className="space-y-3">
                   <div className="bg-white/60 rounded-lg p-4">
                     <p className="font-semibold">Taster Class</p>
-                    <p className="text-sm text-text-dark/70">A short intro class at 8 PM — perfect for newcomers</p>
+                    <p className="text-sm text-text-dark/70">A short intro class — perfect for newcomers</p>
                   </div>
                   <div className="bg-white/60 rounded-lg p-4">
                     <p className="font-semibold">Social Dancing</p>
-                    <p className="text-sm text-text-dark/70">Open social 8–11 PM — costumes encouraged!</p>
+                    <p className="text-sm text-text-dark/70">An open social evening of West Coast Swing</p>
                   </div>
                   <div className="bg-white/60 rounded-lg p-4">
                     <p className="font-semibold">All Welcome</p>

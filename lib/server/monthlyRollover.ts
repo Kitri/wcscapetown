@@ -91,8 +91,10 @@ export function countRolloverClasses(
         const amt = Number((row[ATT_COL.amount] ?? "").toString().replace(/[^\d.]/g, ""));
         if (Number.isFinite(amt) && amt > 0) {
           // A payer row for two people holds 2x the amount: only count their half.
-          const forTwo = /^paid for\s/i.test((row[ATT_COL.comment] ?? "").trim());
-          paidEarlier += forTwo ? amt / 2 : amt;
+          const cmt = (row[ATT_COL.comment] ?? "").trim();
+          const forTwo = /(^|\s-\s)paid for\s/i.test(cmt);
+          const share = cmt.match(/partner share R(\d+(?:\.\d+)?)/i);
+          paidEarlier += forTwo ? (share ? amt - Number(share[1]) : amt / 2) : amt;
         }
       }
     }
