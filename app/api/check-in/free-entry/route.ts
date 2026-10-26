@@ -8,8 +8,9 @@ import {
   parseZaDateISO,
 } from "@/lib/zaDate";
 import { CHECKIN_SPREADSHEET_ID } from "@/lib/server/checkinConfig";
-import { getTeacherRoleForDate } from "@/lib/server/teacherRoster";
-import { ROLLOVER_REASON_PREFIX } from "@/lib/server/monthlyRollover";
+import { getTeacherRoleForDate, getTeachingDatesInMonth } from "@/lib/server/teacherRoster";
+import { includedSessionsRemaining } from "@/lib/server/monthlyRollover";
+import { SESSION_ROLES, SessionRole, sessionReason } from "@/lib/sessionCredit";
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
 import { ATT_COL, ATTENDANCE_RANGE } from "@/lib/server/attendanceColumns";
 
@@ -129,6 +130,20 @@ function matchesFlexibleDayFirstDate(applicable: string, todayISO: string): bool
   if (!sameMonthDay) return false;
 
   return parsed.year === undefined || parsed.year === today.year;
+}
+
+// The single date a Free Entry row's applicable_date names ("2026-11-02",
+// "2 November", "02/11/2026"), or null for ranges ("All Mondays", "November 2026",
+// "5 sessions"). A day-first date without a year is taken to be in today's year.
+function resolveSpecificDateISO(applicable: string, todayISO: string): string | null {
+  const v = (applicable ?? "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const parsed = parseFlexibleDayFirstDate(v);
+  if (!parsed) return null;
+  const year = parsed.year ?? Number(todayISO.slice(0, 4));
+  if (!isValidDateParts(year, parsed.month, parsed.day)) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${year}-${pad(parsed.month)}-${pad(parsed.day)}`;
 }
 
 // Priority for session-count rules: above year / "All Mondays" (1), below an
@@ -349,13 +364,13 @@ export async function GET(request: Request) {
     );
 
     let best: (FreeEntryMatch & { priority: number }) | null = null;
-    // True when a monthly pass covers today (teachers / volunteers on a pass are
-    // still free, but the day is recorded so it can be credited next month).
+    // True when a monthly pass covers today.
     let monthlyActive = false;
+    // Door-volunteer dates later this month (assigned in advance in Free Entry).
+    const upcomingVolunteerDates = new Set<string>();
 
-    // Session-count rules need the member's attendance history to know how many
-    // free sessions have already been used. Load it lazily (once) so date-only
-    // lookups don't trigger an extra Sheets read.
+    // Session-count rules and pass state need the member's attendance history.
+    // Load it lazily (once) so date-only lookups don't trigger an extra Sheets read.
     let attendanceRowsCache: string[][] | null = null;
     const loadAttendanceRows = async (): Promise<string[][]> => {
       if (!attendanceRowsCache) {
@@ -374,6 +389,13 @@ export async function GET(request: Request) {
       const [idRaw, , entry_type, applicable_date, details, reason] = row;
       const id = parseMemberId(idRaw ?? "");
       if (!Number.isFinite(id) || id !== member_id) continue;
+
+      if (isDoorVolunteerEntry(entry_type ?? "", reason ?? "")) {
+        const d = resolveSpecificDateISO(applicable_date ?? "", todayISO);
+        if (d && d > todayISO && d.slice(0, 7) === todayISO.slice(0, 7)) {
+          upcomingVolunteerDates.add(d);
+        }
+      }
 
       let match: (FreeEntryMatch & { priority: number }) | null = null;
 
@@ -445,6 +467,17 @@ export async function GET(request: Request) {
       }
     }
 
+    // ---- Free-entry sessions (door volunteer / teacher) -------------------------
+    // Both roles follow the same rule: free tonight, and the session is worth one
+    // class of credit. Which credit it becomes depends on the pass (sessionReason).
+    let sessionRole: SessionRole | null =
+      best && isDoorVolunteerEntry(best.entry_type, best.reason)
+        ? SESSION_ROLES.volunteer
+        : null;
+    let upcomingSessions: { date: string; role: SessionRole }[] = [...upcomingVolunteerDates]
+      .sort()
+      .map((date) => ({ date, role: SESSION_ROLES.volunteer }));
+
     // Teachers come from the live teaching roster (only looked up for members
     // listed in the Teachers tab). A roster failure must never block check-in.
     const isMondayEvent = !eventParam || eventParam.toLowerCase().includes("monday");
@@ -452,6 +485,7 @@ export async function GET(request: Request) {
       try {
         const teacherRole = await getTeacherRoleForDate(member_id, todayISO);
         if (teacherRole) {
+          sessionRole = teacherRole;
           best = {
             member_id,
             entry_type: "Teacher",
@@ -459,30 +493,61 @@ export async function GET(request: Request) {
               teacherRole === "newcomer teacher"
                 ? "Newcomer teacher."
                 : "Teaching today.",
-            // On a monthly pass the class is recorded so it rolls over as a credit.
-            reason: monthlyActive
-              ? `${ROLLOVER_REASON_PREFIX} ${teacherRole}`
-              : teacherRole,
+            reason: teacherRole,
             applicable_date: todayISO,
             priority: 4,
           };
         }
+        const teaching = await getTeachingDatesInMonth(member_id, todayISO.slice(0, 7));
+        upcomingSessions = upcomingSessions.concat(
+          teaching.filter((t) => t.date > todayISO)
+        );
       } catch (e) {
         console.error("Teacher roster lookup error:", e);
       }
+    } else {
+      upcomingSessions = [];
     }
+
+    // Pass state: sessions already paid for by this month's pass are "included",
+    // any others roll over as credit.
+    let includedRemaining = 0;
+    if (monthlyActive && isMondayEvent) {
+      try {
+        includedRemaining = includedSessionsRemaining(
+          await loadAttendanceRows(),
+          member_id,
+          parseMemberId,
+          todayISO
+        );
+      } catch (e) {
+        console.error("Pass state lookup error:", e);
+      }
+    }
+    if (best && sessionRole) {
+      best = {
+        ...best,
+        reason: sessionReason(sessionRole, {
+          onMonthlyPass: monthlyActive,
+          includedRemaining,
+        }),
+      };
+    }
+    const sessionFields = {
+      session_role: sessionRole,
+      on_monthly_pass: monthlyActive,
+      included_sessions_remaining: includedRemaining,
+      upcoming_sessions: upcomingSessions,
+    };
 
     const comboCandidate =
       isThursdayContext(eventParam, date) && date
         ? await getTuesdayComboForMember(member_id, date)
         : null;
 
-    if (!best && !comboCandidate) {
-      return NextResponse.json({ applies: false, today: todayISO });
-    }
     const resolved = best ?? comboCandidate;
     if (!resolved) {
-      return NextResponse.json({ applies: false, today: todayISO });
+      return NextResponse.json({ applies: false, today: todayISO, ...sessionFields });
     }
 
     return NextResponse.json({
@@ -493,6 +558,7 @@ export async function GET(request: Request) {
       details: resolved.details,
       reason: resolved.reason,
       paid_amount_override: resolved.paid_amount_override ?? 0,
+      ...sessionFields,
     });
   } catch (error) {
     console.error("Free entry check error:", error);

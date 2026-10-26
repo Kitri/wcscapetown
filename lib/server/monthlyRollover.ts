@@ -1,132 +1,131 @@
 import { ATT_COL } from "@/lib/server/attendanceColumns";
+import {
+  CREDIT_USED_REASON,
+  ROLLOVER_START_ISO,
+  SessionCredit,
+  parseCreditUsed,
+  parseIncludedSessions,
+  parseSessionReason,
+} from "@/lib/sessionCredit";
 
-// A teacher / door volunteer who has paid for the month is still free that day, but
-// the day is recorded in Attendance with this reason prefix so it can be credited
-// against their NEXT monthly purchase.
-export const ROLLOVER_REASON_PREFIX = "monthly rollover:";
+export {
+  CREDIT_USED_REASON,
+  INCLUDED_REASON_PREFIX,
+  ROLLOVER_REASON_PREFIX,
+  ROLLOVER_START_ISO,
+} from "@/lib/sessionCredit";
 
-// free_entry_reason is used for analysis, so spending credit on a day entry always
-// writes this exact value. The amount lives in the comment (notes) column, e.g.
-// "Rollover credit used: R37.50 (from 1 day volunteered)".
-export const CREDIT_USED_REASON = "rollover_credit";
-
-// Rollover credit only starts being tracked from this date. Earlier attendance was
-// priced under the old manual arrangement and is settled, so it is ignored here.
-export const ROLLOVER_START_ISO = "2026-10-01";
-
-function parseCreditUsed(comment: string): number {
-  const m = (comment ?? "").match(/rollover credit used:?\s*R?\s*(\d+(?:\.\d+)?)/i);
-  const n = m ? Number(m[1]) : NaN;
-  return Number.isFinite(n) && n > 0 ? n : 0;
-}
-
-export type RolloverCredit = {
-  // Days taught / volunteered while on a monthly pass (usable on the next pass or
-  // a Standard / Student / Pensioner day entry).
-  teacherClasses: number;
-  volunteerClasses: number;
-  // Rand already spent on day entries since the last monthly purchase.
-  creditUsed: number;
-  // Days taught / volunteered earlier THIS MONTH without a pass. Only counts when
-  // buying a monthly pass later in the same month.
-  earlierThisMonth: { teacherClasses: number; volunteerClasses: number };
-  // Rand paid on this member's Monday entries this month since their last monthly
-  // purchase (deducted from a monthly purchase made later in the month).
-  paidEarlierThisMonth: number;
-};
+type ParseId = (raw: string) => number;
 
 function isMonthlyPurchaseRow(row: string[]): boolean {
   const type = (row[ATT_COL.type] ?? "").trim().toLowerCase();
   const reason = (row[ATT_COL.reason] ?? "").trim().toLowerCase();
   // A purchase is a monthly-type row with no free-entry reason, or with the fixed
-  // rollover_credit reason when credit was applied to it. Later check-ins on the
-  // pass are written with reason "monthly" and are not purchases.
+  // rollover_credit reason when a discount was applied. Later check-ins on the pass
+  // are written with reason "monthly" and are not purchases.
   return type.includes("monthly") && (!reason || reason === CREDIT_USED_REASON);
 }
 
+/** This member's Attendance rows since ROLLOVER_START_ISO, oldest first. */
+function memberRows(rows: string[][], memberId: number, parseMemberId: ParseId): string[][] {
+  return rows.filter((row) => {
+    const first = (row[ATT_COL.memberId] ?? "").trim().toLowerCase();
+    if (!first || first === "member_id") return false;
+    if (parseMemberId(row[ATT_COL.memberId] ?? "") !== memberId) return false;
+    const date = (row[ATT_COL.date] ?? "").trim();
+    return /^\d{4}-\d{2}-\d{2}/.test(date) && date >= ROLLOVER_START_ISO;
+  });
+}
+
+const isMonday = (row: string[]) =>
+  (row[ATT_COL.event] ?? "").trim().toLowerCase().includes("monday");
+
+// A payer row for two people holds both amounts: only count the payer's share.
+function ownAmount(row: string[]): number {
+  const amt = Number((row[ATT_COL.amount] ?? "").toString().replace(/[^\d.]/g, ""));
+  if (!Number.isFinite(amt) || amt <= 0) return 0;
+  const cmt = (row[ATT_COL.comment] ?? "").trim();
+  if (!/(^|\s-\s)paid for\s/i.test(cmt)) return amt;
+  const share = cmt.match(/partner share R(\d+(?:\.\d+)?)/i);
+  return share ? amt - Number(share[1]) : amt / 2;
+}
+
 /**
- * Teacher / volunteer classes worked on a monthly pass since the member's last
- * monthly purchase. Buying a new pass starts a fresh window, so a credit is used
- * exactly once. Rows are read in sheet order (oldest first).
- *
- * Teaching / volunteering days earlier in the same calendar month as `todayISO`,
- * when the member was not on a pass, are returned separately so they can be
- * credited if the member then buys a monthly pass.
+ * Volunteer / teaching credit since the member's last monthly purchase. Buying a
+ * pass starts a fresh window, so every credit is used exactly once.
  */
-export function countRolloverClasses(
+export function countSessionCredit(
   attendanceRows: string[][],
   memberId: number,
-  parseMemberId: (raw: string) => number,
+  parseMemberId: ParseId,
   todayISO: string
-): RolloverCredit {
-  let teacherClasses = 0;
-  let volunteerClasses = 0;
-  let creditUsed = 0;
-  let earlierTeacher = 0;
-  let earlierVolunteer = 0;
-  let paidEarlier = 0;
+): SessionCredit {
   const thisMonth = todayISO.slice(0, 7);
+  const c = {
+    rollover: { volunteer: 0, teaching: 0 },
+    creditUsedSessions: 0,
+    creditUsedLegacyRand: 0,
+    earlierThisMonth: { volunteer: 0, teaching: 0 },
+    paidEarlierThisMonth: 0,
+  };
 
-  for (const row of attendanceRows) {
-    const firstCell = (row[ATT_COL.memberId] ?? "").trim().toLowerCase();
-    if (!firstCell || firstCell === "member_id") continue;
-    if (parseMemberId(row[ATT_COL.memberId] ?? "") !== memberId) continue;
-    const rowDate = (row[ATT_COL.date] ?? "").trim();
-    if (!/^\d{4}-\d{2}-\d{2}/.test(rowDate) || rowDate < ROLLOVER_START_ISO) continue;
-
+  for (const row of memberRows(attendanceRows, memberId, parseMemberId)) {
     if (isMonthlyPurchaseRow(row)) {
-      teacherClasses = 0;
-      volunteerClasses = 0;
-      creditUsed = 0;
-      earlierTeacher = 0;
-      earlierVolunteer = 0;
-      paidEarlier = 0;
+      c.rollover = { volunteer: 0, teaching: 0 };
+      c.creditUsedSessions = 0;
+      c.creditUsedLegacyRand = 0;
+      c.earlierThisMonth = { volunteer: 0, teaching: 0 };
+      c.paidEarlierThisMonth = 0;
       continue;
     }
 
-    {
-      const d = (row[ATT_COL.date] ?? "").trim();
-      const ev = (row[ATT_COL.event] ?? "").trim().toLowerCase();
-      if (d.startsWith(thisMonth) && ev.includes("monday")) {
-        const amt = Number((row[ATT_COL.amount] ?? "").toString().replace(/[^\d.]/g, ""));
-        if (Number.isFinite(amt) && amt > 0) {
-          // A payer row for two people holds 2x the amount: only count their half.
-          const cmt = (row[ATT_COL.comment] ?? "").trim();
-          const forTwo = /(^|\s-\s)paid for\s/i.test(cmt);
-          const share = cmt.match(/partner share R(\d+(?:\.\d+)?)/i);
-          paidEarlier += forTwo ? (share ? amt - Number(share[1]) : amt / 2) : amt;
-        }
-      }
-    }
+    const inThisMonth = (row[ATT_COL.date] ?? "").trim().startsWith(thisMonth);
+    if (inThisMonth && isMonday(row)) c.paidEarlierThisMonth += ownAmount(row);
 
     const reason = (row[ATT_COL.reason] ?? "").trim().toLowerCase();
     if (reason === CREDIT_USED_REASON) {
-      creditUsed += parseCreditUsed(row[ATT_COL.comment] ?? "");
-      continue;
-    }
-    if (!reason.startsWith(ROLLOVER_REASON_PREFIX)) {
-      // A teaching / door volunteer day without a pass: earlier this month only.
-      const dateCell = (row[ATT_COL.date] ?? "").trim();
-      const eventCell = (row[ATT_COL.event] ?? "").trim().toLowerCase();
-      if (!dateCell.startsWith(thisMonth) || !eventCell.includes("monday")) continue;
-
-      const what = `${row[ATT_COL.type] ?? ""} ${reason}`.toLowerCase();
-      if (what.includes("teach")) earlierTeacher += 1;
-      else if (what.includes("welcoming committee") || what.includes("door volunteer")) {
-        earlierVolunteer += 1;
-      }
+      const used = parseCreditUsed(row[ATT_COL.comment] ?? "");
+      c.creditUsedSessions += used.sessions;
+      c.creditUsedLegacyRand += used.legacyRand;
       continue;
     }
 
-    if (reason.includes("teacher")) teacherClasses += 1;
-    else if (reason.includes("welcoming committee")) volunteerClasses += 1;
+    const session = parseSessionReason(reason, row[ATT_COL.type] ?? "");
+    if (!session) continue;
+    if (session.status === "rollover") {
+      c.rollover[session.kind] += 1;
+    } else if (session.status === "free" && inThisMonth && isMonday(row)) {
+      c.earlierThisMonth[session.kind] += 1;
+    }
+    // "included" sessions were already deducted from the pass price: no credit.
   }
 
-  return {
-    teacherClasses,
-    volunteerClasses,
-    creditUsed,
-    earlierThisMonth: { teacherClasses: earlierTeacher, volunteerClasses: earlierVolunteer },
-    paidEarlierThisMonth: Math.round(paidEarlier * 100) / 100,
-  };
+  c.paidEarlierThisMonth = Math.round(c.paidEarlierThisMonth * 100) / 100;
+  return c;
+}
+
+/**
+ * Sessions that the member's pass for this month already paid for (they were
+ * assigned in advance and deducted at purchase) and that have not been worked yet.
+ * While this is above zero, a session on the pass is recorded as "included"
+ * instead of earning rollover credit.
+ */
+export function includedSessionsRemaining(
+  attendanceRows: string[][],
+  memberId: number,
+  parseMemberId: ParseId,
+  todayISO: string
+): number {
+  const thisMonth = todayISO.slice(0, 7);
+  let included = 0;
+  for (const row of memberRows(attendanceRows, memberId, parseMemberId)) {
+    if (isMonthlyPurchaseRow(row)) {
+      const inMonth = (row[ATT_COL.date] ?? "").trim().startsWith(thisMonth);
+      included = inMonth ? parseIncludedSessions(row[ATT_COL.comment] ?? "") : 0;
+      continue;
+    }
+    const s = parseSessionReason(row[ATT_COL.reason] ?? "", row[ATT_COL.type] ?? "");
+    if (s?.status === "included") included -= 1;
+  }
+  return Math.max(0, included);
 }

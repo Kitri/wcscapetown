@@ -8,6 +8,14 @@ import {
 import { isCheckinAuthed } from "@/lib/server/checkinAuth";
 import { ATT_COL, ATTENDANCE_RANGE } from "@/lib/server/attendanceColumns";
 import { formatZaTimestamp } from "@/lib/server/timestamp";
+import {
+  CREDIT_USED_REASON,
+  SESSION_ROLES,
+  SessionRole,
+  includedSessionsNote,
+} from "@/lib/sessionCredit";
+
+const SESSION_ROLE_VALUES = Object.values(SESSION_ROLES) as string[];
 
 function parseMemberId(raw: string): number {
   const digits = raw.replace(/[^0-9]/g, "");
@@ -54,9 +62,15 @@ type Payload = {
   // (a student / pensioner partner pays a different price). Default: same as payer.
   partner_amount?: number;
   partner_type?: string;
-  // Buying a monthly pass AND being door volunteer the same night: a free
-  // "Welcoming committee" row is written just before the purchase row.
+  // Buying a monthly pass on a night the member volunteers / teaches: a free
+  // session row is written just before the purchase row, so tonight counts as an
+  // "earlier this month" session already priced into the pass.
+  tonight_session?: SessionRole;
+  // Deprecated alias for tonight_session: "welcoming committee".
   also_volunteer?: boolean;
+  // Monthly purchase: how many sessions still to come this month were deducted
+  // from the price. Recorded in the comment so they earn no further credit.
+  included_sessions?: number;
 };
 
 export async function POST(request: Request) {
@@ -193,13 +207,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, free_entry_added: false });
     }
 
-    if (
-      body.also_volunteer === true &&
-      isMonthlyType(type) &&
-      event.toLowerCase().includes("monday")
-    ) {
-      // Written BEFORE the purchase row: the discount is already in this pass's price,
-      // and the purchase resets the rollover count so it is not credited again.
+    const tonightSession: SessionRole | null = SESSION_ROLE_VALUES.includes(
+      String(body.tonight_session ?? "")
+    )
+      ? (body.tonight_session as SessionRole)
+      : body.also_volunteer === true
+        ? SESSION_ROLES.volunteer
+        : null;
+
+    if (tonightSession && isMonthlyType(type) && event.toLowerCase().includes("monday")) {
+      // Written BEFORE the purchase row: tonight is already in this pass's price, and
+      // the purchase resets the credit window so it is not credited again.
       await appendToSheet(CHECKIN_SPREADSHEET_ID, ATTENDANCE_RANGE, [
         [
           member_id,
@@ -208,13 +226,19 @@ export async function POST(request: Request) {
           event,
           "",
           0,
-          "Welcoming committee",
-          "Welcoming committee, discount applied to this month's pass",
-          "welcoming committee",
+          tonightSession === SESSION_ROLES.volunteer ? "Welcoming committee" : "Teacher",
+          "Free entry, counted in this month's pass price",
+          tonightSession,
           timestamp,
         ],
       ]);
     }
+
+    const includedSessions = Math.max(0, Math.floor(Number(body.included_sessions ?? 0)) || 0);
+    const rowComment =
+      isMonthlyType(type) && includedSessions > 0
+        ? [comment, includedSessionsNote(includedSessions)].filter(Boolean).join(" - ")
+        : comment;
 
     // Column B is a name lookup in the sheet, so it is skipped (null).
     // Columns: C date, D event, E paid_via, F amount, G type, H comment, I free_entry_reason, J timestamp
@@ -227,7 +251,7 @@ export async function POST(request: Request) {
         paid_via,
         paid_amount,
         type,
-        comment,
+        rowComment,
         free_entry_reason,
         timestamp,
       ],
@@ -235,11 +259,13 @@ export async function POST(request: Request) {
 
     // If they PAID for a monthly pass, add them to Free Entry for the month.
     // (Do not do this when they are just signing in with existing free entry.)
+    // A pass fully covered by volunteer / teaching credit costs R0 and has no
+    // payment method, but is still a purchase.
     const paidForMonthly =
       isMonthlyType(type) &&
       paid_amount >= 0 &&
-      (paid_via === "Cash" || paid_via === "Yoco") &&
-      (!free_entry_reason || free_entry_reason === "rollover_credit");
+      (paid_via === "Cash" || paid_via === "Yoco" || free_entry_reason === CREDIT_USED_REASON) &&
+      (!free_entry_reason || free_entry_reason === CREDIT_USED_REASON);
 
     let free_entry_added = false;
     let free_entry_error: string | undefined;

@@ -102,6 +102,31 @@ function parseCell(raw: string, known: Set<string>): Set<string> | null {
   return out;
 }
 
+// This member's role in one roster row, or null if they are not on it.
+function roleInRow(
+  row: string[],
+  myNames: Set<string>,
+  known: Set<string>
+): TeacherRole | null {
+  let role: TeacherRole | null = null;
+  const dateISO = (row[0] ?? "").trim();
+  // C-F: class teachers (level 1/2 primary + assistant); G: newcomer teacher
+  for (let col = 2; col <= 6; col++) {
+    const names = parseCell(row[col] ?? "", known);
+    if (names === null) {
+      console.warn(
+        `Teaching roster ${dateISO}: ignoring unrecognised cell in column ${col + 1}`
+      );
+      continue;
+    }
+    if ([...names].some((n) => myNames.has(n))) {
+      if (col === 6) return "newcomer teacher";
+      role = "teacher";
+    }
+  }
+  return role;
+}
+
 /**
  * Is this member teaching on the given date, according to the live roster?
  * Cheap for everyone else: members not listed in the Teachers tab never
@@ -115,27 +140,37 @@ export async function getTeacherRoleForDate(
   const myNames = directory.byMember.get(memberId);
   if (!myNames) return null;
 
-  const rows = await loadRosterRows();
   let role: TeacherRole | null = null;
-
-  for (const row of rows) {
+  for (const row of await loadRosterRows()) {
     if ((row[0] ?? "").trim() !== dateISO) continue;
-
-    // C-F: class teachers (level 1/2 primary + assistant); G: newcomer teacher
-    for (let col = 2; col <= 6; col++) {
-      const names = parseCell(row[col] ?? "", directory.known);
-      if (names === null) {
-        console.warn(
-          `Teaching roster ${dateISO}: ignoring unrecognised cell in column ${col + 1}`
-        );
-        continue;
-      }
-      if ([...names].some((n) => myNames.has(n))) {
-        if (col === 6) return "newcomer teacher";
-        role = "teacher";
-      }
-    }
+    const r = roleInRow(row, myNames, directory.known);
+    if (r === "newcomer teacher") return r;
+    role = role ?? r;
   }
-
   return role;
+}
+
+/**
+ * Every rostered teaching date for this member in the month of `monthISO`
+ * ("yyyy-mm"), oldest first. Used to price a monthly pass bought before the
+ * teaching nights happen.
+ */
+export async function getTeachingDatesInMonth(
+  memberId: number,
+  monthISO: string
+): Promise<{ date: string; role: TeacherRole }[]> {
+  const directory = await loadTeacherDirectory();
+  const myNames = directory.byMember.get(memberId);
+  if (!myNames) return [];
+
+  const byDate = new Map<string, TeacherRole>();
+  for (const row of await loadRosterRows()) {
+    const date = (row[0] ?? "").trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !date.startsWith(monthISO)) continue;
+    const role = roleInRow(row, myNames, directory.known);
+    if (role && byDate.get(date) !== "newcomer teacher") byDate.set(date, role);
+  }
+  return [...byDate.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, role]) => ({ date, role }));
 }
