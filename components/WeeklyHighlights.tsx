@@ -26,6 +26,23 @@ export default function WeeklyHighlights() {
         </p>
         <div className="flex flex-col gap-3">
 
+          {/* Monthly Social */}
+          <Link
+            href="/whats-on#monthly-social"
+            className="flex items-start gap-3 rounded-xl border-2 border-pink-accent/30 hover:border-pink-accent bg-pink-accent/5 hover:bg-pink-accent/10 p-4 transition-all group"
+          >
+            <span className="mt-0.5 text-xl">💃</span>
+            <div className="text-left min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-pink-accent mb-0.5">
+                Saturday 21 November
+              </p>
+              <p className="font-spartan font-semibold text-base leading-tight mb-1">
+                Monthly Social
+              </p>
+              <p className="text-xs text-text-dark/60">Taster class at 8 PM · R50 · Scout Hall, Claremont</p>
+            </div>
+          </Link>
+
           {/* Regular events row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
 
