@@ -42,6 +42,21 @@ async function lookupMemberFullName(member_id: number): Promise<string> {
   return "";
 }
 
+const FREE_ENTRY_RANGE = "'Free Entry'!A:F";
+
+// Does this member already have the "monthly" Free Entry row for the month?
+function hasMonthlyFreeEntry(rows: string[][], memberId: number, monthYear: string): boolean {
+  return rows.some((row) => {
+    const firstCell = (row[0] ?? "").trim().toLowerCase();
+    if (!firstCell || firstCell === "member_id") return false;
+    return (
+      parseMemberId(row[0] ?? "") === memberId &&
+      (row[2] ?? "").trim().toLowerCase() === "monthly" &&
+      (row[3] ?? "").trim() === monthYear
+    );
+  });
+}
+
 function isMonthlyType(type: string): boolean {
   return (type ?? "").trim().toLowerCase().includes("monthly");
 }
@@ -62,6 +77,10 @@ type Payload = {
   // (a student / pensioner partner pays a different price). Default: same as payer.
   partner_amount?: number;
   partner_type?: string;
+  // Monthly for two: the second person's own discount details (their pass row).
+  partner_comment?: string;
+  partner_free_entry_reason?: string;
+  partner_included_sessions?: number;
   // Buying a monthly pass on a night the member volunteers / teaches: a free
   // session row is written just before the purchase row, so tonight counts as an
   // "earlier this month" session already priced into the pass.
@@ -125,13 +144,6 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
-      if (isMonthlyType(type)) {
-        return NextResponse.json(
-          { error: "Paying for 2 is not supported for monthly passes" },
-          { status: 400 }
-        );
-      }
-
       // The second person must exist and must not already be checked in.
       const existing = await getSheetValues(CHECKIN_SPREADSHEET_ID, "Attendance!A:D");
       for (const row of existing) {
@@ -152,60 +164,20 @@ export async function POST(request: Request) {
       if (!partnerName) {
         return NextResponse.json({ error: "Second member not found" }, { status: 400 });
       }
+      // Buying two monthly passes: the second person must not already have one.
+      if (isMonthlyType(type)) {
+        const monthYear = formatZaMonthYear(date ?? undefined);
+        const freeEntryRows = await getSheetValues(CHECKIN_SPREADSHEET_ID, FREE_ENTRY_RANGE);
+        if (hasMonthlyFreeEntry(freeEntryRows, paid_for_member_id, monthYear)) {
+          return NextResponse.json(
+            { error: `Member ${paid_for_member_id} already has a monthly pass for ${monthYear}` },
+            { status: 409 }
+          );
+        }
+      }
     }
 
     const timestamp = formatZaTimestamp();
-
-    if (hasPaidFor) {
-      // One row per attendee, but the payer's row carries the full payment so
-      // it matches the single Yoco transaction. The second row is R0.
-      const ALLOWED_PARTNER_TYPES = ["Standard entry", "Student", "Pensioner", "Practice", "Social only"];
-      const requestedPartnerType = (body.partner_type ?? "").trim();
-      const partnerType =
-        ALLOWED_PARTNER_TYPES.find((t) => t.toLowerCase() === requestedPartnerType.toLowerCase()) ??
-        (type.toLowerCase() === "practice" ? type : "Standard entry");
-      const partnerAmountRaw = Number(body.partner_amount);
-      const partnerAmount =
-        body.partner_amount !== undefined && Number.isFinite(partnerAmountRaw) && partnerAmountRaw >= 0
-          ? partnerAmountRaw
-          : paid_amount;
-      // Comment keeps "paid for <id>"; the partner's share is only added when it
-      // differs from the payer's, so the payer's own share can be worked out later.
-      const payerComment = [
-        comment,
-        `paid for ${paid_for_member_id}`,
-        partnerAmount !== paid_amount ? `partner share R${partnerAmount}` : "",
-      ]
-        .filter(Boolean)
-        .join(" - ");
-      await appendToSheet(CHECKIN_SPREADSHEET_ID, ATTENDANCE_RANGE, [
-        [
-          member_id,
-          null, // column B: name lookup
-          today,
-          event,
-          paid_via,
-          paid_amount + partnerAmount,
-          type,
-          payerComment,
-          free_entry_reason,
-          timestamp,
-        ],
-        [
-          paid_for_member_id,
-          null,
-          today,
-          event,
-          "",
-          0,
-          partnerType,
-          `paid by ${member_id}`,
-          "",
-          timestamp,
-        ],
-      ]);
-      return NextResponse.json({ ok: true, free_entry_added: false });
-    }
 
     const tonightSession: SessionRole | null = SESSION_ROLE_VALUES.includes(
       String(body.tonight_session ?? "")
@@ -240,25 +212,93 @@ export async function POST(request: Request) {
         ? [comment, includedSessionsNote(includedSessions)].filter(Boolean).join(" - ")
         : comment;
 
-    // Column B is a name lookup in the sheet, so it is skipped (null).
-    // Columns: C date, D event, E paid_via, F amount, G type, H comment, I free_entry_reason, J timestamp
-    await appendToSheet(CHECKIN_SPREADSHEET_ID, ATTENDANCE_RANGE, [
-      [
-        member_id,
-        null,
-        today,
-        event,
-        paid_via,
-        paid_amount,
-        type,
+    if (hasPaidFor) {
+      // One row per attendee, but the payer's row carries the full payment so
+      // it matches the single Yoco transaction. The second row is R0.
+      // Buying a monthly pass for two: the second person gets their own monthly
+      // type (student / pensioner / standard) and their own pass row.
+      const payerMonthly = isMonthlyType(type);
+      // The second person's own volunteer / teaching discount on their pass.
+      const partnerIncluded = Math.max(
+        0,
+        Math.floor(Number(body.partner_included_sessions ?? 0)) || 0
+      );
+      const allowedPartnerTypes = payerMonthly
+        ? ["Monthly", "Student monthly", "Pensioner monthly"]
+        : ["Standard entry", "Student", "Pensioner", "Practice", "Social only"];
+      const requestedPartnerType = (body.partner_type ?? "").trim();
+      const partnerType =
+        allowedPartnerTypes.find((t) => t.toLowerCase() === requestedPartnerType.toLowerCase()) ??
+        (payerMonthly ? "Monthly" : type.toLowerCase() === "practice" ? type : "Standard entry");
+      const partnerAmountRaw = Number(body.partner_amount);
+      const partnerAmount =
+        body.partner_amount !== undefined && Number.isFinite(partnerAmountRaw) && partnerAmountRaw >= 0
+          ? partnerAmountRaw
+          : paid_amount;
+      // Comment keeps "paid for <id>"; the partner's share is only added when it
+      // differs from the payer's, so the payer's own share can be worked out later.
+      const payerComment = [
         rowComment,
-        free_entry_reason,
-        timestamp,
-      ],
-    ]);
+        `paid for ${paid_for_member_id}`,
+        partnerAmount !== paid_amount ? `partner share R${partnerAmount}` : "",
+      ]
+        .filter(Boolean)
+        .join(" - ");
+      await appendToSheet(CHECKIN_SPREADSHEET_ID, ATTENDANCE_RANGE, [
+        [
+          member_id,
+          null, // column B: name lookup
+          today,
+          event,
+          paid_via,
+          paid_amount + partnerAmount,
+          type,
+          payerComment,
+          free_entry_reason,
+          timestamp,
+        ],
+        [
+          paid_for_member_id,
+          null,
+          today,
+          event,
+          "",
+          0,
+          partnerType,
+          [
+            `paid by ${member_id}`,
+            payerMonthly ? (body.partner_comment ?? "").trim() : "",
+            payerMonthly && partnerIncluded > 0 ? includedSessionsNote(partnerIncluded) : "",
+          ]
+            .filter(Boolean)
+            .join(" - "),
+          payerMonthly && body.partner_free_entry_reason === CREDIT_USED_REASON
+            ? CREDIT_USED_REASON
+            : "",
+          timestamp,
+        ],
+      ]);
+    } else {
+      // Column B is a name lookup in the sheet, so it is skipped (null).
+      // Columns: C date, D event, E paid_via, F amount, G type, H comment, I free_entry_reason, J timestamp
+      await appendToSheet(CHECKIN_SPREADSHEET_ID, ATTENDANCE_RANGE, [
+        [
+          member_id,
+          null,
+          today,
+          event,
+          paid_via,
+          paid_amount,
+          type,
+          rowComment,
+          free_entry_reason,
+          timestamp,
+        ],
+      ]);
+    }
 
-    // If they PAID for a monthly pass, add them to Free Entry for the month.
-    // (Do not do this when they are just signing in with existing free entry.)
+    // If they PAID for a monthly pass, add them (and the person they paid for) to
+    // Free Entry for the month. (Not when just signing in with existing free entry.)
     // A pass fully covered by volunteer / teaching credit costs R0 and has no
     // payment method, but is still a purchase.
     const paidForMonthly =
@@ -268,65 +308,53 @@ export async function POST(request: Request) {
       (!free_entry_reason || free_entry_reason === CREDIT_USED_REASON);
 
     let free_entry_added = false;
+    let partner_free_entry_added = false;
     let free_entry_error: string | undefined;
 
     if (paidForMonthly) {
-      try {
-        const eventLower = event.toLowerCase();
-        const isMonday =
-          eventLower.includes("monday") && eventLower.includes("plumstead");
-
-        // Only add monthly passes for Monday events.
-        if (!isMonday) {
-          free_entry_error = "Monthly free entry is only supported for Monday events.";
-        } else {
+      const eventLower = event.toLowerCase();
+      // Only add monthly passes for Monday events.
+      if (!(eventLower.includes("monday") && eventLower.includes("plumstead"))) {
+        free_entry_error = "Monthly free entry is only supported for Monday events.";
+      } else {
+        try {
           const monthYear = formatZaMonthYear(date ?? undefined);
-
-          // Avoid duplicates: if the row already exists for this month, don't add again.
-          const existing = await getSheetValues(
-            CHECKIN_SPREADSHEET_ID,
-            "'Free Entry'!A:F"
+          const existing = await getSheetValues(CHECKIN_SPREADSHEET_ID, FREE_ENTRY_RANGE);
+          // Avoid duplicates: skip anyone who already has the row for this month.
+          const ids = (hasPaidFor ? [member_id, paid_for_member_id] : [member_id]).filter(
+            (id) => !hasMonthlyFreeEntry(existing, id, monthYear)
           );
-
-          let alreadyExists = false;
-          for (const row of existing) {
-            const firstCell = (row[0] ?? "").trim().toLowerCase();
-            if (!firstCell || firstCell === "member_id") continue;
-
-            const id = parseMemberId(row[0] ?? "");
-            if (!Number.isFinite(id) || id !== member_id) continue;
-
-            const entryType = (row[2] ?? "").trim().toLowerCase();
-            const applicable = (row[3] ?? "").trim();
-
-            if (entryType === "monthly" && applicable === monthYear) {
-              alreadyExists = true;
-              break;
-            }
-          }
-
-          if (!alreadyExists) {
+          if (ids.length > 0) {
             // Column B (full name) is a lookup formula in the sheet; leave it untouched.
-            await appendToSheet(CHECKIN_SPREADSHEET_ID, "'Free Entry'!A:F", [
-              [
-                member_id,
+            await appendToSheet(
+              CHECKIN_SPREADSHEET_ID,
+              FREE_ENTRY_RANGE,
+              ids.map((id) => [
+                id,
                 null,
                 "monthly",
                 monthYear,
                 "Member has paid for the month, they can just sign in",
                 "monthly",
-              ],
-            ]);
-            free_entry_added = true;
+              ])
+            );
           }
+          free_entry_added = ids.includes(member_id);
+          partner_free_entry_added = hasPaidFor && ids.includes(paid_for_member_id);
+        } catch (e) {
+          console.error("Monthly free entry append error:", e);
+          free_entry_error = e instanceof Error ? e.message : "Failed";
         }
-      } catch (e) {
-        console.error("Monthly free entry append error:", e);
-        free_entry_error = e instanceof Error ? e.message : "Failed";
       }
     }
 
-    return NextResponse.json({ ok: true, free_entry_added, free_entry_error });
+    return NextResponse.json({
+      ok: true,
+      free_entry_added,
+      ...(hasPaidFor ? { partner_free_entry_added } : {}),
+      free_entry_error,
+    });
+
   } catch (error) {
     console.error("Attendance append error:", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });

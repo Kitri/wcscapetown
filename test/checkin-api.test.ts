@@ -937,6 +937,65 @@ describe("POST /api/check-in/attendance", () => {
     expect(rows[1][6]).toBe("Student");
   });
 
+  it("monthly for two: both get a pass row and a Free Entry month, each with their own type", async () => {
+    const { POST } = await import("../app/api/check-in/attendance/route");
+    mockFormatZaMonthYear.mockImplementation(() => "November 2026");
+    mockAppendToSheet.mockClear();
+    mockGetSheetValues.mockImplementation(async (_s: string, range: string) => {
+      if (range === "All_members!A:C") return [["member_id", "first", "last"], ["43", "Sam", "Partner"]];
+      return [];
+    });
+    const res = await POST(
+      jsonRequest("http://localhost/api/check-in/attendance", {
+        member_id: 42, type: "Monthly", paid_via: "Yoco", paid_amount: 225,
+        comment: "Session discount R75.00", free_entry_reason: "rollover_credit",
+        event: "Monday Plumstead", date: "2026-11-02",
+        paid_for_member_id: 43, partner_type: "Student monthly", partner_amount: 202.5,
+        partner_comment: "Session discount R67.50 (1 volunteer session this month)",
+        partner_free_entry_reason: "rollover_credit", partner_included_sessions: 1,
+      })
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ free_entry_added: true, partner_free_entry_added: true });
+
+    const att = mockAppendToSheet.mock.calls.find((c) => String(c[1]).startsWith("Attendance"));
+    const [payer, second] = att![2] as unknown[][];
+    expect(payer.slice(5, 9)).toEqual([
+      427.5,
+      "Monthly",
+      "Session discount R75.00 - paid for 43 - partner share R202.5",
+      "rollover_credit",
+    ]);
+    expect(second.slice(0, 1)).toEqual([43]);
+    expect(second.slice(5, 9)).toEqual([
+      0,
+      "Student monthly",
+      "paid by 42 - Session discount R67.50 (1 volunteer session this month) - Pass price includes 1 upcoming session",
+      "rollover_credit",
+    ]);
+    const fe = mockAppendToSheet.mock.calls.find((c) => c[1] === "'Free Entry'!A:F");
+    expect((fe![2] as unknown[][]).map((r) => r[0])).toEqual([42, 43]);
+  });
+
+  it("monthly for two is refused when the second person already has a pass this month", async () => {
+    const { POST } = await import("../app/api/check-in/attendance/route");
+    mockFormatZaMonthYear.mockImplementation(() => "November 2026");
+    mockAppendToSheet.mockClear();
+    mockGetSheetValues.mockImplementation(async (_s: string, range: string) => {
+      if (range === "All_members!A:C") return [["member_id"], ["43", "Sam", "Partner"]];
+      if (range === "'Free Entry'!A:F") return [["member_id"], ["43", "", "monthly", "November 2026", "", "monthly"]];
+      return [];
+    });
+    const res = await POST(
+      jsonRequest("http://localhost/api/check-in/attendance", {
+        member_id: 42, type: "Monthly", paid_via: "Yoco", paid_amount: 300,
+        event: "Monday Plumstead", paid_for_member_id: 43, partner_amount: 300,
+      })
+    );
+    expect(res.status).toBe(409);
+    expect(mockAppendToSheet).not.toHaveBeenCalled();
+  });
+
   it("rejects paying for someone already checked in, or for yourself", async () => {
     const { POST } = await import("../app/api/check-in/attendance/route");
 

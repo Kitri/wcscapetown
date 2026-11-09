@@ -126,7 +126,8 @@ Anything the member paid on **Monday entries this month since their last pass** 
 
 ## 6. Other check-in options
 
-- **Pay for 2 people:** one payment covers the selected member and a second member. Each pays their own category's price (for example R100 + R80). This is not available for monthly passes, free entries or door volunteers, and the second person must not already be checked in. The payer's row carries the full amount (to match the single Yoco payment), and the second person's row is R0 with "paid by …".
+- **Pay for 2 people:** one payment covers the selected member and a second member. Each pays their own category's price (for example R100 + R80), and the second person must not already be checked in. The payer's row carries the full amount (to match the single Yoco payment), and the second person's row is R0 with "paid by …". Not available for free entries or door volunteers.
+  - **Monthly for two:** each person gets their own monthly type (Monthly / Student monthly / Pensioner monthly) and **their own** volunteer / teaching discount and money already paid this month, worked out exactly as in section 3. Both get a pass row and the Free Entry month. It is refused if the second person already has a pass this month. The "Door volunteer tonight too" option is only for single purchases.
 - **Override check-in:** for when something goes wrong. The operator sets any amount, a payment method (if more than R0) and a **required** comment, and the row is recorded with type `Override`.
 - **Undo:** a check-in can be undone with a reason. The row moves to the **Check in reverted** sheet.
 - **Already checked in:** a member already checked in for this event and date cannot be checked in again.

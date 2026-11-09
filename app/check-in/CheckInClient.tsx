@@ -930,6 +930,11 @@ export default function CheckInClient({
   const [payForTwo, setPayForTwo] = useState(false);
   const [partner, setPartner] = useState<Member | null>(null);
   const [partnerAlreadyCheckedIn, setPartnerAlreadyCheckedIn] = useState(false);
+  // For a monthly pass for two: the second person's own credit, assigned sessions
+  // later this month, and whether they already have a pass this month.
+  const [partnerCredit, setPartnerCredit] = useState<SessionCredit>(NO_CREDIT);
+  const [partnerUpcoming, setPartnerUpcoming] = useState(0);
+  const [partnerHasPass, setPartnerHasPass] = useState(false);
   const [partnerSearch, setPartnerSearch] = useState("");
   const [partnerResults, setPartnerResults] = useState<Member[]>([]);
   const [partnerSearchLoading, setPartnerSearchLoading] = useState(false);
@@ -1265,9 +1270,9 @@ export default function CheckInClient({
     selected &&
       !effectiveFreeEntry?.applies &&
       selectedType &&
-      !selectedType.toLowerCase().includes("monthly") &&
       selectedType !== WELCOMING_TYPE &&
-      payableAmount > 0
+      // A monthly pass can be bought for two even when the payer's own is covered.
+      (payableAmount > 0 || (isMonthlySelected && !monthlyPurchase?.tonightRole))
   );
   const payForTwoActive = payForTwo && canPayForTwo;
 
@@ -1275,16 +1280,69 @@ export default function CheckInClient({
   // when the payer is buying a day entry; for Practice / Social only it is the same.
   const partnerEntryType = useMemo(() => {
     if (!partner || !selectedType) return selectedType;
+    if (isMonthlySelected) {
+      const ps = normalizePensionerStudent(partner.pensionerStudent ?? "");
+      return ps === "pensioner" ? "Pensioner monthly" : ps === "student" ? "Student monthly" : "Monthly";
+    }
     if (!["Standard entry", "Student", "Pensioner"].includes(selectedType)) return selectedType;
     const ps = normalizePensionerStudent(partner.pensionerStudent ?? "");
     return ps === "pensioner" ? "Pensioner" : ps === "student" ? "Student" : "Standard entry";
-  }, [partner, selectedType]);
+  }, [partner, selectedType, isMonthlySelected]);
+
+  // Monthly for two: the second person's pass gets their own volunteer / teaching
+  // discount (sessions earlier this month + assigned later, rolled-over credit and
+  // money already paid this month), worked out the same way as the payer's.
+  const partnerMonthly = useMemo(() => {
+    if (!partner || !isMonthlySelected || !partnerEntryType) return null;
+    const earlier = totalSessions(partnerCredit.earlierThisMonth);
+    const breakdown = monthlyPassPrice({
+      monthlyPrice: costs?.costs?.[partnerEntryType] ?? 0,
+      credit: partnerCredit,
+      thisMonthSessions: earlier + partnerUpcoming,
+      useCredit: useRolloverCredit && isMondayEvent,
+    });
+    const kind: SessionKind =
+      partnerCredit.earlierThisMonth.teaching > 0 || partnerCredit.rollover.teaching > 0
+        ? "teaching"
+        : "volunteer";
+    const parts: string[] = [];
+    if (breakdown.sessionDiscount > 0) {
+      const from = [
+        breakdown.thisMonthSessions > 0
+          ? `${describeSessions(breakdown.thisMonthSessions, kind)} this month`
+          : "",
+        breakdown.rolloverSessions > 0 ? `${breakdown.rolloverSessions} rolled over` : "",
+      ]
+        .filter(Boolean)
+        .join(" + ");
+      parts.push(`Session discount ${formatZar(breakdown.sessionDiscount)} (${from})`);
+    }
+    if (breakdown.paidEarlierDeduction > 0) {
+      parts.push(`Less ${formatZar(breakdown.paidEarlierDeduction)} already paid this month`);
+    }
+    return {
+      breakdown,
+      note: parts.join(" - "),
+      included: Math.max(0, breakdown.thisMonthSessions - earlier),
+    };
+  }, [
+    costs,
+    isMondayEvent,
+    isMonthlySelected,
+    partner,
+    partnerCredit,
+    partnerEntryType,
+    partnerUpcoming,
+    useRolloverCredit,
+  ]);
+
   const partnerAmount = useMemo(() => {
     if (!partner || !partnerEntryType) return 0;
+    if (partnerMonthly) return partnerMonthly.breakdown.payable;
     if (partnerEntryType === selectedType || isLevel2TuesdayDiscount) return payableAmount;
     const price = costs?.costs?.[partnerEntryType];
     return typeof price === "number" ? price : payableAmount;
-  }, [partner, partnerEntryType, selectedType, isLevel2TuesdayDiscount, payableAmount, costs]);
+  }, [partner, partnerEntryType, partnerMonthly, selectedType, isLevel2TuesdayDiscount, payableAmount, costs]);
   // Total taken in one payment; stays at the payer's own amount until the second
   // person has been chosen.
   const totalDue = payForTwoActive && partner ? payableAmount + partnerAmount : payableAmount;
@@ -1293,6 +1351,7 @@ export default function CheckInClient({
     if (!selected) return false;
     if (alreadyCheckedIn) return false;
     if (payForTwoActive && (!partner || partnerAlreadyCheckedIn)) return false;
+    if (payForTwoActive && isMonthlySelected && partnerHasPass) return false;
     // An override of the session count must say why.
     if (monthlyPurchase && sessionOverrideOpen) {
       if (!sessionOverrideActive || !sessionOverrideComment.trim()) return false;
@@ -1312,7 +1371,7 @@ export default function CheckInClient({
 
     // Free entries (door volunteer, an entry fully covered by credit) need no
     // payment method.
-    return Boolean(selectedType && (selectedPaidVia || payableAmount === 0));
+    return Boolean(selectedType && (selectedPaidVia || totalDue === 0));
   }, [
     alreadyCheckedIn,
     effectiveFreeEntry,
@@ -1320,8 +1379,11 @@ export default function CheckInClient({
     monthlyPurchase,
     partner,
     partnerAlreadyCheckedIn,
+    partnerHasPass,
+    isMonthlySelected,
     payForTwoActive,
     payableAmount,
+    totalDue,
     selected,
     selectedPaidVia,
     selectedType,
@@ -1395,11 +1457,21 @@ export default function CheckInClient({
     setPartnerSearch("");
     setPartnerResults([]);
     setPartnerAlreadyCheckedIn(false);
+    setPartnerCredit(NO_CREDIT);
+    setPartnerUpcoming(0);
+    setPartnerHasPass(false);
+    const qs = `member_id=${member.member_id}&date=${encodeURIComponent(selectedDateISO)}&event=${encodeURIComponent(selectedEvent)}`;
     try {
-      const res = await fetchJson<{ alreadyCheckedIn: boolean }>(
-        `/api/check-in/already-checked-in?member_id=${member.member_id}&date=${encodeURIComponent(selectedDateISO)}&event=${encodeURIComponent(selectedEvent)}`
-      );
+      const [res, free] = await Promise.all([
+        fetchJson<{ alreadyCheckedIn: boolean; sessionCredit?: SessionCredit }>(
+          `/api/check-in/already-checked-in?${qs}`
+        ),
+        fetchJson<FreeEntryResponse>(`/api/check-in/free-entry?${qs}`).catch(() => null),
+      ]);
       setPartnerAlreadyCheckedIn(Boolean(res.alreadyCheckedIn));
+      setPartnerCredit(res.sessionCredit ?? NO_CREDIT);
+      setPartnerUpcoming(free?.upcoming_sessions?.length ?? 0);
+      setPartnerHasPass(Boolean(free?.applies && free.on_monthly_pass));
     } catch {
       // Server re-validates on submit.
     }
@@ -1409,6 +1481,9 @@ export default function CheckInClient({
     setPayForTwo(false);
     setPartner(null);
     setPartnerAlreadyCheckedIn(false);
+    setPartnerCredit(NO_CREDIT);
+    setPartnerUpcoming(0);
+    setPartnerHasPass(false);
     setPartnerSearch("");
     setPartnerResults([]);
   }
@@ -1758,8 +1833,17 @@ export default function CheckInClient({
   // "use credit" tick box and an override for this month's session count.
   const renderMonthlyPurchasePanel = () => (
     <div>
-      <div className="text-text-dark/70 text-sm">Amount ({monthlyPurchase?.type})</div>
-      <div className="font-spartan font-semibold text-3xl">{formatZar(payableAmount)}</div>
+      <div className="text-text-dark/70 text-sm">
+        Amount{payForTwoActive && partner ? " (2 people)" : ` (${monthlyPurchase?.type})`}
+      </div>
+      <div className="font-spartan font-semibold text-3xl">{formatZar(totalDue)}</div>
+      {payForTwoActive && partner && (
+        <div className="text-text-dark/70 text-sm">
+          {selected?.first_name} {formatZar(payableAmount)} ({monthlyPurchase?.type}) +{" "}
+          {partner.first_name} {formatZar(partnerAmount)} ({partnerEntryType})
+          {partnerMonthly?.note ? ` — ${partner.first_name}: ${partnerMonthly.note}` : ""}
+        </div>
+      )}
       {useRolloverCredit && (thisMonthSessionsText || monthlyBreakdown.rolloverSessions > 0) && (
         <div className="text-sm text-text-dark/80 mt-1">
           {[
@@ -1903,7 +1987,7 @@ export default function CheckInClient({
         : {
             member_id: selected.member_id,
             type: monthlyPurchase ? monthlyPurchase.type : selectedType,
-            paid_via: payableAmount === 0 ? "" : selectedPaidVia,
+            paid_via: totalDue === 0 ? "" : selectedPaidVia,
             paid_amount: payableAmount,
             comment: notes(comment, creditNote),
             // Whenever credit is applied (day entry or monthly purchase) the reason is
@@ -1919,6 +2003,17 @@ export default function CheckInClient({
                   paid_for_member_id: partner.member_id,
                   partner_amount: partnerAmount,
                   partner_type: partnerEntryType,
+                  ...(partnerMonthly
+                    ? {
+                        partner_comment: partnerMonthly.note,
+                        partner_free_entry_reason:
+                          partnerMonthly.breakdown.sessionDiscount > 0 ||
+                          partnerMonthly.breakdown.paidEarlierDeduction > 0
+                            ? CREDIT_USED_REASON
+                            : "",
+                        partner_included_sessions: partnerMonthly.included,
+                      }
+                    : {}),
                 }
               : {}),
             ...monthlyFields,
@@ -2986,6 +3081,11 @@ export default function CheckInClient({
                               </>
                             )}
 
+                            {partner && isMonthlySelected && partnerHasPass && (
+                              <div className="text-pink-accent font-semibold">
+                                {partner.full_name} already has a monthly pass this month.
+                              </div>
+                            )}
                             {partner && partnerAlreadyCheckedIn && (
                               <div className="text-pink-accent font-semibold">
                                 {partner.full_name} is already checked in for this event.
