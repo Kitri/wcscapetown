@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +101,41 @@ export default function WhatsOn() {
                 <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
                 <p className="text-xs mt-2 font-semibold text-pink-accent">Next: Sat 21 November · Taster class 8 PM</p>
+              </a>
+            </div>
+
+            <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Upcoming Events</h2>
+            <div className="grid grid-cols-1 gap-6 justify-items-center">
+              {/* Kristen Wallace Intensive - 16 December */}
+              <a
+                href="/kristen-intensive"
+                className="group rounded-2xl overflow-hidden transition-all hover:shadow-xl w-full max-w-3xl border-2 flex flex-col-reverse md:flex-row"
+                style={{ borderColor: 'rgba(28,138,209,0.4)', backgroundColor: 'rgba(28,138,209,0.04)' }}
+              >
+                <div className="flex-1 p-6 md:p-8 flex flex-col justify-center">
+                  <div className="inline-block text-white px-4 py-1.5 rounded-full font-semibold text-xs mb-4 self-start" style={{ backgroundColor: '#1C8AD1' }}>
+                    INTERNATIONAL INTENSIVE · WED 16 DEC
+                  </div>
+                  <h3 className="font-spartan font-semibold text-2xl mb-1">Kristen Wallace Intensive</h3>
+                  <p className="text-sm text-text-dark/60 mb-3">A 2-hour West Coast Swing intensive</p>
+                  <div className="space-y-1 text-sm text-text-dark/80 mb-4">
+                    <p><span className="font-semibold">📅 When:</span> Wednesday 16 December · 3–5 PM</p>
+                    <p><span className="font-semibold">📍 Where:</span> Pinelands North Primary School</p>
+                    <p><span className="font-semibold">💰 Cost:</span> R250 per person</p>
+                  </div>
+                  <span className="inline-block self-start text-white text-sm font-semibold px-5 py-2 rounded-lg group-hover:-translate-y-0.5 transition-transform" style={{ backgroundColor: '#1C8AD1' }}>
+                    Book now →
+                  </span>
+                </div>
+                <div className="relative shrink-0 h-[220px] md:h-auto md:w-[260px] overflow-hidden">
+                  <Image
+                    src="/images/kristen_intensive.JPEG"
+                    alt="Kristen Wallace dancing West Coast Swing"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 260px"
+                    className="object-cover object-[45%_25%]"
+                  />
+                </div>
               </a>
             </div>
           </div>

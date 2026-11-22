@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 function getNextLabel(targetDay: number): string {
   const now = new Date();
@@ -25,6 +26,38 @@ export default function WeeklyHighlights() {
           What&apos;s On
         </p>
         <div className="flex flex-col gap-3">
+
+          {/* Featured: Kristen Wallace Intensive */}
+          <Link
+            href="/kristen-intensive"
+            className="rounded-xl border-2 overflow-hidden transition-all hover:shadow-lg flex flex-col md:flex-row md:items-center gap-4"
+            style={{ borderColor: 'rgba(28,138,209,0.45)', backgroundColor: 'rgba(28,138,209,0.07)' }}
+          >
+            <div className="relative shrink-0 h-[180px] md:h-auto md:w-[200px] self-stretch md:min-h-[150px]">
+              <Image
+                src="/images/kristen_intensive.JPEG"
+                alt="Kristen Wallace dancing West Coast Swing"
+                fill
+                sizes="(max-width: 768px) 100vw, 200px"
+                className="object-cover object-[45%_25%]"
+              />
+            </div>
+            <div className="flex-1 px-5 pb-1 md:py-5 md:px-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wider mb-1" style={{ color: '#1C8AD1' }}>
+                🌍 International Intensive · Wednesday 16 December
+              </p>
+              <p className="font-spartan font-bold text-xl md:text-2xl leading-tight mb-1">
+                Kristen Wallace is back in Cape Town!
+              </p>
+              <p className="text-sm text-text-dark/70">2-hour intensive · 3–5 PM · R250 · Pinelands North Primary School</p>
+            </div>
+            <span
+              className="inline-block shrink-0 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-all hover:opacity-90 mx-5 mb-5 md:mb-0 md:mx-0 md:mr-5 self-start md:self-center"
+              style={{ backgroundColor: '#1C8AD1' }}
+            >
+              Book now →
+            </span>
+          </Link>
 
           {/* Monthly Social */}
           <Link

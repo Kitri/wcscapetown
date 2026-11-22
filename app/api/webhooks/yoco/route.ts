@@ -13,6 +13,12 @@ import {
 } from '@/lib/db';
 import { logApiResponse } from '@/lib/blobLogger';
 import {
+  KRISTEN_INTENSIVE_SHEET_ID,
+  KRISTEN_INTENSIVE_SHEET_TAB,
+  KRISTEN_INTENSIVE_RANGE,
+  KRISTEN_INTENSIVE_YOCO_SOURCE,
+} from '@/lib/server/kristenIntensiveConfig';
+import {
   type AddOnPassType,
   type AddOnRegistrationType,
   getParticipantsForRegistrationType,
@@ -192,6 +198,27 @@ async function updateSwingStrongPaymentStatus(orderId: string, status: string, p
 
 // ─── Event handler ────────────────────────────────────────────────────────────
 
+// Kristen intensive sheet helper
+// Sheet columns: A=Timestamp B=Email C=First Name D=Surname E=Role F=Level G=OrderID H=Status I=payment_id
+async function updateKristenIntensivePaymentStatus(orderId: string, status: string, paymentId?: string): Promise<void> {
+  try {
+    const rows = await getSheetValues(KRISTEN_INTENSIVE_SHEET_ID, KRISTEN_INTENSIVE_RANGE);
+    const rowIndex = rows.findIndex((row) => row[6] === orderId); // column G (index 6) = OrderID
+    if (rowIndex === -1) {
+      console.warn('Kristen intensive order not found in sheet:', orderId);
+      return;
+    }
+    const sheetRowNumber = rowIndex + 1;
+    await updateSheetValues(
+      KRISTEN_INTENSIVE_SHEET_ID,
+      `'${KRISTEN_INTENSIVE_SHEET_TAB}'!H${sheetRowNumber}:I${sheetRowNumber}`,
+      [[status, paymentId ?? '']]
+    );
+  } catch (err) {
+    console.error('Failed to update Kristen intensive sheet status:', err);
+  }
+}
+
 async function handleEvent(event: YocoEvent) {
 
   // Log webhook event to blob storage (non-blocking)
@@ -228,6 +255,21 @@ async function handleEvent(event: YocoEvent) {
           await updateYocoPaymentId(checkoutId, paymentId, amount, apiCreatedDate || null);
         }
 
+        return;
+      }
+
+      // Handle Kristen Wallace intensive payment (same flow as Swing Strong)
+      if (source === KRISTEN_INTENSIVE_YOCO_SOURCE) {
+        const orderId = event.payload.metadata?.orderId;
+        const paymentId = event.payload.id;
+        const checkoutId = event.payload.metadata?.checkoutId;
+
+        if (orderId) {
+          await updateKristenIntensivePaymentStatus(orderId, 'paid', paymentId);
+        }
+        if (checkoutId && paymentId) {
+          await updateYocoPaymentId(checkoutId, paymentId, event.payload.amount, event.payload.createdDate || null);
+        }
         return;
       }
 
