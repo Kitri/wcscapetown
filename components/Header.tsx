@@ -26,9 +26,10 @@ export default function Header() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden lg:flex items-center gap-6 xl:gap-8 whitespace-nowrap">
           <Link href="/" className="text-text-dark hover:text-yellow-accent transition-colors">Home</Link>
           <Link href="/whats-on" className="text-text-dark hover:text-pink-accent transition-colors">What&apos;s On</Link>
+          <Link href="/kristen-intensive" className="text-text-dark hover:text-[#1C8AD1] transition-colors">Kristen Intensive</Link>
           <Link href="/about-us" className="text-text-dark hover:text-yellow-accent transition-colors">About Us</Link>
           <Link href="/community-culture" className="text-text-dark hover:text-pink-accent transition-colors">Community Culture</Link>
           <Link href="/contact" className="text-text-dark hover:text-pink-accent transition-colors">Contact</Link>
@@ -36,7 +37,7 @@ export default function Header() {
 
         {/* Mobile Hamburger Menu */}
         <button 
-          className="md:hidden w-[30px] h-[24px] flex flex-col justify-between"
+          className="lg:hidden w-[30px] h-[24px] flex flex-col justify-between"
           aria-label="Toggle navigation menu"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
@@ -54,7 +55,7 @@ export default function Header() {
 
       {/* Mobile Menu Overlay */}
       {isMenuOpen && (
-        <div className="md:hidden fixed inset-0 top-[90px] bg-cloud-dancer z-[999]">
+        <div className="lg:hidden fixed inset-0 top-[90px] bg-cloud-dancer z-[999]">
           <nav className="flex flex-col items-center gap-6 py-8">
             <Link 
               href="/" 
@@ -69,6 +70,13 @@ export default function Header() {
               onClick={() => setIsMenuOpen(false)}
             >
               What&apos;s On
+            </Link>
+            <Link 
+              href="/kristen-intensive" 
+              className="text-text-dark hover:text-[#1C8AD1] transition-colors text-lg"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Kristen Intensive
             </Link>
             <Link 
               href="/about-us" 

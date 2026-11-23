@@ -7,9 +7,6 @@ export const dynamic = "force-dynamic";
 // Last Monday class 14 Dec 2026, last Thursday practice 17 Dec 2026, classes restart Mon 11 Jan 2027.
 const BREAK_START = new Date(2026, 11, 18); // first day with no Mon/Thu sessions
 const BREAK_END = new Date(2027, 0, 11); // classes restart
-const TODAY = new Date();
-const BEFORE_BREAK = TODAY < BREAK_START; // small note under Upcoming Events
-const ON_BREAK = TODAY >= BREAK_START && TODAY < BREAK_END; // "we're on break" banner at the top
 
 function getNextOccurrence(targetDay: number, skipBreak = false): string {
   const now = new Date();
@@ -28,6 +25,9 @@ function getNextOccurrence(targetDay: number, skipBreak = false): string {
 }
 
 export default function WhatsOn() {
+  const today = new Date();
+  const BEFORE_BREAK = today < BREAK_START; // small note under Upcoming Events
+  const ON_BREAK = today >= BREAK_START && today < BREAK_END; // "we're on break" banner at the top
   const nextMonday = getNextOccurrence(1, true);
   const nextWednesday = getNextOccurrence(3);
   const nextThursday = getNextOccurrence(4, true);

@@ -4,7 +4,6 @@ import Image from "next/image";
 // End-of-year break: last Monday class 14 Dec 2026, classes restart Mon 11 Jan 2027.
 const BREAK_START = new Date(2026, 11, 15);
 const BREAK_END = new Date(2027, 0, 11);
-const BEFORE_BREAK = new Date() < new Date(2026, 11, 18);
 
 function getNextLabel(targetDay: number, skipBreak = false): string {
   const now = new Date();
@@ -27,6 +26,7 @@ function getNextLabel(targetDay: number, skipBreak = false): string {
 }
 
 export default function WeeklyHighlights() {
+  const BEFORE_BREAK = new Date() < new Date(2026, 11, 18);
   const mondayLabel = getNextLabel(1, true);
   const wednesdayLabel = getNextLabel(3);
 
