@@ -1,13 +1,24 @@
 import Link from "next/link";
 import Image from "next/image";
 
-function getNextLabel(targetDay: number): string {
+// End-of-year break: last Monday class 14 Dec 2026, classes restart Mon 11 Jan 2027.
+const BREAK_START = new Date(2026, 11, 15);
+const BREAK_END = new Date(2027, 0, 11);
+const SHOW_BREAK_NOTE = new Date() < BREAK_END;
+
+function getNextLabel(targetDay: number, skipBreak = false): string {
   const now = new Date();
   const dayOfWeek = now.getDay();
-  if (dayOfWeek === targetDay) return "Tonight";
   const daysUntil = (targetDay - dayOfWeek + 7) % 7;
-  const next = new Date(now);
+  let next = new Date(now);
   next.setDate(now.getDate() + daysUntil);
+  next.setHours(0, 0, 0, 0);
+  if (skipBreak && next >= BREAK_START && next < BREAK_END) {
+    next = new Date(BREAK_END);
+    next.setDate(next.getDate() + ((targetDay - next.getDay() + 7) % 7));
+  } else if (dayOfWeek === targetDay) {
+    return "Tonight";
+  }
   return next.toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",
@@ -16,7 +27,7 @@ function getNextLabel(targetDay: number): string {
 }
 
 export default function WeeklyHighlights() {
-  const mondayLabel = getNextLabel(1);
+  const mondayLabel = getNextLabel(1, true);
   const wednesdayLabel = getNextLabel(3);
 
   return (
@@ -64,13 +75,13 @@ export default function WeeklyHighlights() {
             href="/whats-on#monthly-social"
             className="flex items-start gap-3 rounded-xl border-2 border-pink-accent/30 hover:border-pink-accent bg-pink-accent/5 hover:bg-pink-accent/10 p-4 transition-all group"
           >
-            <span className="mt-0.5 text-xl">💃</span>
+            <span className="mt-0.5 text-xl">🎄</span>
             <div className="text-left min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-pink-accent mb-0.5">
-                Saturday 21 November
+                Friday 18 December
               </p>
               <p className="font-spartan font-semibold text-base leading-tight mb-1">
-                Monthly Social
+                Christmas Social
               </p>
               <p className="text-xs text-text-dark/60">Taster class at 8 PM · R50 · Scout Hall, Claremont</p>
             </div>
@@ -93,6 +104,9 @@ export default function WeeklyHighlights() {
                   Classes &amp; Social
                 </p>
                 <p className="text-xs text-text-dark/60">7–10 PM · Havana Nights, Plumstead</p>
+                {SHOW_BREAK_NOTE && (
+                  <p className="text-xs italic text-text-dark/50 mt-0.5">Last class for the year: 14 Dec · last Thursday practice: 17 Dec · back 11 Jan</p>
+                )}
               </div>
             </Link>
 

@@ -3,20 +3,32 @@ import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 
-function getNextOccurrence(targetDay: number): string {
+// End-of-year break for Monday classes and Thursday practices.
+// Last Monday class 14 Dec 2026, last Thursday practice 17 Dec 2026, classes restart Mon 11 Jan 2027.
+const BREAK_START = new Date(2026, 11, 18); // first day with no Mon/Thu sessions
+const BREAK_END = new Date(2027, 0, 11); // classes restart
+const SHOW_BREAK_NOTE = new Date() < BREAK_END;
+
+function getNextOccurrence(targetDay: number, skipBreak = false): string {
   const now = new Date();
   const dayOfWeek = now.getDay();
-  if (dayOfWeek === targetDay) return "Tonight!";
   const daysUntil = (targetDay - dayOfWeek + 7) % 7;
   const next = new Date(now);
   next.setDate(now.getDate() + daysUntil);
+  next.setHours(0, 0, 0, 0);
+  if (skipBreak && next >= BREAK_START && next < BREAK_END) {
+    const resume = new Date(BREAK_END);
+    resume.setDate(resume.getDate() + ((targetDay - resume.getDay() + 7) % 7));
+    return resume.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
+  }
+  if (dayOfWeek === targetDay) return "Tonight!";
   return next.toLocaleDateString("en-GB", { day: "numeric", month: "long" });
 }
 
 export default function WhatsOn() {
-  const nextMonday = getNextOccurrence(1);
+  const nextMonday = getNextOccurrence(1, true);
   const nextWednesday = getNextOccurrence(3);
-  const nextThursday = getNextOccurrence(4);
+  const nextThursday = getNextOccurrence(4, true);
   return (
     <>
       <Header />
@@ -50,7 +62,17 @@ export default function WhatsOn() {
         {/* Quick Overview */}
         <section className="px-[5%] py-[40px] bg-white">
           <div className="max-w-[1100px] mx-auto">
-            <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Regular Events</h2>
+            <h2 className="font-spartan font-semibold text-2xl text-center mb-6">Regular Events</h2>
+            {SHOW_BREAK_NOTE && (
+            <div className="max-w-3xl mx-auto mb-8 rounded-xl border-2 border-yellow-accent/50 bg-yellow-accent/10 px-5 py-4 text-center">
+              <p className="font-semibold mb-1">🎄 End of year break</p>
+              <p className="text-sm text-text-dark/80">
+                Monday classes and Thursday practices finish for the year the week of 14 December.
+                Last Monday class: <span className="font-semibold">Monday 14 December</span> · Last Thursday practice: <span className="font-semibold">Thursday 17 December</span> (Pinelands North Primary School).
+                Classes start again on <span className="font-semibold">Monday 11 January 2027</span>.
+              </p>
+            </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
               {/* Monday Classes */}
               <a href="#monday-classes" className="group border-2 border-yellow-accent/30 hover:border-yellow-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
@@ -63,6 +85,9 @@ export default function WhatsOn() {
                 <p className="text-xs mt-2 font-semibold text-yellow-accent">
                   {nextMonday === "Tonight!" ? "🎉 Tonight!" : `Next class: ${nextMonday}`}
                 </p>
+                {SHOW_BREAK_NOTE && (
+                  <p className="text-xs italic mt-1 text-text-dark/60">Last class for the year: 14 Dec · back 11 Jan</p>
+                )}
               </a>
               
               {/* Thursday Practice Session */}
@@ -76,7 +101,9 @@ export default function WhatsOn() {
                 <p className="text-xs mt-2 font-semibold text-purple-accent">
                   {nextThursday === "Tonight!" ? "🎉 Tonight!" : `Next: ${nextThursday}`}
                 </p>
-                <p className="text-xs italic mt-1 text-text-dark/60">Open practice session</p>
+                <p className="text-xs italic mt-1 text-text-dark/60">
+                  {SHOW_BREAK_NOTE ? "Open practice session · last one for the year: 17 Dec" : "Open practice session"}
+                </p>
               </a>
 
               {/* Wednesday Down to Earth Market */}
@@ -100,7 +127,7 @@ export default function WhatsOn() {
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs mt-2 font-semibold text-pink-accent">Next: Sat 21 November · Taster class 8 PM</p>
+                <p className="text-xs mt-2 font-semibold text-pink-accent">Next: Fri 18 December · 🎄 Christmas social</p>
               </a>
             </div>
 
@@ -381,8 +408,8 @@ export default function WhatsOn() {
             </h2>
 
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
-              <p className="text-lg md:text-xl font-semibold mb-1">Next: Saturday 21 November</p>
-              <p className="text-base md:text-lg">🎓 Taster class at 8 PM · Social dancing to follow</p>
+              <p className="text-lg md:text-xl font-semibold mb-1">🎄 Next: Friday 18 December · Christmas Social</p>
+              <p className="text-base md:text-lg">Our Christmas-themed social for December · 🎓 Taster class at 8 PM · Social dancing to follow</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
