@@ -7,7 +7,9 @@ export const dynamic = "force-dynamic";
 // Last Monday class 14 Dec 2026, last Thursday practice 17 Dec 2026, classes restart Mon 11 Jan 2027.
 const BREAK_START = new Date(2026, 11, 18); // first day with no Mon/Thu sessions
 const BREAK_END = new Date(2027, 0, 11); // classes restart
-const SHOW_BREAK_NOTE = new Date() < BREAK_END;
+const TODAY = new Date();
+const BEFORE_BREAK = TODAY < BREAK_START; // small note under Upcoming Events
+const ON_BREAK = TODAY >= BREAK_START && TODAY < BREAK_END; // "we're on break" banner at the top
 
 function getNextOccurrence(targetDay: number, skipBreak = false): string {
   const now = new Date();
@@ -62,17 +64,16 @@ export default function WhatsOn() {
         {/* Quick Overview */}
         <section className="px-[5%] py-[40px] bg-white">
           <div className="max-w-[1100px] mx-auto">
-            <h2 className="font-spartan font-semibold text-2xl text-center mb-6">Regular Events</h2>
-            {SHOW_BREAK_NOTE && (
+            {ON_BREAK && (
             <div className="max-w-3xl mx-auto mb-8 rounded-xl border-2 border-yellow-accent/50 bg-yellow-accent/10 px-5 py-4 text-center">
-              <p className="font-semibold mb-1">🎄 End of year break</p>
+              <p className="font-semibold mb-1">🎄 We&apos;re on our end of year break</p>
               <p className="text-sm text-text-dark/80">
-                Monday classes and Thursday practices finish for the year the week of 14 December.
-                Last Monday class: <span className="font-semibold">Monday 14 December</span> · Last Thursday practice: <span className="font-semibold">Thursday 17 December</span> (Pinelands North Primary School).
-                Classes start again on <span className="font-semibold">Monday 11 January 2027</span>.
+                Monday classes and Thursday practices are taking a break over the holidays.
+                Classes start again on <span className="font-semibold">Monday 11 January 2027</span>. See you on the dance floor!
               </p>
             </div>
             )}
+            <h2 className="font-spartan font-semibold text-2xl text-center mb-8">Regular Events</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
               {/* Monday Classes */}
               <a href="#monday-classes" className="group border-2 border-yellow-accent/30 hover:border-yellow-accent rounded-xl p-6 text-center transition-all hover:shadow-lg">
@@ -85,8 +86,8 @@ export default function WhatsOn() {
                 <p className="text-xs mt-2 font-semibold text-yellow-accent">
                   {nextMonday === "Tonight!" ? "🎉 Tonight!" : `Next class: ${nextMonday}`}
                 </p>
-                {SHOW_BREAK_NOTE && (
-                  <p className="text-xs italic mt-1 text-text-dark/60">Last class for the year: 14 Dec · back 11 Jan</p>
+                {BEFORE_BREAK && (
+                  <p className="text-xs italic mt-1 text-text-dark/60">Last class for the year: 14 Dec</p>
                 )}
               </a>
               
@@ -102,7 +103,7 @@ export default function WhatsOn() {
                   {nextThursday === "Tonight!" ? "🎉 Tonight!" : `Next: ${nextThursday}`}
                 </p>
                 <p className="text-xs italic mt-1 text-text-dark/60">
-                  {SHOW_BREAK_NOTE ? "Open practice session · last one for the year: 17 Dec" : "Open practice session"}
+                  {BEFORE_BREAK ? "Open practice session · last one for the year: 17 Dec" : "Open practice session"}
                 </p>
               </a>
 
@@ -165,6 +166,12 @@ export default function WhatsOn() {
                 </div>
               </a>
             </div>
+            {BEFORE_BREAK && (
+              <p className="max-w-3xl mx-auto mt-8 text-center text-sm text-text-dark/60">
+                🎄 <span className="font-semibold">End of year break:</span> our last Monday class is on 14 December and our last
+                Thursday practice is on 17 December. Classes start again on Monday 11 January 2027.
+              </p>
+            )}
           </div>
         </section>
 

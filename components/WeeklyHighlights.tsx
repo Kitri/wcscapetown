@@ -4,7 +4,7 @@ import Image from "next/image";
 // End-of-year break: last Monday class 14 Dec 2026, classes restart Mon 11 Jan 2027.
 const BREAK_START = new Date(2026, 11, 15);
 const BREAK_END = new Date(2027, 0, 11);
-const SHOW_BREAK_NOTE = new Date() < BREAK_END;
+const BEFORE_BREAK = new Date() < new Date(2026, 11, 18);
 
 function getNextLabel(targetDay: number, skipBreak = false): string {
   const now = new Date();
@@ -104,8 +104,8 @@ export default function WeeklyHighlights() {
                   Classes &amp; Social
                 </p>
                 <p className="text-xs text-text-dark/60">7–10 PM · Havana Nights, Plumstead</p>
-                {SHOW_BREAK_NOTE && (
-                  <p className="text-xs italic text-text-dark/50 mt-0.5">Last class for the year: 14 Dec · last Thursday practice: 17 Dec · back 11 Jan</p>
+                {BEFORE_BREAK && (
+                  <p className="text-xs italic text-text-dark/50 mt-0.5">Last class for the year: 14 Dec</p>
                 )}
               </div>
             </Link>
