@@ -81,7 +81,7 @@ export default function WeeklyHighlights() {
                 Friday 18 December
               </p>
               <p className="font-spartan font-semibold text-base leading-tight mb-1">
-                Christmas Social
+                Festive Season Social
               </p>
               <p className="text-xs text-text-dark/60">Taster class at 8 PM · R50 · Scout Hall, Claremont</p>
             </div>

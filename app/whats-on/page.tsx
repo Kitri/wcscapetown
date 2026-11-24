@@ -128,7 +128,7 @@ export default function WhatsOn() {
                 </div>
                 <h3 className="font-spartan font-semibold text-lg mb-2">WCS Social</h3>
                 <p className="text-sm text-text-dark/70 mb-1">Scout Hall, Claremont</p>
-                <p className="text-xs mt-2 font-semibold text-pink-accent">Next: Fri 18 December · 🎄 Christmas social</p>
+                <p className="text-xs mt-2 font-semibold text-pink-accent">Next: Fri 18 December · 🎄 Festive Season Social</p>
               </a>
             </div>
 
@@ -415,8 +415,8 @@ export default function WhatsOn() {
             </h2>
 
             <div className="bg-pink-accent/20 border-2 border-pink-accent rounded-xl p-6 md:p-8 mb-8 text-center">
-              <p className="text-lg md:text-xl font-semibold mb-1">🎄 Next: Friday 18 December · Christmas Social</p>
-              <p className="text-base md:text-lg">Our Christmas-themed social for December · 🎓 Taster class at 8 PM · Social dancing to follow</p>
+              <p className="text-lg md:text-xl font-semibold mb-1">🎄 Next: Friday 18 December · Festive Season Social</p>
+              <p className="text-base md:text-lg">Our festive end-of-year social · 🎓 Taster class at 8 PM · Social dancing to follow</p>
             </div>
 
             <div className="grid md:grid-cols-2 gap-8">
